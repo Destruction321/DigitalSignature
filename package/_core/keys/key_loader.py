@@ -69,7 +69,7 @@ class KeyLoader:
             password_result = self.__request_password_interactive(key_id, status_result.msg)
             
             if password_result is False:  # 用户取消
-                return Result(status=Status.NO_PASSWORD, msg="密码输入已取消")
+                return Result(status=Status.CANCEL_INPUT, msg="密码输入已取消")
                 
             password = cast(str | None, password_result)
             
@@ -124,7 +124,7 @@ class KeyLoader:
 
                 password = self.__request_and_validate_password(key_id, attempt + 1, True)
                 if password is False:  # 用户取消
-                    return Result(status=Status.NO_PASSWORD, msg="密码输入已取消")
+                    return Result(status=Status.CANCEL_INPUT, msg="密码输入已取消")
                 
                 continue
             

@@ -7,7 +7,12 @@ from tkinter import messagebox
 from typing import Callable
 
 from .. import utils
-from ..utils import DirType, KeyType, Status, Result
+from ..utils import DirType, Status, Result
+
+_PEM = utils.FileType.KEY.value
+_ENCRYPTED = f"_{utils.KeyType.ENCRYPTED.value}"
+_PRIVATE = utils.KeyType.PRIVATE.value
+_PUBLIC = utils.KeyType.PUBLIC.value
 
 
 """public methods"""
@@ -187,18 +192,18 @@ def _cleanup_directory_files(dir_path: Path, condition_func: Callable[[str], boo
 
 def _parse_key_id_from_file_name(file_name: str) -> tuple[str | None, bool]:
     """从文件名解析 key_id 以及是否为私钥"""
-    is_private = file_name.startswith("private_")
-    is_public = file_name.startswith("public_")
+    is_private = file_name.startswith(f"{_PRIVATE}_")
+    is_public = file_name.startswith(f"{_PRIVATE}_")
 
     if not is_private and not is_public:
         return None, is_private
 
     # 移除扩展名
-    base_name = file_name.replace(".pem", "")
+    base_name = file_name.replace(_PEM, "")
 
     # 处理加密私钥
-    if is_private and base_name.endswith(f"_{KeyType.ENCRYPTED.value}"):
-        base_name = base_name.replace(f"_{KeyType.ENCRYPTED.value}", "")
+    if is_private and base_name.endswith(_ENCRYPTED):
+        base_name = base_name.replace(_ENCRYPTED, "")
 
     # 解析格式：{prefix}_{key_id}_{key_size}
     parts = base_name.split("_")
@@ -216,16 +221,16 @@ def _get_orphaned_keys(keys_dir: Path) -> dict:
     """获取孤立密钥列表"""
     key_files = {}
     for file_path in keys_dir.iterdir():
-        if file_path.suffix != ".pem":
+        if file_path.suffix != _PEM:
             continue
         
         key_id, is_private = _parse_key_id_from_file_name(file_path.name)
         if key_id is None:
             continue
         
-        key_type = KeyType.PRIVATE.value if is_private else KeyType.PUBLIC.value
+        key_type = _PRIVATE if is_private else _PUBLIC
         if key_id not in key_files:
-            key_files[key_id] = {KeyType.PRIVATE.value: None, KeyType.PUBLIC.value: None}
+            key_files[key_id] = {_PRIVATE: None, _PUBLIC: None}
             
         key_files[key_id][key_type] = file_path
         
@@ -240,11 +245,11 @@ def _del_orphaned_keys(key_files: dict, valid_key_ids: list[str]) -> tuple[Resul
         if key_id in valid_key_ids:
             continue
         
-        has_pair = files[KeyType.PRIVATE.value] is not None and files[KeyType.PUBLIC.value] is not None
+        has_pair = files[_PRIVATE] is not None and files[_PUBLIC] is not None
         if has_pair:
             continue
         
-        for key_type in [KeyType.PRIVATE.value, KeyType.PUBLIC.value]:
+        for key_type in [_PRIVATE, _PUBLIC]:
             file_path = files[key_type]
             if not file_path or not file_path.exists():
                 continue

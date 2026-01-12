@@ -1,7 +1,7 @@
 # package/_core/keys/key_manager.py
 """密钥对管理模块"""
 from pathlib import Path
-from typing import Callable, cast, TypedDict
+from typing import Callable, cast, TYPE_CHECKING, TypedDict
 
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import serialization
@@ -10,8 +10,11 @@ from cryptography.hazmat.primitives.asymmetric.rsa import RSAPrivateKey, RSAPubl
 from ._key_encryption import DecryptError, encrypt_private_key, decrypt_private_key
 from ._key_recovery import KeyRecoveryManager
 from ... import utils
-from ...utils import KeyType, Status, Result
+from ...utils import Status, Result
 from ..._services.config_security import save_config
+
+if TYPE_CHECKING:
+    from ... utils import PassWord
 
 
 class _KeyPairInfo(TypedDict):
@@ -87,7 +90,7 @@ class SingleKeyManager:
             self.__private_key = cast(RSAPrivateKey, self.__private_key)
             self.__public_key = cast(RSAPublicKey, self.__public_key)
             
-            if password:
+            if password is not None:
                 encrypted_key_data = encrypt_private_key(self.__private_key, password)
                 with open(private_key_path, "w") as f:
                     f.write(encrypted_key_data)
@@ -110,7 +113,7 @@ class SingleKeyManager:
         except Exception as e:
             return Result(status=Status.KEY_FILE_CORRUPT, msg=f"保存密钥失败: {str(e)}")
 
-    def load_private_key(self, key_path: str, password: str | None = None) -> Result:
+    def load_private_key(self, key_path: str, is_encrypted: bool, password: str | None = None) -> Result:
         """
         从文件加载私钥
         
@@ -122,7 +125,7 @@ class SingleKeyManager:
             load_result (Result): 加载结果，成功时更新当前的私钥
         """
         try:
-            if key_path.split("_")[-1] != f"{KeyType.ENCRYPTED.value}.pem":
+            if not is_encrypted:
                 with open(key_path, "rb") as key_file:
                     private_key = serialization.load_pem_private_key(
                         key_file.read(), password=None, backend=default_backend()
@@ -223,11 +226,11 @@ class MultiKeyManager:
         return self.__recovery_mgr
 
     @property
-    def recovery_callback(self) -> Callable[[str, utils.PASSWORD], None] | None:
+    def recovery_callback(self) -> Callable[[str, PassWord], None] | None:
         return self.__recovery_mgr.recovery_callback
 
     @recovery_callback.setter
-    def recovery_callback(self, callback: Callable[[str, utils.PASSWORD], None]) -> None:
+    def recovery_callback(self, callback: Callable[[str, PassWord], None]) -> None:
         self.__recovery_mgr.recovery_callback = callback
 
 
@@ -268,7 +271,7 @@ class MultiKeyManager:
         Returns:
             load_result (Result): 加载结果，成功时返回当前密钥对的管理器
         """
-        no_key_id = _no_key(key_id, self.__key_pairs)
+        no_key_id = self.__no_key(key_id, self.__key_pairs)
         if no_key_id:
             return no_key_id
         
@@ -288,7 +291,7 @@ class MultiKeyManager:
             if is_encrypted and password is None:
                 return Result(status=Status.NEED_PASSWORD)
             
-            load_private_result = l_km.load_private_key(key_info["private_key_path"], password)
+            load_private_result = l_km.load_private_key(key_info["private_key_path"], is_encrypted, password)
             if not load_private_result.is_success():
                 return load_private_result
             
@@ -323,7 +326,7 @@ class MultiKeyManager:
         Returns:
             delete_result (Result): 删除结果
         """
-        no_key_id = _no_key(key_id, self.__key_pairs)
+        no_key_id = self.__no_key(key_id, self.__key_pairs)
         if no_key_id:
             return no_key_id
         
@@ -364,7 +367,7 @@ class MultiKeyManager:
         Returns:
             change_result (Result): 修改结果
         """
-        no_key_id = _no_key(key_id, self.__key_pairs)
+        no_key_id = self.__no_key(key_id, self.__key_pairs)
         if no_key_id:
             return no_key_id
         
@@ -447,7 +450,7 @@ class MultiKeyManager:
         Returns:
             encryption_status_result (Result): 成功状态和加密状态描述
         """
-        no_key_id = _no_key(key_id, self.__key_pairs)
+        no_key_id = self.__no_key(key_id, self.__key_pairs)
         if no_key_id:
             return no_key_id
         
@@ -468,12 +471,10 @@ class MultiKeyManager:
         Returns:
             (private_key_path, public_key_path) (tuple[str, str]): 私钥和公钥的文件路径
         """
-        if is_encrypted:
-            private_key_file = f"{KeyType.PRIVATE.value}_{key_id}_{key_size}_{KeyType.ENCRYPTED.value}.pem"
-        else:
-            private_key_file = f"{KeyType.PRIVATE.value}_{key_id}_{key_size}.pem"
-
-        public_key_file = f"{KeyType.PUBLIC.value}_{key_id}_{key_size}.pem"
+        
+        PRIVATE_, PUBLIC_, ENCRYPTED, _PEM = _get_consts(is_encrypted)
+        private_key_file = f"{PRIVATE_}{key_id}_{key_size}{ENCRYPTED}{_PEM}"
+        public_key_file = f"{PUBLIC_}{key_id}_{key_size}{_PEM}"
 
         keys_dir = utils.get_path(utils.DirType.KEYS)
         return (
@@ -481,10 +482,20 @@ class MultiKeyManager:
             str(Path(keys_dir, public_key_file))
         )
 
+    @staticmethod
+    def __no_key(key_id: str, key_pairs: dict[str, _KeyPairInfo]) -> Result | None:
+        """检查密钥存在性"""
+        if not key_id.strip():
+            return Result(status=Status.PARAM_EMPTY)
+        if key_id not in key_pairs:
+            return Result(status=Status.KEY_NOT_FOUND)
+        
 
-def _no_key(key_id: str, key_pairs: dict[str, _KeyPairInfo]) -> Result | None:
-    """检查密钥存在性"""
-    if not key_id.strip():
-        return Result(status=Status.PARAM_EMPTY)
-    if key_id not in key_pairs:
-        return Result(status=Status.KEY_NOT_FOUND)
+def _get_consts(is_encrypted: bool = False):
+    """字符串导出"""
+    return (
+        f"{utils.KeyType.PRIVATE.value}_",
+        f"{utils.KeyType.PUBLIC.value}_",
+        f"_{utils.KeyType.ENCRYPTED.value}" if is_encrypted else "",
+        utils.FileType.KEY.value
+    )

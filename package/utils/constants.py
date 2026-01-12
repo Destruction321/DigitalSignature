@@ -6,7 +6,7 @@ from typing import Final, Any
 
 
 @unique
-class PASSWORD(Enum):
+class PassWord(Enum):
     CHANGE = "change"
     RECOVERY = "recovery"
 
@@ -17,6 +17,7 @@ class DirType(Enum):
     TEXTS = "texts"
     SIGNATURES = "signatures"
     TEMP = "temp"
+    BACKUP = "_backup_"
     UNKNOWN = "unknown"
     
 @unique
@@ -25,6 +26,12 @@ class KeyType(Enum):
     PUBLIC = "public"
     ENCRYPTED = "encrypted"
     
+@unique
+class FileType(Enum):
+    KEY = ".pem"
+    TEXT = ".txt"
+    SIGNATURE = ".sig"
+
 @unique
 class Status(Enum):
     # 通用状态
@@ -40,8 +47,8 @@ class Status(Enum):
     KEY_FILE_MISSING = ("KEY_FILE_MISSING", "密钥文件缺失")
     KEY_FILE_CORRUPT = ("KEY_FILE_CORRUPT", "密钥文件损坏")
     NO_PASSWORD = ("NO_PASSWORD", "启用加密存储时需要设置密码")
+    CANCEL_INPUT = ("CANCEL_INPUT", "密码输入已取消")
     NEED_PASSWORD = ("NEED_PASSWORD", "密钥已加密，需输入密码")
-    REMOVE_PASSWORD= ("REMOVE_PASSWORD", "移除加密")
     PASSWORD_ERROR = ("PASSWORD_ERROR", "密码错误")
     PASSWORD_TOO_SHORT = ("PASSWORD_TOO_SHORT", "密码长度至少6位")
     OLD_PASSWORD_ERROR = ("OLD_PASSWORD_ERROR", "旧密码验证失败")

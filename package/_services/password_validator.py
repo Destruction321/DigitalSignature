@@ -3,7 +3,8 @@
 from tkinter import messagebox, simpledialog
 from typing import Callable, cast, TYPE_CHECKING, TypedDict
 
-from ..utils import ENCRYPTED, MAX_PASSWORD_ATTEMPTS, Status, Result, PASSWORD
+from .. import utils
+from ..utils import Status, Result, PassWord
 
 if TYPE_CHECKING:
     from tkinter import Widget
@@ -14,7 +15,7 @@ class _SetNewPassword(TypedDict):
     """重置密码所需数据"""
     key_id: str
     old_password: str | None
-    mode: PASSWORD
+    mode: PassWord
     is_encrypted: bool
 
 class PasswordValidator:
@@ -33,13 +34,13 @@ class PasswordValidator:
 
 
     """public methods"""
-    def validate_and_reset_password(self, key_id: str, mode: PASSWORD = PASSWORD.CHANGE) -> Result:
+    def validate_and_reset_password(self, key_id: str, mode: PassWord = PassWord.CHANGE) -> Result:
         """
         验证旧密码并重置为新密码
         
         Args:
             key_id: 密钥ID
-            context: 操作上下文（PASSWORD.CHANGE=更改密码, PASSWORD.RECOVERY=恢复配置）
+            context: 操作上下文（PassWord.CHANGE=更改密码, PassWord.RECOVERY=恢复配置）
             max_attempts: 最大密码尝试次数
             
         Returns:
@@ -57,7 +58,7 @@ class PasswordValidator:
             return status_result
         
         # 判断是否需要验证旧密码
-        is_encrypted = ENCRYPTED in status_result.msg
+        is_encrypted = utils.ENCRYPTED in status_result.msg
         require_old_password = is_encrypted
         
         # 验证旧密码
@@ -79,15 +80,15 @@ class PasswordValidator:
 
 
     """private methods"""
-    def __verify_old_password(self, key_id: str, mode: PASSWORD) -> Result:
+    def __verify_old_password(self, key_id: str, mode: PassWord) -> Result:
         """验证旧密码"""
-        attempts_left = MAX_PASSWORD_ATTEMPTS
+        attempts_left = utils.MAX_PASSWORD_ATTEMPTS
         
         while attempts_left > 0:
             # 构建提示信息
-            context_text = "恢复配置" if mode == PASSWORD.RECOVERY else "更改密码"
-            attempts_info = f"（剩余尝试次数: {attempts_left}）" if attempts_left < MAX_PASSWORD_ATTEMPTS else ""
-            prompt = f"正在进行{context_text}\n请输入密钥 '{key_id}' 的旧密码{attempts_info}:"
+            context_text = "恢复配置" if mode == PassWord.RECOVERY else "更改密码"
+            attempts_info = f"{attempts_left}" if attempts_left <= utils.MAX_PASSWORD_ATTEMPTS else ""
+            prompt = f"正在进行{context_text}\n请输入密钥 '{key_id}' 的旧密码（剩余次数: {attempts_info}）"
             
             # 请求输入旧密码
             old_password = simpledialog.askstring(
@@ -96,7 +97,7 @@ class PasswordValidator:
             
             # 用户取消
             if old_password is None:
-                return Result(status=Status.REMOVE_PASSWORD, msg=f"取消{context_text}")
+                return Result(status=Status.CANCEL_INPUT, msg=f"取消{context_text}")
                 
             # 密码为空
             if not old_password.strip():
@@ -125,7 +126,7 @@ class PasswordValidator:
             )
             
             if not retry:
-                return Result(status=Status.REMOVE_PASSWORD, msg=f"放弃{context_text}")
+                return Result(status=Status.CANCEL_INPUT, msg=f"放弃{context_text}")
                 
         message = f"密码验证失败次数过多！密钥 '{key_id}' 的{context_text}已被锁定"
         return Result(status=Status.OLD_PASSWORD_ERROR, msg=message)
@@ -137,7 +138,7 @@ class PasswordValidator:
         mode = set_new_password["mode"]
         is_encrypted = set_new_password["is_encrypted"]
 
-        context_text = "恢复配置" if mode == PASSWORD.RECOVERY else "更改密码"
+        context_text = "恢复配置" if mode == PassWord.RECOVERY else "更改密码"
         
         # 构建提示信息
         if is_encrypted:
@@ -152,7 +153,7 @@ class PasswordValidator:
         
         # 用户取消
         if new_password is None:
-            return Result(status=Status.REMOVE_PASSWORD, msg=f"取消设置密钥 '{key_id}' 的新密码")
+            return Result(status=Status.CANCEL_INPUT, msg="取消设置新密码")
             
         # 处理新密码（留空=移除加密）
         new_password = new_password.strip() if new_password else None
@@ -176,7 +177,7 @@ class PasswordValidator:
         
         # 成功结果
         status_desc = "设置加密" if new_password else "移除加密"
-        message = f"密钥 '{key_id}' {context_text}成功（{status_desc}）"
+        message = f"{context_text}成功（{status_desc}）"
         return Result(status=Status.SUCCESS, msg=message)
 
     def __update_status(self, message: str) -> None:

@@ -9,7 +9,8 @@ from typing import Callable, cast
 from shutil import move
 
 from .utils import (
-    BASE_DIR, DIRS, DirType, KEYS_CONFIG_FILE, Status,
+    BASE_DIR, DIRS, KEYS_CONFIG_FILE, 
+    DirType, FileType, KeyType, Status,
     format_size, get_path
 )
 
@@ -202,15 +203,15 @@ class APP:
         """迁移现有文件到新的目录结构"""
         migration_map: dict[DirType, list[str]] = {
             DirType.KEYS: [
-                "private_key_*.pem",
-                "public_key_*.pem",
+                f"{KeyType.PRIVATE.value}_key_*{FileType.KEY.value}",
+                f"{KeyType.PUBLIC.value}_key_*{FileType.KEY.value}",
                 KEYS_CONFIG_FILE
             ],
-            DirType.TEXTS: ["*.txt"],
-            DirType.SIGNATURES: ["*.sig"]
+            DirType.TEXTS: [f"{FileType.TEXT.value}"],
+            DirType.SIGNATURES: [f"{FileType.SIGNATURE.value}"]
         }
 
-        exclude_files = ["requirements.txt", "README.txt"]
+        exclude_files = [f"requirements{FileType.TEXT.value}", f"README{FileType.TEXT.value}"]
         migrated_files: list[tuple[DirType, str, str]] = []
 
         for category, patterns in migration_map.items():
@@ -292,7 +293,7 @@ class APP:
                 self.__update_directory_info()
                 self.__key_tab.loaded_key_id = self.__multi_km.current_key_id
                 self.__ui_state_mgr.update_status(f"自动加载密钥成功: {self.__multi_km.current_key_id}")
-            elif not success and result.status == Status.NEED_PASSWORD:
+            elif not success and loading_result.status == Status.NEED_PASSWORD:
                 self.__ui_state_mgr.update_status(f"密钥 '{self.__multi_km.current_key_id}' 已加密，请手动加载")
             else:
                 self.__ui_state_mgr.update_status("自动加载密钥失败，请手动加载")
@@ -556,8 +557,11 @@ class APP:
         if reload_result.is_success():
             return
         
-        if reload_result.status != Status.NO_PASSWORD:
-            messagebox.showerror("加载失败", f"重新加载密钥失败:\n\n{reload_result.msg}")
+        if reload_result.status == Status.CANCEL_INPUT:
+            messagebox.showinfo("取消加载", reload_result.msg)
+            return
+        
+        messagebox.showerror("加载失败", f"重新加载密钥失败:\n\n{reload_result.msg}")
 
     def __handle_status_update(self, message: str) -> None:
         """处理状态更新"""

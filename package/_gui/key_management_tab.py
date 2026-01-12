@@ -4,7 +4,7 @@ import tkinter as tk
 from tkinter import ttk, messagebox
 from typing import cast, TYPE_CHECKING
 
-from ..utils import DirType, ENCRYPTED, get_path, PASSWORD, Status
+from ..utils import DirType, ENCRYPTED, get_path, PassWord, Status
 from .._core.keys import key_creator
 from .._core.keys.key_manager import SingleKeyManager
 from .._services.password_validator import PasswordValidator
@@ -311,13 +311,13 @@ class KeyManagementTab:
             messagebox.showerror("错误", "无法解析密钥ID")
             return
         
-        self.__handle_change_result(key_id, PASSWORD.CHANGE)
+        self.__handle_change_result(key_id, PassWord.CHANGE)
 
 
     """Recovery methods"""
-    def __handle_key_recovery(self, key_id: str, action: PASSWORD) -> None:
+    def __handle_key_recovery(self, key_id: str, action: PassWord) -> None:
         """处理密钥恢复"""
-        if action != PASSWORD.RECOVERY:
+        if action != PassWord.RECOVERY:
             return
 
         # 询问用户想要做什么
@@ -329,21 +329,21 @@ class KeyManagementTab:
         )
 
         if choice: # 用户选择重置密码
-            self.__handle_change_result(key_id, PASSWORD.RECOVERY)
+            self.__handle_change_result(key_id, PassWord.RECOVERY)
         else:  # 用户选择跳过
             self.__ui_state_mgr.update_status(f"跳过加密密钥 '{key_id}' 的恢复")
 
-    def __handle_change_result(self, key_id: str, mode: PASSWORD) -> None:
+    def __handle_change_result(self, key_id: str, mode: PassWord) -> None:
         change_result = self.__password_validator.validate_and_reset_password(
             key_id=key_id,
             mode=mode
         )
         if change_result.is_success():
-            messagebox.showinfo("成功", f"密钥 '{key_id}' 密码修改成功")
+            messagebox.showinfo("成功", f"密钥 '{key_id}' 密码修改成功：{change_result.msg}")
             return
-            
-        if change_result.status == Status.REMOVE_PASSWORD:
-            messagebox.showinfo("移除加密", f"密钥 '{key_id}' 已移除加密")
+        
+        if change_result.status == Status.CANCEL_INPUT:
+            messagebox.showinfo("取消", f"密钥 '{key_id}' 已{change_result.msg}")
             return
             
         messagebox.showerror("错误", f"密钥 '{key_id}' 修改密码失败：{change_result.msg}")

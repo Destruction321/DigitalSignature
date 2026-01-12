@@ -10,6 +10,9 @@ from typing import Any, Callable, Final
 from ... import utils
 from ...utils import DirType, Status, Result
 
+_BACKUP_: Final[str] = "_backup_"
+
+_DATA: Final[str] = "data"
 
 _CHECKSUM_FILE: Final[str] = "backup_checksum.json"
 
@@ -161,7 +164,7 @@ def list_backups() -> list[dict[str, Any]]:
 
     try:
         for item in current_dir.iterdir():
-            if not item.is_dir() or not any(pattern in item.name for pattern in ["_backup_", "backup_"]):
+            if not item.is_dir() or not any(pattern in item.name for pattern in [_BACKUP_]):
                 continue
 
             try:
@@ -248,7 +251,7 @@ def delete_backup(backup_name: str) -> Result:
         if not backup_path.exists():
             return Result(status=Status.DIR_NOT_FOUND, msg=f"备份 '{backup_name}' 不存在")
             
-        if not backup_path.is_dir() or not any(pattern in backup_name for pattern in ["_backup_"]):
+        if not backup_path.is_dir() or not any(pattern in backup_name for pattern in [_BACKUP_]):
             return Result(status=Status.PARAM_EMPTY, msg=f"'{backup_name}' 不是有效的备份目录")
             
         shutil.rmtree(backup_path)
@@ -265,7 +268,7 @@ def delete_backup(backup_name: str) -> Result:
 def _backup_data(data_type: DirType, backup_dir: str | None = None) -> Result:
     if backup_dir is None:
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        backup_dir = f"{"data" if data_type == DirType.FULL else data_type.value}_backup_{timestamp}"
+        backup_dir = f"{_DATA if data_type == DirType.FULL else data_type.value}{_BACKUP_}{timestamp}"
         
     data_dir = utils.get_path(DirType.FULL) if data_type == DirType.FULL else utils.get_path(data_type)
     if not Path(data_dir).exists():
@@ -398,30 +401,45 @@ def _calculate_backup_checksum(backup_dir: Path) -> tuple[str, int, int]:
 def _detect_backup_type(backup_dir: Path) -> DirType:
     """检测备份类型"""
     backup_name = backup_dir.name
-
-    if backup_name.startswith("data_backup_"):
+    KEYS, TEXTS, SIGNATURES = _get_dir_type()
+    if backup_name.startswith(f"{_DATA}{_BACKUP_}"):
         return DirType.FULL
-    elif backup_name.startswith("keys_backup_"):
+    elif backup_name.startswith(f"{KEYS}{_BACKUP_}"):
         return DirType.KEYS
-    elif backup_name.startswith("texts_backup_"):
+    elif backup_name.startswith(f"{TEXTS}{_BACKUP_}"):
         return DirType.TEXTS
-    elif backup_name.startswith("signatures_backup_"):
+    elif backup_name.startswith(f"{SIGNATURES}{_BACKUP_}"):
         return DirType.SIGNATURES
     else:
         return _inferred_type(backup_dir)
 
+def _get_dir_type():
+    return (
+        DirType.KEYS.value,
+        DirType.TEXTS.value,
+        DirType.SIGNATURES.value
+    )
+
 def _inferred_type(backup_dir: Path) -> DirType:
     """通过目录内容推断类型"""
+    _PEM, _TXT, _SIG = _get_file_type()
     if (backup_dir / DirType.KEYS.value).exists():
         return DirType.FULL
-    if _extension_exists(backup_dir, ".pem"):
+    if _extension_exists(backup_dir, _PEM):
         return DirType.KEYS
-    if _extension_exists(backup_dir, ".txt"):
+    if _extension_exists(backup_dir, _TXT):
         return DirType.TEXTS
-    if _extension_exists(backup_dir, ".sig"):
+    if _extension_exists(backup_dir, _SIG):
         return DirType.SIGNATURES
 
     return DirType.UNKNOWN
+
+def _get_file_type():
+    return (
+        utils.FileType.KEY.value,
+        utils.FileType.TEXT.value,
+        utils.FileType.SIGNATURE.value
+    )
 
 def _extension_exists(backup_dir: Path, extension: str) -> bool:
     """通过扩展名判断"""

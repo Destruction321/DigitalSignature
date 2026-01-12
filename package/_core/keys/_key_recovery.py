@@ -4,9 +4,11 @@ from datetime import datetime
 from pathlib import Path
 from tkinter.messagebox import showerror
 from typing import Callable, TYPE_CHECKING
+
+from ... import utils
+from ...utils import DirType, Status, Result
 from ..._services import config_security
-from ...utils import DirType, get_path, KeyType, KEYS_CONFIG_FILE, PASSWORD
-from ...utils.constants import Status, Result
+
 
 if TYPE_CHECKING:
     from .key_manager import MultiKeyManager
@@ -17,15 +19,15 @@ class KeyRecoveryManager:
     def __init__(self, multi_key_manager: MultiKeyManager):
         self.__multi_km: MultiKeyManager = multi_key_manager
         self.__security_status_callback: Callable[[bool], None] | None = None
-        self.__recovery_callback: Callable[[str, PASSWORD], None] | None = None
+        self.__recovery_callback: Callable[[str, utils.PassWord], None] | None = None
 
 
     @property
-    def recovery_callback(self) -> Callable[[str, PASSWORD], None] | None:
+    def recovery_callback(self) -> Callable[[str, utils.PassWord], None] | None:
         return self.__recovery_callback
 
     @recovery_callback.setter
-    def recovery_callback(self, callback: Callable[[str, PASSWORD], None]) -> None:
+    def recovery_callback(self, callback: Callable[[str, utils.PassWord], None]) -> None:
         self.__recovery_callback = callback
 
 
@@ -77,7 +79,7 @@ class KeyRecoveryManager:
             # 检查配置文件是否存在
             if not config_file_path.exists():
                 # 尝试迁移旧配置
-                migrated = config_security.migrate_config(KEYS_CONFIG_FILE, self.__multi_km.config_file)
+                migrated = config_security.migrate_config(utils.KEYS_CONFIG_FILE, self.__multi_km.config_file)
                 if not migrated.is_success() or not config_file_path.exists():
                     self.__update_security_status(False)
                     return Result(status=Status.FILE_NOT_FOUND, msg="配置文件不存在，迁移旧配置失败")
@@ -113,7 +115,7 @@ class KeyRecoveryManager:
     def __try_rebuild_from_files(self) -> Result:
         """第二层：从本地密钥文件重建配置"""
         try:
-            keys_dir = Path(get_path(DirType.KEYS))
+            keys_dir = Path(utils.get_path(DirType.KEYS))
 
             # 检查密钥目录是否存在
             if not keys_dir.exists():
@@ -162,7 +164,7 @@ class KeyRecoveryManager:
             # 通知UI加密密钥已恢复
             if recovered_encrypted_keys and self.__recovery_callback:
                 for key_id in recovered_encrypted_keys:
-                    self.__recovery_callback(key_id, PASSWORD.RECOVERY)
+                    self.__recovery_callback(key_id, utils.PassWord.RECOVERY)
                     
             # 恢复成功
             self.__update_security_status(True)
@@ -203,16 +205,16 @@ class KeyRecoveryManager:
         if self.__security_status_callback:
             self.__security_status_callback(is_secure)
 
-    @staticmethod
-    def __parse_key_from_file_name(file_name: str, keys_dir: Path) -> tuple[str, int, bool, str, str] | None:
+    def __parse_key_from_file_name(self, file_name: str, keys_dir: Path) -> tuple[str, int, bool, str, str] | None:
         """从文件名解析密钥信息"""
         try:
+            PRIVATE_, PUBLIC_, ENCRYPTED, _PEM = self.__get_consts()
             # 仅处理私钥文件（公钥通过私钥名推导）
-            if not file_name.startswith(f"{KeyType.PRIVATE.value}_") or not file_name.endswith(".pem"):
+            if not file_name.startswith(PRIVATE_) or not file_name.endswith(_PEM):
                 return None
             
             # 移除前缀和后缀
-            base_name = file_name.replace(f"{KeyType.PRIVATE.value}_", "").replace(".pem", "")
+            base_name = file_name.replace(PRIVATE_, "").replace(_PEM, "")
             parts = base_name.split("_")
             
             # 至少需要 key_id + key_size
@@ -220,7 +222,7 @@ class KeyRecoveryManager:
                 return None
             
             # 解析加密状态和密钥信息
-            if parts[-1] == KeyType.ENCRYPTED.value:
+            if parts[-1] == ENCRYPTED:
                 is_encrypted = True
                 key_size = int(parts[-2])
                 key_id = "_".join(parts[:-2])
@@ -236,10 +238,20 @@ class KeyRecoveryManager:
             
             # 构建文件路径
             private_path = str(keys_dir / file_name)
-            public_file_name = f"{KeyType.PUBLIC.value}_{key_id}_{key_size}.pem"
+            public_file_name = f"{PUBLIC_}{key_id}_{key_size}{_PEM}"
             public_path = str(keys_dir / public_file_name)
             return key_id, key_size, is_encrypted, private_path, public_path
         
         except Exception as e:
             showerror("密钥解析失败", f"{file_name}: {e}")
             return None
+        
+    @staticmethod
+    def __get_consts():
+        """字符串导出"""
+        return (
+            f"{utils.KeyType.PRIVATE.value}_",
+            f"{utils.KeyType.PUBLIC.value}_",
+            utils.KeyType.ENCRYPTED.value,
+            utils.FileType.KEY.value
+        )
