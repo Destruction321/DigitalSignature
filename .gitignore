@@ -1,7 +1,7 @@
 /.venv
 /build
 /build_resources
-/data
+/data*
 /dist
 /README.md
 /__pycache__

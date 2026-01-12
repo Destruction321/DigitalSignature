@@ -109,7 +109,7 @@ def build_project(onefile=False):
         if spec_file.exists():
             print(f"✓ spec 文件已生成到: {spec_file}")
         else:
-            print("⚠️ 注意: spec 文件未在指定位置生成")
+            print(f" 注意: spec 文件未在指定位置生成")
 
         # 显示构建结果
         dist_dir = PROJECT_ROOT / "dist"

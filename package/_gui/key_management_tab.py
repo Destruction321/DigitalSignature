@@ -528,7 +528,7 @@ class KeyManagementTab:
         
         status_result = self.__multi_km.get_key_encryption_status(current_key_id)
         if not status_result.is_success():
-            self.__key_status_label.config(text=f"当前密钥: {current_key_id} (状态未知)", foreground="red")
+            self.__key_status_label.config(text="未找到密钥对", foreground="red")
             return
         
         status = status_result.msg
