@@ -53,7 +53,7 @@ def create_key_pair(key_setter: KeySetter, multi_km: MultiKeyManager, callbacks:
     
     # 检查密钥ID是否重复
     if key_id in multi_km.key_pairs:
-        messagebox.showerror("错误", Status.KEY_ID_DUPLICATE.desc)
+        messagebox.showerror("创建密钥对失败", Status.KEY_ID_DUPLICATE.desc)
         callbacks.update_status_callback(Status.KEY_ID_DUPLICATE.desc)
         return
     
@@ -63,8 +63,8 @@ def create_key_pair(key_setter: KeySetter, multi_km: MultiKeyManager, callbacks:
         # 4. 处理成功
         _handle_key_creation_success(key_id, create_result.msg, key_setter, callbacks, multi_km)
     else:
-        messagebox.showerror("错误", create_result.msg)
-        callbacks.update_status_callback(f"创建失败: {create_result.msg}")
+        messagebox.showerror("创建密钥对失败", create_result.msg)
+        callbacks.update_status_callback(f"创建密钥对失败: {create_result.msg}")
 
 
 """private methods"""
@@ -73,14 +73,14 @@ def _validate_key_creation_inputs(key_setter: KeySetter) -> tuple[str, int, str 
     # 密钥ID
     key_id = key_setter.key_id_entry.get().strip()
     if not key_id:
-        messagebox.showerror("错误", Status.PARAM_EMPTY.desc)
+        messagebox.showerror("创建密钥对失败", "密钥ID不能为空")
         return None
     
     # 密钥长度
     try:
         key_size = int(key_setter.key_size_combo.get())
     except (ValueError, AttributeError):
-        messagebox.showerror("错误", Status.KEY_SIZE_ERROR.desc)
+        messagebox.showerror("创建密钥对失败", Status.KEY_SIZE_ERROR.desc)
         return None
     
     # 密码验证
@@ -138,11 +138,11 @@ def _get_and_validate_password(encryption_var: tk.BooleanVar, password_entry: tk
     
     password = password_entry.get().strip()
     if not password:
-        messagebox.showerror("错误", Status.PARAM_EMPTY.desc)
+        messagebox.showerror("创建密钥对失败", Status.NO_PASSWORD.desc)
         return False
     
     if len(password) < 6:
-        messagebox.showerror("错误", Status.PASSWORD_TOO_SHORT.desc)
+        messagebox.showerror("创建密钥对失败", Status.PASSWORD_TOO_SHORT.desc)
         return False
     
     return password

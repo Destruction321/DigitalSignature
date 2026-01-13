@@ -131,7 +131,12 @@ class KeyLoader:
             # 其他业务错误：直接返回
             return load_result
         
-        self.__handle_error("密码错误次数过多，加载密钥失败")
+        if self.__update_status:
+            self.__update_status(f"密码错误次数过多，加载失败")
+            
+        if self.__key_loaded_callback:
+            self.__key_loaded_callback(None)
+            
         return Result(status=Status.PASSWORD_ERROR, msg="密码错误次数过多，加载失败")
         
     def __handle_key_loading_success(self, key_id: str, key_manager: SingleKeyManager) -> None:
@@ -143,14 +148,3 @@ class KeyLoader:
             self.__key_loaded_callback(key_manager)
             
         messagebox.showinfo("成功", f"密钥对 '{key_id}' 加载成功")
-        
-    def __handle_error(self, error_message: str) -> None:
-        """处理错误"""
-        messagebox.showerror("错误", error_message)
-        
-        if self.__update_status:
-            self.__update_status(f"加载失败: {error_message}")
-            
-        if self.__key_loaded_callback:
-            self.__key_loaded_callback(None)
-            
