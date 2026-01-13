@@ -1,6 +1,5 @@
 /.venv
-/build
-/build_resources
+/build*
 /data*
 /dist
 /README.md
