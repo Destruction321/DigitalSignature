@@ -8,24 +8,20 @@ from tkinter import ttk, messagebox
 from typing import Callable, cast
 from shutil import move
 
-from .utils import (
-    BASE_DIR, DIRS, KEYS_CONFIG_FILE, 
-    DirType, FileType, KeyType, Status,
-    format_size, get_path
-)
-
+from . import utils
+from .utils import DirType, FileType, KeyType, Status
 from ._core.keys.key_loader import KeyLoader
 from ._core.keys.key_manager import SingleKeyManager, MultiKeyManager
 from ._gui.key_management_tab import KeyManagementTab
 from ._gui.signing_tabs.file_signing_tab import FileSigningTab
 from ._gui.signing_tabs.text_signing_tab import TextSigningTab
-from ._services import cleanup_utils
-from ._services.backup import backup_utils
+from ._services import cleanup_services
+from ._services.backup import backup_services
 from ._services.backup.backup_manager import BackupManager
 from ._services.backup.backup_restore import BackupRestore
-from ._services.ui_state_manager import get_ui_state_manager
+from .utils.ui_state_manager import get_ui_state_manager
 
- 
+
 class APP:
     """数字签名系统主模块"""
     def __init__(self, root: tk.Tk) -> None:
@@ -46,7 +42,7 @@ class APP:
         self.__migrate_existing_files()
         self.__update_directory_info()
         
-        self.__root.after(100, self.__auto_load_current_key)  # type: ignore[call-arg]
+        self.__auto_load_current_key()
 
 
     @property
@@ -103,7 +99,7 @@ class APP:
         dir_grid: ttk.Frame = ttk.Frame(dir_info_frame)
         dir_grid.pack(fill=tk.X)
 
-        base_info: str = f"数据目录: {Path(BASE_DIR).resolve()}"
+        base_info: str = f"数据目录: {Path(utils.BASE_DIR).resolve()}"
         base_label: ttk.Label = ttk.Label(dir_grid, text=base_info, font=("微软雅黑", 9, "bold"))
         base_label.grid(row=0, column=0, columnspan=6, sticky=tk.W, pady=(0, 5))
 
@@ -198,20 +194,20 @@ class APP:
 
 
     """core logic"""
-    @staticmethod
-    def __migrate_existing_files() -> None:
+    def __migrate_existing_files(self) -> None:
         """迁移现有文件到新的目录结构"""
+        PRIVATE_, PUBLIC_, _PEM, _TXT, _SIG = self.__get_constants()
         migration_map: dict[DirType, list[str]] = {
             DirType.KEYS: [
-                f"{KeyType.PRIVATE.value}_key_*{FileType.KEY.value}",
-                f"{KeyType.PUBLIC.value}_key_*{FileType.KEY.value}",
-                KEYS_CONFIG_FILE
+                f"{PRIVATE_}key_*{_PEM}",
+                f"{PUBLIC_}key_*{_PEM}",
+                utils.KEYS_CONFIG_FILE
             ],
-            DirType.TEXTS: [f"{FileType.TEXT.value}"],
-            DirType.SIGNATURES: [f"{FileType.SIGNATURE.value}"]
+            DirType.TEXTS: [_TXT],
+            DirType.SIGNATURES: [_SIG]
         }
 
-        exclude_files = [f"requirements{FileType.TEXT.value}", f"README{FileType.TEXT.value}"]
+        exclude_files = [f"requirements{_TXT}", f"README{_TXT}"]
         migrated_files: list[tuple[DirType, str, str]] = []
 
         for category, patterns in migration_map.items():
@@ -221,10 +217,10 @@ class APP:
                     if old_file_path.name in exclude_files:
                         continue
 
-                    if not old_file_path.is_file() or old_file.startswith(BASE_DIR):
+                    if not old_file_path.is_file() or old_file.startswith(utils.BASE_DIR):
                         continue
 
-                    new_path = get_path(category, old_file_path.name)
+                    new_path = utils.get_path(category, old_file_path.name)
 
                     if Path(new_path).exists():
                         continue
@@ -251,7 +247,7 @@ class APP:
         """更新所有目录信息显示"""
         for category, label in self.__dir_labels.items():
             # 获取目录路径
-            dir_path = DIRS.get(category)
+            dir_path = utils.DIRS.get(category)
             if not dir_path:
                 print(f"未知目录类别: {category}")
                 continue
@@ -268,7 +264,7 @@ class APP:
                 files = [f for f in dir_path.iterdir() if f.is_file()]
                 file_count = len(files)
                 total_size = sum(f.stat().st_size for f in files)
-                size_str = format_size(total_size)
+                size_str = utils.format_size(total_size)
                 label.config(text=f"{file_count}文件/{size_str}")
                 
             except (PermissionError, OSError) as e:
@@ -324,22 +320,22 @@ class APP:
 
     def __backup_all_data(self) -> None:
         """备份所有数据"""
-        backup_result = backup_utils.create_backup(DirType.FULL)
+        backup_result = backup_services.create_backup(DirType.FULL)
         self.__handle_backup_result(backup_result.is_success(), backup_result.msg, "数据备份")
 
     def __backup_keys_only(self) -> None:
         """仅备份密钥"""
-        backup_result = backup_utils.create_backup(DirType.KEYS)
+        backup_result = backup_services.create_backup(DirType.KEYS)
         self.__handle_backup_result(backup_result.is_success(), backup_result.msg, "密钥备份")
 
     def __backup_texts_only(self) -> None:
         """仅备份文本"""
-        backup_result = backup_utils.create_backup(DirType.TEXTS)
+        backup_result = backup_services.create_backup(DirType.TEXTS)
         self.__handle_backup_result(backup_result.is_success(), backup_result.msg, "文本备份")
 
     def __backup_signatures_only(self) -> None:
         """仅备份签名"""
-        backup_result = backup_utils.create_backup(DirType.SIGNATURES)
+        backup_result = backup_services.create_backup(DirType.SIGNATURES)
         self.__handle_backup_result(backup_result.is_success(), backup_result.msg, "签名备份")
 
     def __handle_backup_result(self, success: bool, result: str, operation: str) -> None:
@@ -352,7 +348,7 @@ class APP:
 
     def __restore_backup_dialog(self) -> None:
         """恢复备份对话框"""
-        backups = backup_utils.list_backups_with_integrity()
+        backups = backup_services.list_backups_with_integrity()
         if not backups:
             messagebox.showinfo("恢复备份", "没有找到可用的备份文件")
             return
@@ -381,7 +377,7 @@ class APP:
         # 如果用户选择了天数（点击了确定），则执行完整清理
         if selected_days is not None:
             self.__cleanup_days_threshold = selected_days
-            cleanup_result = cleanup_utils.cleanup_all_files(
+            cleanup_result = cleanup_services.cleanup_all_files(
                 self.__ui_state_mgr.update_status,
                 self.__update_directory_info, 
                 selected_days
@@ -391,12 +387,12 @@ class APP:
 
     def __cleanup_temp_files(self) -> None:
         """清理临时文件"""
-        cleanup_result = cleanup_utils.cleanup_temp_files()
+        cleanup_result = cleanup_services.cleanup_temp_files()
         self.__handle_cleanup_result(cleanup_result)
 
     def __cleanup_orphaned_keys(self) -> None:
         """清理孤立的密钥文件"""
-        cleanup_result = cleanup_utils.cleanup_orphaned_keys()
+        cleanup_result = cleanup_services.cleanup_orphaned_keys()
         self.__handle_cleanup_result(cleanup_result)
 
     def __cleanup_old_files(self) -> None:
@@ -407,7 +403,7 @@ class APP:
         # 如果用户选择了天数（点击了确定），则执行清理
         if selected_days is not None:
             self.__cleanup_days_threshold = selected_days
-            cleanup_result = cleanup_utils.cleanup_old_files(
+            cleanup_result = cleanup_services.cleanup_old_files(
                 self.__cleanup_days_threshold,
                 [DirType.TEXTS, DirType.SIGNATURES, DirType.TEMP]
             )
@@ -598,3 +594,13 @@ class APP:
         except Exception as e:
             messagebox.showerror("数字签名实例设置失败", f"{e}")
             self.__current_km = None
+
+    @staticmethod
+    def __get_constants():
+        return (
+            f"{KeyType.PRIVATE.value}_",
+            f"{KeyType.PUBLIC.value}_",
+            FileType.KEY.value,
+            FileType.TEXT.value,
+            FileType.SIGNATURE.value
+        )

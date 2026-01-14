@@ -7,7 +7,7 @@ from pathlib import Path
 from shutil import move
 from typing import Any
 
-from ..utils import Status, Result
+from .constants import Status, Result
 
 """public methods"""
 def load_config(config_file: str, verify_integrity: bool = True) -> Result:

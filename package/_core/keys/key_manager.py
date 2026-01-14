@@ -11,7 +11,7 @@ from ._key_encryption import DecryptError, encrypt_private_key, decrypt_private_
 from ._key_recovery import KeyRecoveryManager
 from ... import utils
 from ...utils import Status, Result
-from ..._services.config_security import save_config
+from ...utils.config_utils import save_config
 
 if TYPE_CHECKING:
     from ... utils import PassWord

@@ -7,7 +7,7 @@ from typing import Callable, TYPE_CHECKING
 
 from ... import utils
 from ...utils import DirType, Status, Result
-from ..._services import config_security
+from ...utils import config_utils
 
 
 if TYPE_CHECKING:
@@ -79,13 +79,13 @@ class KeyRecoveryManager:
             # 检查配置文件是否存在
             if not config_file_path.exists():
                 # 尝试迁移旧配置
-                migrated = config_security.migrate_config(utils.KEYS_CONFIG_FILE, self.__multi_km.config_file)
+                migrated = config_utils.migrate_config(utils.KEYS_CONFIG_FILE, self.__multi_km.config_file)
                 if not migrated.is_success() or not config_file_path.exists():
                     self.__update_security_status(False)
                     return Result(status=Status.FILE_NOT_FOUND, msg="配置文件不存在，迁移旧配置失败")
                     
             # 安全加载配置
-            load_config_result = config_security.load_config(self.__multi_km.config_file, verify_integrity=True)
+            load_config_result = config_utils.load_config(self.__multi_km.config_file, verify_integrity=True)
             if not load_config_result.is_success():
                 self.__update_security_status(False)
                 return load_config_result
@@ -93,7 +93,7 @@ class KeyRecoveryManager:
             config_data = load_config_result.data
             
             # 验证配置结构
-            validate_result = config_security.validate_config_structure(config_data)
+            validate_result = config_utils.validate_config_structure(config_data)
             if not validate_result.is_success():
                 self.__update_security_status(False)
                 return validate_result

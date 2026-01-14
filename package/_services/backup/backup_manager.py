@@ -6,7 +6,7 @@ from tkinter import ttk, messagebox
 from tkinter.scrolledtext import ScrolledText
 from typing import Any, Callable, cast
 
-from . import backup_utils
+from . import backup_services
 from ._backup_verifier import BackupVerifier
 from ...utils import format_size
 
@@ -34,7 +34,7 @@ class BackupManager:
     """public methods"""
     def show(self) -> None:
         """显示统一备份管理对话框"""
-        backups = backup_utils.list_backups_with_integrity()
+        backups = backup_services.list_backups_with_integrity()
 
         self.__dialog = tk.Toplevel(self.__parent)
         self.__dialog.title("备份管理")
@@ -329,7 +329,7 @@ class BackupManager:
 
     def __refresh_list(self) -> None:
         """刷新备份列表"""
-        backups = backup_utils.list_backups_with_integrity()
+        backups = backup_services.list_backups_with_integrity()
         self.__populate_list(backups)
 
         # 更新统计信息
@@ -376,7 +376,7 @@ class BackupManager:
             return
         
         try:
-            delete_result = backup_utils.delete_backup(selected_backup["name"])
+            delete_result = backup_services.delete_backup(selected_backup["name"])
             if delete_result.is_success():
                 self.__update_status(f"备份删除成功: {selected_backup["name"]}")
                 messagebox.showinfo("删除成功", f"备份删除成功！\n\n{delete_result.msg}")

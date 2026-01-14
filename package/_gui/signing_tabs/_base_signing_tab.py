@@ -10,7 +10,7 @@ from typing import Callable, TYPE_CHECKING
 
 from cryptography.hazmat.primitives.hashes import Hash, SHA256
 
-from ..._services.ui_state_manager import get_ui_state_manager
+from ...utils.ui_state_manager import get_ui_state_manager
 from ...utils import BASE_DIR, Status, Result
 
 if TYPE_CHECKING:

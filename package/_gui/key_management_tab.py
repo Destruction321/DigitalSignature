@@ -8,7 +8,7 @@ from ..utils import DirType, ENCRYPTED, get_path, PassWord, Status
 from .._core.keys import key_creator
 from .._core.keys.key_manager import SingleKeyManager
 from .._services.password_validator import PasswordValidator
-from .._services.ui_state_manager import get_ui_state_manager
+from ..utils.ui_state_manager import get_ui_state_manager
 
 if TYPE_CHECKING:
     from .._core.keys.key_loader import KeyLoader
