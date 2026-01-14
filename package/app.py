@@ -10,6 +10,7 @@ from shutil import move
 
 from . import utils
 from .utils import DirType, FileType, KeyType, Status
+from .utils.ui_state_manager import get_ui_state_manager
 from ._core.keys.key_loader import KeyLoader
 from ._core.keys.key_manager import SingleKeyManager, MultiKeyManager
 from ._gui.key_management_tab import KeyManagementTab
@@ -19,7 +20,6 @@ from ._services import cleanup_services
 from ._services.backup import backup_services
 from ._services.backup.backup_manager import BackupManager
 from ._services.backup.backup_restore import BackupRestore
-from .utils.ui_state_manager import get_ui_state_manager
 
 
 class APP:
@@ -604,3 +604,4 @@ class APP:
             FileType.TEXT.value,
             FileType.SIGNATURE.value
         )
+        
