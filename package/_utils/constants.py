@@ -116,7 +116,7 @@ class Result:
         ]
         
         
-"""const"""
+"""consts"""
 ENCRYPTED = "已加密"
 
 # 数据文件夹路径
