@@ -3,8 +3,8 @@
 from tkinter import messagebox, simpledialog
 from typing import Callable, cast, TYPE_CHECKING, TypedDict
 
-from .. import utils
-from ..utils import Status, Result, PassWord
+from .. import _utils
+from .._utils import Status, Result, PassWord
 
 if TYPE_CHECKING:
     from tkinter import Widget
@@ -58,7 +58,7 @@ class PasswordValidator:
             return status_result
         
         # 判断是否需要验证旧密码
-        is_encrypted = utils.ENCRYPTED in status_result.msg
+        is_encrypted = _utils.ENCRYPTED in status_result.msg
         require_old_password = is_encrypted
         
         # 验证旧密码
@@ -82,12 +82,12 @@ class PasswordValidator:
     """private methods"""
     def __verify_old_password(self, key_id: str, mode: PassWord) -> Result:
         """验证旧密码"""
-        attempts_left = utils.MAX_PASSWORD_ATTEMPTS
+        attempts_left = _utils.MAX_PASSWORD_ATTEMPTS
         
         while attempts_left > 0:
             # 构建提示信息
             context_text = "恢复配置" if mode == PassWord.RECOVERY else "更改密码"
-            attempts_info = f"{attempts_left}" if attempts_left <= utils.MAX_PASSWORD_ATTEMPTS else ""
+            attempts_info = f"{attempts_left}" if attempts_left <= _utils.MAX_PASSWORD_ATTEMPTS else ""
             prompt = f"正在进行{context_text}\n请输入密钥 '{key_id}' 的旧密码（剩余次数: {attempts_info}）"
             
             # 请求输入旧密码

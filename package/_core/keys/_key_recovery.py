@@ -5,9 +5,9 @@ from pathlib import Path
 from tkinter.messagebox import showerror
 from typing import Callable, TYPE_CHECKING
 
-from ... import utils
-from ...utils import DirType, Status, Result
-from ...utils import config_utils
+from ... import _utils
+from ..._utils import DirType, Status, Result
+from ..._utils import config_utils
 
 
 if TYPE_CHECKING:
@@ -19,15 +19,15 @@ class KeyRecoveryManager:
     def __init__(self, multi_key_manager: MultiKeyManager):
         self.__multi_km: MultiKeyManager = multi_key_manager
         self.__security_status_callback: Callable[[bool], None] | None = None
-        self.__recovery_callback: Callable[[str, utils.PassWord], None] | None = None
+        self.__recovery_callback: Callable[[str, _utils.PassWord], None] | None = None
 
 
     @property
-    def recovery_callback(self) -> Callable[[str, utils.PassWord], None] | None:
+    def recovery_callback(self) -> Callable[[str, _utils.PassWord], None] | None:
         return self.__recovery_callback
 
     @recovery_callback.setter
-    def recovery_callback(self, callback: Callable[[str, utils.PassWord], None]) -> None:
+    def recovery_callback(self, callback: Callable[[str, _utils.PassWord], None]) -> None:
         self.__recovery_callback = callback
 
 
@@ -79,7 +79,7 @@ class KeyRecoveryManager:
             # 检查配置文件是否存在
             if not config_file_path.exists():
                 # 尝试迁移旧配置
-                migrated = config_utils.migrate_config(utils.KEYS_CONFIG_FILE, self.__multi_km.config_file)
+                migrated = config_utils.migrate_config(_utils.KEYS_CONFIG_FILE, self.__multi_km.config_file)
                 if not migrated.is_success() or not config_file_path.exists():
                     self.__update_security_status(False)
                     return Result(status=Status.FILE_NOT_FOUND, msg="配置文件不存在，迁移旧配置失败")
@@ -115,7 +115,7 @@ class KeyRecoveryManager:
     def __try_rebuild_from_files(self) -> Result:
         """第二层：从本地密钥文件重建配置"""
         try:
-            keys_dir = Path(utils.get_path(DirType.KEYS))
+            keys_dir = Path(_utils.get_path(DirType.KEYS))
 
             # 检查密钥目录是否存在
             if not keys_dir.exists():
@@ -164,7 +164,7 @@ class KeyRecoveryManager:
             # 通知UI加密密钥已恢复
             if recovered_encrypted_keys and self.__recovery_callback:
                 for key_id in recovered_encrypted_keys:
-                    self.__recovery_callback(key_id, utils.PassWord.RECOVERY)
+                    self.__recovery_callback(key_id, _utils.PassWord.RECOVERY)
                     
             # 恢复成功
             self.__update_security_status(True)
@@ -250,8 +250,8 @@ class KeyRecoveryManager:
     def __get_consts():
         """字符串导出"""
         return (
-            f"{utils.KeyType.PRIVATE.value}_",
-            f"{utils.KeyType.PUBLIC.value}_",
-            utils.KeyType.ENCRYPTED.value,
-            utils.FileType.KEY.value
+            f"{_utils.KeyType.PRIVATE.value}_",
+            f"{_utils.KeyType.PUBLIC.value}_",
+            _utils.KeyType.ENCRYPTED.value,
+            _utils.FileType.KEY.value
         )

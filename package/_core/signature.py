@@ -9,7 +9,7 @@ from cryptography.hazmat.primitives.asymmetric import padding
 from cryptography.hazmat.primitives.asymmetric.rsa import RSAPrivateKey, RSAPublicKey
 from cryptography.hazmat.primitives.hashes import SHA256
 
-from ..utils import DirType, get_path, Status, Result
+from .._utils import DirType, get_path, Status, Result
 
 if TYPE_CHECKING:
     from .keys.key_manager import SingleKeyManager

@@ -5,8 +5,8 @@ from tkinter.simpledialog import askstring
 from typing import Any, Callable, cast, TYPE_CHECKING
 
 from .key_manager import SingleKeyManager
-from ... import utils
-from ...utils import Status, Result
+from ... import _utils
+from ..._utils import Status, Result
 
 if TYPE_CHECKING:
     from tkinter import Tk
@@ -80,7 +80,7 @@ class KeyLoader:
     """private methods"""
     def __request_password_interactive(self, key_id: str, status_message: str) -> str | bool | None:
         """交互式请求密码"""
-        if utils.ENCRYPTED not in status_message:
+        if _utils.ENCRYPTED not in status_message:
             return None  # 不需要密码
 
         return self.__request_and_validate_password(key_id)
@@ -102,13 +102,13 @@ class KeyLoader:
     def __build_password_prompt(self, key_id: str, attempt: int, is_retry: bool) -> str:
         """构建密码提示信息"""
         if is_retry:
-            return f"密码错误，请重新输入密码 ({attempt}/{utils.MAX_PASSWORD_ATTEMPTS}):"
+            return f"密码错误，请重新输入密码 ({attempt}/{_utils.MAX_PASSWORD_ATTEMPTS}):"
         else:
             return f"密钥 '{key_id}' 已加密\n请输入密码:"
 
     def __attempt_key_loading(self, key_id: str, password: str | bool | None) -> Result:
         """尝试加载密钥（带重试机制）"""
-        for attempt in range(1, utils.MAX_PASSWORD_ATTEMPTS + 1):
+        for attempt in range(1, _utils.MAX_PASSWORD_ATTEMPTS + 1):
             load_result = self.__multi_km.load_key_pair(key_id, cast(str | None, password))
             
             # 成功：回调并返回结果
@@ -118,7 +118,7 @@ class KeyLoader:
             
             # 密码错误：重试
             if load_result.status == Status.PASSWORD_ERROR:
-                if attempt >= utils.MAX_PASSWORD_ATTEMPTS:
+                if attempt >= _utils.MAX_PASSWORD_ATTEMPTS:
                     # 重试次数用尽
                     break
 

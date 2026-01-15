@@ -8,7 +8,7 @@ from tkinter.scrolledtext import ScrolledText
 from typing import Any, Callable, cast
 
 from . import backup_services
-from ...utils import Status, Result, format_size
+from ..._utils import Status, Result, format_size
 
 
 class BackupVerifier:

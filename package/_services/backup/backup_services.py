@@ -7,8 +7,8 @@ from os.path import relpath
 from pathlib import Path
 from typing import Any, Callable, Final
 
-from ... import utils
-from ...utils import DirType, Status, Result
+from ... import _utils
+from ..._utils import DirType, Status, Result
 
 _BACKUP_: Final[str] = "_backup_"
 
@@ -146,7 +146,7 @@ def verify_backup_integrity(backup_dir: Path) -> Result:
             message = f"备份完整性验证失败：文件大小不匹配（应有{total_size}字节，实有{current_total_size}字节）"
             return Result(status=Status.BACKUP_VERIFY_FAILED, data=checksum_data, msg=message)
 
-        message = f"备份完整性验证通过（{backup_type}，{file_count}个文件，{utils.format_size(total_size)}）"
+        message = f"备份完整性验证通过（{backup_type}，{file_count}个文件，{_utils.format_size(total_size)}）"
         return Result(status=Status.BACKUP_VERIFY_SUCCESS, data=checksum_data, msg=message)
     
     except Exception as e:
@@ -221,7 +221,7 @@ def restore_backup(backup_dir: Path, overwrite: bool = False, backup_type: DirTy
         
     try:
         if backup_type == DirType.FULL:
-            restore_result = operation(backup_dir, Path(utils.get_path(DirType.FULL)), overwrite)
+            restore_result = operation(backup_dir, Path(_utils.get_path(DirType.FULL)), overwrite)
         else:
             restore_result = operation(backup_dir, backup_type, overwrite)
         return restore_result
@@ -270,7 +270,7 @@ def _backup_data(data_type: DirType, backup_dir: str | None = None) -> Result:
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         backup_dir = f"{_DATA if data_type == DirType.FULL else data_type.value}{_BACKUP_}{timestamp}"
         
-    data_dir = utils.get_path(DirType.FULL) if data_type == DirType.FULL else utils.get_path(data_type)
+    data_dir = _utils.get_path(DirType.FULL) if data_type == DirType.FULL else _utils.get_path(data_type)
     if not Path(data_dir).exists():
         return Result(status=Status.DIR_NOT_FOUND, msg=f"数据目录不存在: {data_dir}")
     
@@ -304,7 +304,7 @@ def _restore_full_backup(backup_dir: Path, data_dir: Path, overwrite: bool) -> R
 
 def _restore_partial_backup(backup_dir: Path, data_type: DirType, overwrite: bool) -> Result:
     """恢复部分备份（密钥、文本、签名）"""
-    dir = Path(utils.get_path(data_type))
+    dir = Path(_utils.get_path(data_type))
     dir.mkdir(parents=True, exist_ok=True)
     
     if overwrite:
@@ -436,9 +436,9 @@ def _inferred_type(backup_dir: Path) -> DirType:
 
 def _get_file_type():
     return (
-        utils.FileType.KEY.value,
-        utils.FileType.TEXT.value,
-        utils.FileType.SIGNATURE.value
+        _utils.FileType.KEY.value,
+        _utils.FileType.TEXT.value,
+        _utils.FileType.SIGNATURE.value
     )
 
 def _extension_exists(backup_dir: Path, extension: str) -> bool:

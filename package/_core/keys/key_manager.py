@@ -9,12 +9,12 @@ from cryptography.hazmat.primitives.asymmetric.rsa import RSAPrivateKey, RSAPubl
 
 from ._key_encryption import DecryptError, encrypt_private_key, decrypt_private_key
 from ._key_recovery import KeyRecoveryManager
-from ... import utils
-from ...utils import Status, Result
-from ...utils.config_utils import save_config
+from ... import _utils
+from ..._utils import Status, Result
+from ..._utils.config_utils import save_config
 
 if TYPE_CHECKING:
-    from ... utils import PassWord
+    from ... _utils import PassWord
 
 
 class _KeyPairInfo(TypedDict):
@@ -240,7 +240,7 @@ class MultiKeyManager:
         if config_file is not None:
             return config_file
         else:
-            return utils.get_path(utils.DirType.KEYS, utils.KEYS_CONFIG_FILE)
+            return _utils.get_path(_utils.DirType.KEYS, _utils.KEYS_CONFIG_FILE)
 
 
     """public methods"""
@@ -258,7 +258,7 @@ class MultiKeyManager:
             self.__config_secure = True
             return Result(status=Status.SUCCESS)
         
-        return Result(status=Status.CONFIG_SAVE_FAILED)
+        return success
 
     def load_key_pair(self, key_id: str, password: str | None = None) -> Result:
         """
@@ -427,7 +427,7 @@ class MultiKeyManager:
                         message = "移除加密失败：私钥文件仍为加密格式"
                         return Result(status=Status.KEY_FILE_CORRUPT, msg=message)
                         
-            status_desc = utils.ENCRYPTED if new_password else "移除加密"
+            status_desc = _utils.ENCRYPTED if new_password else "移除加密"
             message = f"密钥 '{key_id}' 密码更改成功（{status_desc}）"
             return Result(status=Status.SUCCESS, msg=message)
             
@@ -455,7 +455,7 @@ class MultiKeyManager:
             return no_key_id
         
         is_encrypted = self.__key_pairs[key_id].get("is_encrypted", False)
-        status_desc = utils.ENCRYPTED if is_encrypted else "未加密"
+        status_desc = _utils.ENCRYPTED if is_encrypted else "未加密"
         
         return Result(status=Status.SUCCESS, data=is_encrypted, msg=status_desc)
 
@@ -476,7 +476,7 @@ class MultiKeyManager:
         private_key_file = f"{PRIVATE_}{key_id}_{key_size}{ENCRYPTED}{_PEM}"
         public_key_file = f"{PUBLIC_}{key_id}_{key_size}{_PEM}"
 
-        keys_dir = utils.get_path(utils.DirType.KEYS)
+        keys_dir = _utils.get_path(_utils.DirType.KEYS)
         return (
             str(Path(keys_dir, private_key_file)),
             str(Path(keys_dir, public_key_file))
@@ -494,8 +494,8 @@ class MultiKeyManager:
 def _get_consts(is_encrypted: bool = False):
     """字符串导出"""
     return (
-        f"{utils.KeyType.PRIVATE.value}_",
-        f"{utils.KeyType.PUBLIC.value}_",
-        f"_{utils.KeyType.ENCRYPTED.value}" if is_encrypted else "",
-        utils.FileType.KEY.value
+        f"{_utils.KeyType.PRIVATE.value}_",
+        f"{_utils.KeyType.PUBLIC.value}_",
+        f"_{_utils.KeyType.ENCRYPTED.value}" if is_encrypted else "",
+        _utils.FileType.KEY.value
     )

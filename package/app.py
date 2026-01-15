@@ -8,9 +8,7 @@ from tkinter import ttk, messagebox
 from typing import Callable, cast
 from shutil import move
 
-from . import utils
-from .utils import DirType, FileType, KeyType, Status
-from .utils.ui_state_manager import get_ui_state_manager
+from . import _utils
 from ._core.keys.key_loader import KeyLoader
 from ._core.keys.key_manager import SingleKeyManager, MultiKeyManager
 from ._gui.key_management_tab import KeyManagementTab
@@ -20,6 +18,8 @@ from ._services import cleanup_services
 from ._services.backup import backup_services
 from ._services.backup.backup_manager import BackupManager
 from ._services.backup.backup_restore import BackupRestore
+from ._utils import DirType, FileType, KeyType, Status
+from ._utils.ui_state_manager import get_ui_state_manager
 
 
 class APP:
@@ -99,7 +99,7 @@ class APP:
         dir_grid: ttk.Frame = ttk.Frame(dir_info_frame)
         dir_grid.pack(fill=tk.X)
 
-        base_info: str = f"数据目录: {Path(utils.BASE_DIR).resolve()}"
+        base_info: str = f"数据目录: {Path(_utils.BASE_DIR).resolve()}"
         base_label: ttk.Label = ttk.Label(dir_grid, text=base_info, font=("微软雅黑", 9, "bold"))
         base_label.grid(row=0, column=0, columnspan=6, sticky=tk.W, pady=(0, 5))
 
@@ -201,7 +201,7 @@ class APP:
             DirType.KEYS: [
                 f"{PRIVATE_}key_*{_PEM}",
                 f"{PUBLIC_}key_*{_PEM}",
-                utils.KEYS_CONFIG_FILE
+                _utils.KEYS_CONFIG_FILE
             ],
             DirType.TEXTS: [_TXT],
             DirType.SIGNATURES: [_SIG]
@@ -217,10 +217,10 @@ class APP:
                     if old_file_path.name in exclude_files:
                         continue
 
-                    if not old_file_path.is_file() or old_file.startswith(utils.BASE_DIR):
+                    if not old_file_path.is_file() or old_file.startswith(_utils.BASE_DIR):
                         continue
 
-                    new_path = utils.get_path(category, old_file_path.name)
+                    new_path = _utils.get_path(category, old_file_path.name)
 
                     if Path(new_path).exists():
                         continue
@@ -247,7 +247,7 @@ class APP:
         """更新所有目录信息显示"""
         for category, label in self.__dir_labels.items():
             # 获取目录路径
-            dir_path = utils.DIRS.get(category)
+            dir_path = _utils.DIRS.get(category)
             if not dir_path:
                 print(f"未知目录类别: {category}")
                 continue
@@ -264,7 +264,7 @@ class APP:
                 files = [f for f in dir_path.iterdir() if f.is_file()]
                 file_count = len(files)
                 total_size = sum(f.stat().st_size for f in files)
-                size_str = utils.format_size(total_size)
+                size_str = _utils.format_size(total_size)
                 label.config(text=f"{file_count}文件/{size_str}")
                 
             except (PermissionError, OSError) as e:
@@ -510,8 +510,10 @@ class APP:
 
             if key_id:
                 self.__multi_km.current_key_id = key_id
-                self.__multi_km.save_keys_config()
-
+                save_result = self.__multi_km.save_keys_config()
+                if not save_result.is_success():
+                    messagebox.showerror("密钥配置保存失败", f"密钥加载成功但配置保存失败：{save_result.msg}")
+                    
                 # 通知KeyManagementTab密钥已真正加载
                 if self.__key_tab:
                     self.__key_tab.loaded_key_id = key_id

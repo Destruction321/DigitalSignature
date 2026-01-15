@@ -8,7 +8,7 @@ from typing import cast, TYPE_CHECKING
 
 from ._base_signing_tab import BaseSigningTab
 from ..._core import signature
-from ...utils import DirType, get_path
+from ..._utils import DirType, get_path
 
 if TYPE_CHECKING:
     from ..._core.keys.key_manager import SingleKeyManager

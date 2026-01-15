@@ -8,7 +8,7 @@ from typing import Any, Callable, cast
 
 from . import backup_services
 from ._backup_verifier import BackupVerifier
-from ...utils import format_size
+from ..._utils import format_size
 
 
 class BackupManager:

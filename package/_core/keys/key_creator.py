@@ -10,7 +10,7 @@ from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives.asymmetric import rsa
 
 from .key_manager import SingleKeyManager
-from ...utils import ENCRYPTED, Status, Result
+from ..._utils import ENCRYPTED, Status, Result
 
 if TYPE_CHECKING:
     from tkinter.ttk import Combobox
