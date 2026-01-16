@@ -208,7 +208,7 @@ class KeyRecoveryManager:
     def __parse_key_from_file_name(self, file_name: str, keys_dir: Path) -> tuple[str, int, bool, str, str] | None:
         """从文件名解析密钥信息"""
         try:
-            PRIVATE_, PUBLIC_, ENCRYPTED, _PEM = self.__get_consts()
+            PRIVATE_, PUBLIC_, ENCRYPTED, _PEM = self.__get_constants()
             # 仅处理私钥文件（公钥通过私钥名推导）
             if not file_name.startswith(PRIVATE_) or not file_name.endswith(_PEM):
                 return None
@@ -247,7 +247,7 @@ class KeyRecoveryManager:
             return None
         
     @staticmethod
-    def __get_consts():
+    def __get_constants() -> tuple[str, str, str, str]:
         """字符串导出"""
         return (
             f"{_utils.KeyType.PRIVATE.value}_",

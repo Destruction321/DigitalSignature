@@ -51,14 +51,6 @@ class APP:
 
 
     """initialization methods"""
-    def __setup_main_window(self) -> None:
-        """设置主窗口"""
-        self.__root.title("数字签名系统 - 哈尔滨工程大学")
-        self.__root.geometry("1000x700")
-        self.__root.minsize(900, 600)
-        self.__root.columnconfigure(0, weight=1)
-        self.__root.rowconfigure(0, weight=1)
-
     def __initialize_managers(self) -> None:
         """初始化管理器"""
         self.__multi_km: MultiKeyManager = MultiKeyManager()
@@ -71,8 +63,179 @@ class APP:
             update_status_callback=self.__ui_state_mgr.update_status,
         )
 
+    def __on_key_loaded(self, key_manager: SingleKeyManager | None) -> None:
+        """密钥加载成功时的回调"""
+        if key_manager is None or not hasattr(key_manager, "private_key"):
+            self.__ui_state_mgr.update_status("密钥管理器无效，无法创建数字签名实例")
+            self.__current_km = None
+            self.__multi_km.current_key_id = None
+
+            # 通知KeyManagementTab加载失败
+            if self.__key_tab:
+                self.__key_tab.loaded_key_id = None
+            return
+
+        try:
+            key_id = getattr(key_manager, "key_id", None)
+            if key_id is None:
+                key_id = self.__multi_km.current_key_id
+
+            if key_id:
+                self.__multi_km.current_key_id = key_id
+                save_result = self.__multi_km.save_keys_config()
+                if not save_result.is_success():
+                    messagebox.showerror("密钥配置保存失败", f"密钥加载成功但配置保存失败：{save_result.msg}")
+                    
+                # 通知KeyManagementTab密钥已真正加载
+                if self.__key_tab:
+                    self.__key_tab.loaded_key_id = key_id
+
+            self.__current_km = key_manager
+            self.__update_all_tabs_key_manager()
+
+            self.__ui_state_mgr.update_status(f"密钥对 '{key_id}' 已加载并准备就绪")
+            self.__update_directory_info()
+
+        except Exception as e:
+            self.__ui_state_mgr.update_status(f"创建数字签名实例失败: {e}")
+            self.__current_km = None
+            self.__multi_km.current_key_id = None
+
+            # 通知KeyManagementTab加载失败
+            if self.__key_tab:
+                self.__key_tab.loaded_key_id = None
+
+    def __migrate_existing_files(self) -> None:
+        """迁移现有文件到新的目录结构"""
+        PRIVATE_, PUBLIC_, _PEM, _TXT, _SIG = self.__get_constants()
+        migration_map: dict[DirType, list[str]] = {
+            DirType.KEYS: [
+                f"{PRIVATE_}key_*{_PEM}",
+                f"{PUBLIC_}key_*{_PEM}",
+                _utils.KEYS_CONFIG_FILE
+            ],
+            DirType.TEXTS: [_TXT],
+            DirType.SIGNATURES: [_SIG]
+        }
+
+        exclude_files = [f"requirements{_TXT}", f"README{_TXT}"]
+        migrated_files: list[tuple[DirType, str, str]] = []
+
+        for category, patterns in migration_map.items():
+            for pattern in patterns:
+                for old_file in glob(pattern):
+                    old_file_path = Path(old_file)
+                    if old_file_path.name in exclude_files:
+                        continue
+
+                    if not old_file_path.is_file() or old_file.startswith(_utils.BASE_DIR):
+                        continue
+
+                    new_path = _utils.get_path(category, old_file_path.name)
+
+                    if Path(new_path).exists():
+                        continue
+
+                    try:
+                        move(old_file, new_path)
+                        migrated_files.append((category, old_file, new_path))
+                    except Exception as e:
+                        print(f"迁移文件失败 {old_file}: {e}")
+
+        if not migrated_files:
+            return
+
+        category_counts = Counter(category for category, _, _ in migrated_files)
+
+        migration_info = "已自动迁移文件到data目录:\n\n"
+        
+        for category, count in category_counts.items():
+            migration_info += f"{category}: {count} 个文件\n"
+
+        messagebox.showinfo("文件迁移", migration_info)
+
+    @staticmethod
+    def __get_constants() -> tuple[str, str, str, str, str]:
+        """字符串导出"""
+        return (
+            f"{KeyType.PRIVATE.value}_",
+            f"{KeyType.PUBLIC.value}_",
+            FileType.KEY.value,
+            FileType.TEXT.value,
+            FileType.SIGNATURE.value
+        )
+
+    def __auto_load_current_key(self) -> None:
+        """程序启动时自动加载当前密钥"""
+        if self.__multi_km.current_key_id is None:
+            self.__ui_state_mgr.update_status("请先在密钥管理标签页加载密钥对")
+            return
+
+        self.__key_tab = cast(KeyManagementTab, self.__key_tab)
+        try:
+            # 使用KeyLoader静默加载
+            loading_result = self.__key_loader.load_key(self.__multi_km.current_key_id, silent=True)
+            success = loading_result.is_success()
+            result = loading_result.data
+            
+            if success and isinstance(result, SingleKeyManager):
+                # 设置密钥管理器
+                self.__set_current_key_manager(result)
+                self.__update_directory_info()
+                self.__key_tab.loaded_key_id = self.__multi_km.current_key_id
+                self.__ui_state_mgr.update_status(f"自动加载密钥成功: {self.__multi_km.current_key_id}")
+            elif not success and loading_result.status == Status.NEED_PASSWORD:
+                self.__ui_state_mgr.update_status(f"密钥 '{self.__multi_km.current_key_id}' 已加密，请手动加载")
+            else:
+                self.__ui_state_mgr.update_status("自动加载密钥失败，请手动加载")
+
+        except Exception as e:
+            self.__ui_state_mgr.update_status(f"自动加载密钥出错: {e}")
+
+        # 更新密钥标签页显示
+        self.__key_tab.update_key_status()
+
+    def __set_current_key_manager(self, key_manager: SingleKeyManager) -> None:
+        """设置当前密钥管理器"""
+        if not hasattr(key_manager, "private_key"):
+            self.__current_km = None
+            return
+
+        try:
+            # 创建数字签名实例
+            self.__current_km = key_manager
+
+            # 更新所有标签页
+            self.__update_all_tabs_key_manager()
+
+            # 更新状态
+            key_id = getattr(key_manager, "key_id", "未知")
+            self.__ui_state_mgr.update_status(f"密钥对 '{key_id}' 已加载并准备就绪")
+            self.__update_directory_info()
+
+        except Exception as e:
+            messagebox.showerror("数字签名实例设置失败", f"{e}")
+            self.__current_km = None
+
+    def __update_all_tabs_key_manager(self) -> None:
+        """更新所有标签页的密钥管理器"""
+        self.__current_km = cast(SingleKeyManager, self.__current_km)
+        if self.__text_tab:
+            self.__text_tab.km = self.__current_km
+
+        if self.__file_tab:
+            self.__file_tab.km = self.__current_km
+
 
     """UI creator"""
+    def __setup_main_window(self) -> None:
+        """设置主窗口"""
+        self.__root.title("数字签名系统 - 哈尔滨工程大学")
+        self.__root.geometry("1000x700")
+        self.__root.minsize(900, 600)
+        self.__root.columnconfigure(0, weight=1)
+        self.__root.rowconfigure(0, weight=1)
+        
     def __setup_ui(self) -> None:
         """设置用户界面"""
         main_frame: ttk.Frame = ttk.Frame(self.__root, padding="10")
@@ -192,113 +355,19 @@ class APP:
         self.__status_label = ttk.Label(status_frame, text="就绪", relief=tk.SUNKEN, anchor=tk.W)
         self.__status_label.pack(fill=tk.X, padx=5, pady=2)
 
+    def __handle_status_update(self, message: str) -> None:
+        """处理状态更新"""
+        if self.__status_label:
+            self.__status_label.config(text=message)
 
-    """core logic"""
-    def __migrate_existing_files(self) -> None:
-        """迁移现有文件到新的目录结构"""
-        PRIVATE_, PUBLIC_, _PEM, _TXT, _SIG = self.__get_constants()
-        migration_map: dict[DirType, list[str]] = {
-            DirType.KEYS: [
-                f"{PRIVATE_}key_*{_PEM}",
-                f"{PUBLIC_}key_*{_PEM}",
-                _utils.KEYS_CONFIG_FILE
-            ],
-            DirType.TEXTS: [_TXT],
-            DirType.SIGNATURES: [_SIG]
-        }
-
-        exclude_files = [f"requirements{_TXT}", f"README{_TXT}"]
-        migrated_files: list[tuple[DirType, str, str]] = []
-
-        for category, patterns in migration_map.items():
-            for pattern in patterns:
-                for old_file in glob(pattern):
-                    old_file_path = Path(old_file)
-                    if old_file_path.name in exclude_files:
-                        continue
-
-                    if not old_file_path.is_file() or old_file.startswith(_utils.BASE_DIR):
-                        continue
-
-                    new_path = _utils.get_path(category, old_file_path.name)
-
-                    if Path(new_path).exists():
-                        continue
-
-                    try:
-                        move(old_file, new_path)
-                        migrated_files.append((category, old_file, new_path))
-                    except Exception as e:
-                        print(f"迁移文件失败 {old_file}: {e}")
-
-        if not migrated_files:
-            return
-
-        category_counts = Counter(category for category, _, _ in migrated_files)
-
-        migration_info = "已自动迁移文件到data目录:\n\n"
-        
-        for category, count in category_counts.items():
-            migration_info += f"{category}: {count} 个文件\n"
-
-        messagebox.showinfo("文件迁移", migration_info)
-
-    def __update_directory_info(self) -> None:
-        """更新所有目录信息显示"""
-        for category, label in self.__dir_labels.items():
-            # 获取目录路径
-            dir_path = _utils.DIRS.get(category)
-            if not dir_path:
-                print(f"未知目录类别: {category}")
-                continue
-            
-            dir_path = Path(dir_path)
-            
-            if not dir_path.exists():
-                # 目录不存在
-                label.config(text="目录不存在")
-                continue
-            
-            # 计算文件数和总大小
-            try:
-                files = [f for f in dir_path.iterdir() if f.is_file()]
-                file_count = len(files)
-                total_size = sum(f.stat().st_size for f in files)
-                size_str = _utils.format_size(total_size)
-                label.config(text=f"{file_count}文件/{size_str}")
-                
-            except (PermissionError, OSError) as e:
-                label.config(text=f"访问错误: {e}")
-
-    def __auto_load_current_key(self) -> None:
-        """程序启动时自动加载当前密钥"""
-        if self.__multi_km.current_key_id is None:
-            self.__ui_state_mgr.update_status("请先在密钥管理标签页加载密钥对")
-            return
-
-        self.__key_tab = cast(KeyManagementTab, self.__key_tab)
-        try:
-            # 使用KeyLoader静默加载
-            loading_result = self.__key_loader.load_key(self.__multi_km.current_key_id, silent=True)
-            success = loading_result.is_success()
-            result = loading_result.data
-            
-            if success and isinstance(result, SingleKeyManager):
-                # 设置密钥管理器
-                self.__set_current_key_manager(result)
-                self.__update_directory_info()
-                self.__key_tab.loaded_key_id = self.__multi_km.current_key_id
-                self.__ui_state_mgr.update_status(f"自动加载密钥成功: {self.__multi_km.current_key_id}")
-            elif not success and loading_result.status == Status.NEED_PASSWORD:
-                self.__ui_state_mgr.update_status(f"密钥 '{self.__multi_km.current_key_id}' 已加密，请手动加载")
-            else:
-                self.__ui_state_mgr.update_status("自动加载密钥失败，请手动加载")
-
-        except Exception as e:
-            self.__ui_state_mgr.update_status(f"自动加载密钥出错: {e}")
-
-        # 更新密钥标签页显示
-        self.__key_tab.update_key_status()
+    def __handle_result_show(self, text: str, tab_type: str) -> None:
+        """处理结果显示"""
+        if tab_type == "file" and hasattr(self.__file_tab, "result_text"):
+            cast(tk.Text, cast(FileSigningTab, self.__file_tab).result_text).delete("1.0", tk.END)
+            cast(tk.Text, cast(FileSigningTab, self.__file_tab).result_text).insert("1.0", text)
+        elif tab_type == "text" and hasattr(self.__text_tab, "result_text"):
+            cast(tk.Text, cast(TextSigningTab, self.__text_tab).result_text).delete("1.0", tk.END)
+            cast(tk.Text, cast(TextSigningTab, self.__text_tab).result_text).insert("1.0", text)
 
 
     """Backups"""
@@ -364,9 +433,10 @@ class APP:
 
     def __backup_manager_dialog(self) -> None:
         """统一备份管理对话框"""
-        parent_window = cast(tk.Widget, cast(object, self.__root.winfo_toplevel()))
+        parent_window = cast(tk.Widget, self.__root.winfo_toplevel())
         dialog = BackupManager(parent_window, self.__ui_state_mgr.update_status)
         dialog.show()
+
 
     """Cleanups"""
     def __cleanup_all_files(self) -> None:
@@ -383,7 +453,6 @@ class APP:
                 selected_days
             )
             self.__handle_cleanup_result(cleanup_result)
-        
 
     def __cleanup_temp_files(self) -> None:
         """清理临时文件"""
@@ -408,6 +477,15 @@ class APP:
                 [DirType.TEXTS, DirType.SIGNATURES, DirType.TEMP]
             )
             self.__handle_cleanup_result(cleanup_result)
+
+    def __handle_cleanup_result(self, cleanup_result) -> None:
+        """处理清理结果"""
+        message = cleanup_result.msg
+        self.__ui_state_mgr.update_status(message)
+        if cleanup_result.is_success():
+            messagebox.showinfo("清理完成", message)
+        else:
+            messagebox.showerror("清理失败", message)
 
     def __show_days_selection_dialog(self) -> int | None:
         """显示天数选择对话框，返回用户选择的天数或None（用户取消）"""
@@ -480,67 +558,34 @@ class APP:
         result["confirmed"] = False
         dialog.destroy()
 
-    def __handle_cleanup_result(self, cleanup_result) -> None:
-        """处理清理结果"""
-        message = cleanup_result.msg
-        self.__ui_state_mgr.update_status(message)
-        if cleanup_result.is_success():
-            messagebox.showinfo("清理完成", message)
-        else:
-            messagebox.showerror("清理失败", message)
-
 
     """Utils"""
-    def __on_key_loaded(self, key_manager: SingleKeyManager | None) -> None:
-        """密钥加载成功时的回调"""
-        if key_manager is None or not hasattr(key_manager, "private_key"):
-            self.__ui_state_mgr.update_status("密钥管理器无效，无法创建数字签名实例")
-            self.__current_km = None
-            self.__multi_km.current_key_id = None
-
-            # 通知KeyManagementTab加载失败
-            if self.__key_tab:
-                self.__key_tab.loaded_key_id = None
-            return
-
-        try:
-            key_id = getattr(key_manager, "key_id", None)
-            if key_id is None:
-                key_id = self.__multi_km.current_key_id
-
-            if key_id:
-                self.__multi_km.current_key_id = key_id
-                save_result = self.__multi_km.save_keys_config()
-                if not save_result.is_success():
-                    messagebox.showerror("密钥配置保存失败", f"密钥加载成功但配置保存失败：{save_result.msg}")
-                    
-                # 通知KeyManagementTab密钥已真正加载
-                if self.__key_tab:
-                    self.__key_tab.loaded_key_id = key_id
-
-            self.__current_km = key_manager
-            self.__update_all_tabs_key_manager()
-
-            self.__ui_state_mgr.update_status(f"密钥对 '{key_id}' 已加载并准备就绪")
-            self.__update_directory_info()
-
-        except Exception as e:
-            self.__ui_state_mgr.update_status(f"创建数字签名实例失败: {e}")
-            self.__current_km = None
-            self.__multi_km.current_key_id = None
-
-            # 通知KeyManagementTab加载失败
-            if self.__key_tab:
-                self.__key_tab.loaded_key_id = None
-
-    def __update_all_tabs_key_manager(self) -> None:
-        """更新所有标签页的密钥管理器"""
-        self.__current_km = cast(SingleKeyManager, self.__current_km)
-        if self.__text_tab:
-            self.__text_tab.km = self.__current_km
-
-        if self.__file_tab:
-            self.__file_tab.km = self.__current_km
+    def __update_directory_info(self) -> None:
+        """更新所有目录信息显示"""
+        for category, label in self.__dir_labels.items():
+            # 获取目录路径
+            dir_path = _utils.DIRS.get(category)
+            if not dir_path:
+                print(f"未知目录类别: {category}")
+                continue
+            
+            dir_path = Path(dir_path)
+            
+            if not dir_path.exists():
+                # 目录不存在
+                label.config(text="目录不存在")
+                continue
+            
+            # 计算文件数和总大小
+            try:
+                files = [f for f in dir_path.iterdir() if f.is_file()]
+                file_count = len(files)
+                total_size = sum(f.stat().st_size for f in files)
+                size_str = _utils.format_size(total_size)
+                label.config(text=f"{file_count}文件/{size_str}")
+                
+            except (PermissionError, OSError) as e:
+                label.config(text=f"访问错误: {e}")
 
     def __reload_current_key(self, click_reload_btn: bool = False) -> None:
         """重新加载当前密钥"""
@@ -560,50 +605,3 @@ class APP:
             return
         
         messagebox.showerror("加载失败", f"重新加载密钥失败:\n\n{reload_result.msg}")
-
-    def __handle_status_update(self, message: str) -> None:
-        """处理状态更新"""
-        if self.__status_label:
-            self.__status_label.config(text=message)
-
-    def __handle_result_show(self, text: str, tab_type: str) -> None:
-        """处理结果显示"""
-        if tab_type == "file" and hasattr(self.__file_tab, "result_text"):
-            cast(tk.Text, cast(FileSigningTab, self.__file_tab).result_text).delete("1.0", tk.END)
-            cast(tk.Text, cast(FileSigningTab, self.__file_tab).result_text).insert("1.0", text)
-        elif tab_type == "text" and hasattr(self.__text_tab, "result_text"):
-            cast(tk.Text, cast(TextSigningTab, self.__text_tab).result_text).delete("1.0", tk.END)
-            cast(tk.Text, cast(TextSigningTab, self.__text_tab).result_text).insert("1.0", text)
-
-    def __set_current_key_manager(self, key_manager: SingleKeyManager) -> None:
-        """设置当前密钥管理器"""
-        if not hasattr(key_manager, "private_key"):
-            self.__current_km = None
-            return
-
-        try:
-            # 创建数字签名实例
-            self.__current_km = key_manager
-
-            # 更新所有标签页
-            self.__update_all_tabs_key_manager()
-
-            # 更新状态
-            key_id = getattr(key_manager, "key_id", "未知")
-            self.__ui_state_mgr.update_status(f"密钥对 '{key_id}' 已加载并准备就绪")
-            self.__update_directory_info()
-
-        except Exception as e:
-            messagebox.showerror("数字签名实例设置失败", f"{e}")
-            self.__current_km = None
-
-    @staticmethod
-    def __get_constants():
-        return (
-            f"{KeyType.PRIVATE.value}_",
-            f"{KeyType.PUBLIC.value}_",
-            FileType.KEY.value,
-            FileType.TEXT.value,
-            FileType.SIGNATURE.value
-        )
-        
