@@ -3,7 +3,8 @@
 import tkinter as tk
 from pathlib import Path
 
-from package import APP, DIRS
+from package import DIRS
+from package.app.app import APP
 
 
 # 创建数据目录
