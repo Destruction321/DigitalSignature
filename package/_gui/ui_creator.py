@@ -1,3 +1,4 @@
+# package/_gui/ui_creator.py
 """数字签名窗口UI创建模块"""
 import tkinter as tk
 from pathlib import Path

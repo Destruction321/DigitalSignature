@@ -1,3 +1,4 @@
+# package/_utils/tools.py
 """工具函数"""
 from .constants import DIRS, DirType
 

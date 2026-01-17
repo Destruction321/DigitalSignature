@@ -1,3 +1,4 @@
+# package/app/_modules/initializer.py
 """数字签名窗口初始化器"""
 import tkinter as tk
 from collections import Counter

@@ -1,3 +1,4 @@
+# package/app/app.py
 """数字签名系统主模块"""
 from typing import TYPE_CHECKING
 

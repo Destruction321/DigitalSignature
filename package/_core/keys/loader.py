@@ -1,4 +1,4 @@
-# package/_core/keys/key_loader.py
+# package/_core/keys/loader.py
 """密钥加载器"""
 from tkinter import messagebox
 from tkinter.simpledialog import askstring

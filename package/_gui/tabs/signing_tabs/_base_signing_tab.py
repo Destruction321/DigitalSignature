@@ -1,4 +1,4 @@
-# package/_gui/tabs/_base_signing_tab.py
+# package/_gui/tabs/signing_tabs/_base_signing_tab.py
 """签名标签页基类"""
 import tkinter as tk
 from pathlib import Path

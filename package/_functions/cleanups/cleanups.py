@@ -1,5 +1,5 @@
+# package/_functions/cleanups/cleanups.py
 """数字签名窗口清理模块"""
-from re import U
 import tkinter as tk
 from tkinter import messagebox, ttk
 from typing import TYPE_CHECKING

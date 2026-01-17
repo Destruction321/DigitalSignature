@@ -1,4 +1,4 @@
-# package/_gui/tabs/text_signing_tab.py
+# package/_gui/tabs/signing_tabs/text_signing_tab.py
 """文本签名标签页，实现核心接口和内容编辑接口"""
 import tkinter as tk
 from pathlib import Path

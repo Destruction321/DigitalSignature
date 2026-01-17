@@ -1,4 +1,4 @@
-# package/_gui/tabs/file_signing_tab.py
+# package/_gui/tabs/signing_tabs/file_signing_tab.py
 """文件签名标签页，实现核心接口和哈希显示接口"""
 import hashlib
 import tkinter as tk

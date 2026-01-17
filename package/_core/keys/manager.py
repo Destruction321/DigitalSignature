@@ -1,4 +1,4 @@
-# package/_core/keys/key_manager.py
+# package/_core/keys/manager.py
 """密钥对管理模块"""
 from pathlib import Path
 from typing import Callable, cast, TYPE_CHECKING, TypedDict
@@ -7,11 +7,11 @@ from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric.rsa import RSAPrivateKey, RSAPublicKey
 
+from ._config import save_config
 from ._encryption import DecryptError, encrypt_private_key, decrypt_private_key
 from ._recovery import KeyRecoveryManager
 from ... import _utils
 from ..._utils import Status, Result
-from ._config import save_config
 
 if TYPE_CHECKING:
     from ..._utils import PassWord

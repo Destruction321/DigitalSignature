@@ -1,13 +1,13 @@
-# package/_core/keys/_key_recovery.py
+# package/_core/keys/_recovery.py
 """密钥恢复管理器"""
 from datetime import datetime
 from pathlib import Path
 from tkinter.messagebox import showerror
 from typing import Callable, TYPE_CHECKING
 
+from . import _config
 from ... import _utils
 from ..._utils import DirType, Status, Result
-from . import _config
 
 
 if TYPE_CHECKING:

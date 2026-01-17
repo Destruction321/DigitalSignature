@@ -1,3 +1,4 @@
+# package/app/_modules/app_utils.py
 """数字签名窗口辅助工具"""
 from pathlib import Path
 from tkinter import messagebox

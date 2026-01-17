@@ -1,4 +1,4 @@
-# package/_core/keys/_key_encryption.py
+# package/_core/keys/_encryption.py
 """私钥加密组件"""
 import base64
 from secrets import token_bytes

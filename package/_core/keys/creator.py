@@ -1,4 +1,4 @@
-# package/_core/keys/key_creator.py
+# package/_core/keys/creator.py
 """密钥创建模块"""
 import tkinter as tk
 from dataclasses import dataclass

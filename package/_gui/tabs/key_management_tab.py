@@ -50,7 +50,6 @@ class KeyManagementTab:
             update_status=self.__ui_state_mgr.update_status,
             refresh_list=self.refresh_key_list,
             update_security=self.__update_security_status
-            
         )
         
         # 构建UI
@@ -298,24 +297,8 @@ class KeyManagementTab:
         )
         self.__security_status_label.pack()
 
-    def __change_key_password(self) -> None:
-        """更改密钥的加密密码"""
-        self.__key_listbox = cast(tk.Listbox, self.__key_listbox)
-        selection = self.__key_listbox.curselection()
-        if not selection:
-            messagebox.showwarning("警告", "请选择一个密钥对")
-            return
-        
-        display_text = self.__key_listbox.get(selection[0])
-        key_id = self.__get_key_id_and_size(display_text)
-        if not key_id:
-            messagebox.showerror("错误", "无法解析密钥ID")
-            return
-        
-        self.__handle_change_result(key_id, PassWord.CHANGE)
 
-
-    """Recovery methods"""
+    """Other private methods"""
     def __handle_key_recovery(self, key_id: str, action: PassWord) -> None:
         """处理密钥恢复"""
         if action != PassWord.RECOVERY:
@@ -377,8 +360,22 @@ class KeyManagementTab:
         else:
             messagebox.showerror("错误", f"配置恢复失败: {result.msg}")
 
-
-    """Other private methods"""
+    def __change_key_password(self) -> None:
+        """更改密钥的加密密码"""
+        self.__key_listbox = cast(tk.Listbox, self.__key_listbox)
+        selection = self.__key_listbox.curselection()
+        if not selection:
+            messagebox.showwarning("警告", "请选择一个密钥对")
+            return
+        
+        display_text = self.__key_listbox.get(selection[0])
+        key_id = self.__get_key_id_and_size(display_text)
+        if not key_id:
+            messagebox.showerror("错误", "无法解析密钥ID")
+            return
+        
+        self.__handle_change_result(key_id, PassWord.CHANGE)
+        
     def __load_selected_key(self) -> SingleKeyManager | None:
         """加载选中的密钥"""
         self.__key_listbox = cast(tk.Listbox, self.__key_listbox)

@@ -1,4 +1,4 @@
-# package/_utils/config_security.py
+# package/_core/keys/_config.py
 """配置管理模块"""
 import hmac, json
 from hashlib import sha256

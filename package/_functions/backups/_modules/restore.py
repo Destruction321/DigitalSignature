@@ -1,4 +1,4 @@
-# package/_utils/backup/backup_restore.py
+# package/_functions/backups/_modules/restore.py
 """备份恢复器"""
 import tkinter as tk
 from pathlib import Path

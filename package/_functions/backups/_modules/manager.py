@@ -1,4 +1,4 @@
-# package/_utils/backup/backup_manager.py
+# package/_functions/backups/_modules/manager.py
 """备份管理器"""
 import tkinter as tk
 from pathlib import Path
@@ -7,7 +7,7 @@ from tkinter.scrolledtext import ScrolledText
 from typing import Any, Callable, cast
 
 from . import backup_utils
-from .verifier import BackupVerifier
+from ._verifier import BackupVerifier
 from ...._utils import format_size
 
 

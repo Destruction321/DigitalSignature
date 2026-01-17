@@ -1,4 +1,4 @@
-# package/_utils/cleanup_utils.py
+# package/_functions/cleanups/_cleanup_utils.py
 """文件清理组件，统一管理所有清理操作"""
 import json
 from datetime import datetime
