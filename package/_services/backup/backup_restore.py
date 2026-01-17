@@ -14,7 +14,7 @@ class BackupRestore:
                  update_status_callback: Callable[[str], None],
                  update_dir_callback: Callable[[], None],
                  refresh_key_callback: Callable[[], None],
-                 reload_key_callback: Callable[[bool], None]) -> None:
+                 reload_key_callback: Callable[[], None]) -> None:
         self.__parent = parent
         self.__update_status = update_status_callback
         self.__update_dir = update_dir_callback
@@ -184,7 +184,7 @@ class BackupRestore:
                 cast(tk.Toplevel, self.__dialog).destroy()
                 self.__update_dir()
                 self.__refresh_key()
-                self.__reload_key(False)
+                self.__reload_key()
             else:
                 messagebox.showerror("恢复失败", f"备份恢复失败：\n{restore_result.msg}")
         except Exception as e:

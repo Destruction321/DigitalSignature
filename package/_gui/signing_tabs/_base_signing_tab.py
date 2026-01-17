@@ -55,22 +55,22 @@ class BaseSigningTab(ABC):
     @abstractmethod
     def _sign_content(self, km: SingleKeyManager, content: str) -> None:
         """
-        签名文本
+        签名文本或文件
         
         Args:
             km (SingleKeyManager): 密钥管理器
-            content (str): 待签名内容
+            content (str): 待签名内容或文件路径
         """
         pass
 
     @abstractmethod
     def _verify_content(self, km: SingleKeyManager, content: str) -> None:
         """
-        验证文本签名
+        验证文本或文件签名
         
         Args:
             km (SingleKeyManager): 密钥管理器
-            content (str): 待验证内容
+            content (str): 待验证内容或文件路径
         """
         pass
 

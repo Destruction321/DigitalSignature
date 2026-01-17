@@ -31,20 +31,20 @@ class FileSigningTab(BaseSigningTab):
         
         return ""
 
-    def _sign_content(self, km: SingleKeyManager, file_path: str) -> None:
-        if not self.__validate_file_exists(file_path):
+    def _sign_content(self, km: SingleKeyManager, content: str) -> None:
+        if not self.__validate_file_exists(content):
             return
         
         try:
-            signature_file = signature.sign_file(km, Path(file_path))
-            file_hash = self._get_file_hash(file_path)
-            self._handle_sign_success(signature_file.data, file_path, file_hash)
+            signature_file = signature.sign_file(km, Path(content))
+            file_hash = self._get_file_hash(content)
+            self._handle_sign_success(signature_file.data, content, file_hash)
 
         except Exception as e:
             self._handle_operation_error("签名", e)
 
-    def _verify_content(self, km: SingleKeyManager, file_path: str) -> None:
-        if not self.__validate_file_exists(file_path):
+    def _verify_content(self, km: SingleKeyManager, content: str) -> None:
+        if not self.__validate_file_exists(content):
             return
         
         signature_path = cast(tk.Entry, self.__signature_path_entry).get().strip()
@@ -52,9 +52,9 @@ class FileSigningTab(BaseSigningTab):
             return
 
         try:
-            is_valid = signature.verify_signature(km, file_path, Path(signature_path))
-            file_hash = self._get_file_hash(file_path)
-            self._handle_verify_success(is_valid.is_success(), signature_path, file_path, file_hash)
+            is_valid = signature.verify_signature(km, content, Path(signature_path))
+            file_hash = self._get_file_hash(content)
+            self._handle_verify_success(is_valid.is_success(), signature_path, content, file_hash)
 
         except Exception as e:
             self._handle_operation_error("验证", e)

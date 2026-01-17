@@ -83,10 +83,10 @@ class PasswordValidator:
     def __verify_old_password(self, key_id: str, mode: PassWord) -> Result:
         """验证旧密码"""
         attempts_left = _utils.MAX_PASSWORD_ATTEMPTS
+        context_text = "恢复配置" if mode == PassWord.RECOVERY else "更改密码"
         
         while attempts_left > 0:
             # 构建提示信息
-            context_text = "恢复配置" if mode == PassWord.RECOVERY else "更改密码"
             attempts_info = f"{attempts_left}" if attempts_left <= _utils.MAX_PASSWORD_ATTEMPTS else ""
             prompt = f"正在进行{context_text}\n请输入密钥 '{key_id}' 的旧密码（剩余次数: {attempts_info}）"
             
