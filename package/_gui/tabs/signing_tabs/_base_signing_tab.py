@@ -15,6 +15,7 @@ from ...._utils import BASE_DIR, Status, Result
 
 if TYPE_CHECKING:
     from ...._core.keys.manager import SingleKeyManager
+    from ...._utils.ui_state_manager import UIStateManager
 
 
 class BaseSigningTab(ABC):
@@ -24,8 +25,8 @@ class BaseSigningTab(ABC):
         self.__tab_type: str = tab_type
         self.__result_text: tk.Text | None = None
 
-        self._ui_state_mgr = get_ui_state_manager()
         self._parent: tk.Widget = parent
+        self._ui_state_mgr: UIStateManager = get_ui_state_manager()
 
 
     @property
@@ -381,6 +382,7 @@ class BaseSigningTab(ABC):
     def __show_result_text(self, is_valid: bool, content_path: str, signature_path: str, content_hash: str) -> None:
         """返回结果字符串"""
         msg: list[str] = ["成功", "完整且未被篡改"] if is_valid else ["失败", "可能已被篡改"]
+        error = f"{"" if is_valid else "\n也可能使用了错误的签名文件或公钥文件。"}"
 
         self._ui_state_mgr.update_status(f"{self.__tab_type.capitalize()}验证{msg[0]}")
         result_text = (
@@ -388,7 +390,7 @@ class BaseSigningTab(ABC):
             f"{"文件" if self.__tab_type == "file" else "内容"}路径: {content_path}\n"
             f"签名文件: {signature_path}\n"
             f"{"文件" if self.__tab_type == "file" else "文本"}哈希: {content_hash}\n\n"
-            f"{"文件" if self.__tab_type == "file" else "内容"}{msg[1]}。\n也可能使用了错误的签名文件或公钥文件。"
+            f"{"文件" if self.__tab_type == "file" else "内容"}{msg[1]}。{error}"
         )
 
         self._show_result(result_text)

@@ -14,6 +14,7 @@ from ..._utils.ui_state_manager import get_ui_state_manager
 if TYPE_CHECKING:
     from ..._core.keys.loader import KeyLoader
     from ..._core.keys.manager import MultiKeyManager
+    from ..._utils.ui_state_manager import UIStateManager
         
 
 class BackUps:
@@ -30,7 +31,7 @@ class BackUps:
         self.__key_tab: KeyManagementTab = key_tab
         self.__multi_km: MultiKeyManager = multi_km
         self.__key_loader: KeyLoader = key_loader
-        self.__ui_state_mgr = get_ui_state_manager()
+        self.__ui_state_mgr: UIStateManager = get_ui_state_manager()
     
     
     """public methods -- bind to buttons"""

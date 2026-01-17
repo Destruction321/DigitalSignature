@@ -22,32 +22,48 @@ if TYPE_CHECKING:
 class UICreator:
     """数字签名窗口UI创建模块"""
     def __init__(self, root: tk.Tk, multi_km: MultiKeyManager, key_loader: KeyLoader) -> None:
-        self.root: tk.Tk = root  # 主窗口
-        self.dir_labels: dict[DirType, ttk.Label] = {}  # 目录标签
-        self.backup_buttons: dict[str, ttk.Button] = {}
-        self.multi_km: MultiKeyManager = multi_km
-        self.key_loader: KeyLoader = key_loader
-        self.key_tab: KeyManagementTab | None = None  # 密钥管理标签页
-        self.text_tab: TextSigningTab | None = None  # 文本签名标签页
-        self.file_tab: FileSigningTab | None = None  # 文件签名标签页
-        
+        self.__root: tk.Tk = root  # 主窗口
+        self.__multi_km: MultiKeyManager = multi_km
+        self.__key_loader: KeyLoader = key_loader
+        self.__backup_buttons: dict[str, ttk.Button] = {}
+        self.__dir_labels: dict[DirType, ttk.Label] = {}  # 目录标签
         self.__cleanups: CleanUps | None = None
         self.__backups: BackUps | None = None
         self.__status_label: ttk.Label | None = None  # 状态标签
+        self.__key_tab: KeyManagementTab | None = None  # 密钥管理标签页
+        self.__text_tab: TextSigningTab | None = None  # 文本签名标签页
+        self.__file_tab: FileSigningTab | None = None  # 文件签名标签页
         
     
+    @property
+    def dir_labels(self) -> dict[DirType, ttk.Label]:
+        return self.__dir_labels
+    
+    @property
+    def key_tab(self) -> KeyManagementTab | None:
+        return self.__key_tab
+    
+    @property
+    def text_tab(self) -> TextSigningTab | None:
+        return self.__text_tab
+    
+    @property
+    def file_tab(self) -> FileSigningTab | None:
+        return self.__file_tab
+    
+        
     """public UI creator"""
     def setup_main_window(self) -> None:
         """设置主窗口"""
-        self.root.title("数字签名系统 - 哈尔滨工程大学")
-        self.root.geometry("1000x700")
-        self.root.minsize(900, 600)
-        self.root.columnconfigure(0, weight=1)
-        self.root.rowconfigure(0, weight=1)
+        self.__root.title("数字签名系统 - 哈尔滨工程大学")
+        self.__root.geometry("1000x700")
+        self.__root.minsize(900, 600)
+        self.__root.columnconfigure(0, weight=1)
+        self.__root.rowconfigure(0, weight=1)
         
     def setup_ui(self) -> None:
         """设置用户界面"""
-        main_frame: ttk.Frame = ttk.Frame(self.root, padding="10")
+        main_frame: ttk.Frame = ttk.Frame(self.__root, padding="10")
         main_frame.pack(fill=tk.BOTH, expand=True)
 
         main_frame.columnconfigure(0, weight=1)
@@ -100,18 +116,18 @@ class UICreator:
         notebook.add(file_tab, text="文件签名")
 
         # 创建标签页实例
-        self.key_tab = KeyManagementTab(key_tab, self.multi_km, self.key_loader)
-        self.text_tab = TextSigningTab(text_tab)
-        self.file_tab = FileSigningTab(file_tab)
+        self.__key_tab = KeyManagementTab(key_tab, self.__multi_km, self.__key_loader)
+        self.__text_tab = TextSigningTab(text_tab)
+        self.__file_tab = FileSigningTab(file_tab)
         
-        self.__cleanups = CleanUps(self.root, self.dir_labels)
+        self.__cleanups = CleanUps(self.__root, self.__dir_labels)
         self.__backups = BackUps(
-            root=self.root,
-            backup_buttons=self.backup_buttons,
-            dir_labels=self.dir_labels,
-            key_tab=self.key_tab,
-            multi_km=self.multi_km,
-            key_loader=self.key_loader
+            root=self.__root,
+            backup_buttons=self.__backup_buttons,
+            dir_labels=self.__dir_labels,
+            key_tab=self.__key_tab,
+            multi_km=self.__multi_km,
+            key_loader=self.__key_loader
         )
 
     def __create_tools_area(self, parent: tk.Widget) -> None:
@@ -128,11 +144,11 @@ class UICreator:
 
         buttons_row1: list[tuple[str, Callable[[], None]]] = [
             ("重新加载密钥", lambda: app_utils.reload_current_key(
-                multi_km=self.multi_km,
-                key_loader=self.key_loader,
+                multi_km=self.__multi_km,
+                key_loader=self.__key_loader,
                 click_reload_btn=True
             )),
-            ("刷新目录信息", lambda: app_utils.update_directory_info(self.dir_labels))
+            ("刷新目录信息", lambda: app_utils.update_directory_info(self.__dir_labels))
         ]
 
         for text, command in buttons_row1:
@@ -172,7 +188,7 @@ class UICreator:
         for text, command in backup_buttons:
             button = ttk.Button(backup_button_row, text=text, command=command)
             button.pack(side=tk.LEFT, expand=True, fill=tk.X, padx=2)
-            self.backup_buttons[text] = button
+            self.__backup_buttons[text] = button
 
     def __create_status_bar(self, parent: tk.Widget) -> None:
         """创建状态栏"""
@@ -189,9 +205,9 @@ class UICreator:
 
     def __handle_result_show(self, text: str, tab_type: str) -> None:
         """处理结果显示"""
-        if tab_type == "file" and hasattr(self.file_tab, "result_text"):
-            cast(tk.Text, cast(FileSigningTab, self.file_tab).result_text).delete("1.0", tk.END)
-            cast(tk.Text, cast(FileSigningTab, self.file_tab).result_text).insert("1.0", text)
-        elif tab_type == "text" and hasattr(self.text_tab, "result_text"):
-            cast(tk.Text, cast(TextSigningTab, self.text_tab).result_text).delete("1.0", tk.END)
-            cast(tk.Text, cast(TextSigningTab, self.text_tab).result_text).insert("1.0", text)
+        if tab_type == "file" and hasattr(self.__file_tab, "result_text"):
+            cast(tk.Text, cast(FileSigningTab, self.__file_tab).result_text).delete("1.0", tk.END)
+            cast(tk.Text, cast(FileSigningTab, self.__file_tab).result_text).insert("1.0", text)
+        elif tab_type == "text" and hasattr(self.__text_tab, "result_text"):
+            cast(tk.Text, cast(TextSigningTab, self.__text_tab).result_text).delete("1.0", tk.END)
+            cast(tk.Text, cast(TextSigningTab, self.__text_tab).result_text).insert("1.0", text)

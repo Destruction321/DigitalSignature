@@ -1,11 +1,16 @@
 """数字签名窗口清理模块"""
+from re import U
 import tkinter as tk
 from tkinter import messagebox, ttk
+from typing import TYPE_CHECKING
 
 from ...app._modules.app_utils import update_directory_info
 from . import _cleanup_utils
 from ..._utils import DirType
 from ..._utils.ui_state_manager import get_ui_state_manager
+
+if TYPE_CHECKING:
+    from ..._utils.ui_state_manager import UIStateManager
 
 
 class CleanUps:
@@ -14,7 +19,7 @@ class CleanUps:
         self.__cleanup_days_threshold: int = 30
         self.__root: tk.Tk = root
         self.__dir_labels: dict[DirType, ttk.Label] = dir_labels
-        self.__ui_state_mgr = get_ui_state_manager()
+        self.__ui_state_mgr: UIStateManager = get_ui_state_manager()
     
     
     """public methods -- bind to buttons"""

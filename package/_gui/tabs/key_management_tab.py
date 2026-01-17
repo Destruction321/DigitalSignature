@@ -13,6 +13,7 @@ from ..._utils.ui_state_manager import get_ui_state_manager
 if TYPE_CHECKING:
     from ..._core.keys.loader import KeyLoader
     from ..._core.keys.manager import MultiKeyManager
+    from ..._utils.ui_state_manager import UIStateManager
 
 
 class KeyManagementTab:
@@ -34,7 +35,7 @@ class KeyManagementTab:
         # 依赖注入
         self.__parent: tk.Widget = parent
         self.__multi_km: MultiKeyManager = multi_key_manager
-        self.__ui_state_mgr = get_ui_state_manager()
+        self.__ui_state_mgr: UIStateManager = get_ui_state_manager()
 
         # 设置恢复回调
         self.__multi_km.recovery_callback = self.__handle_key_recovery

@@ -4,59 +4,71 @@ from collections import Counter
 from glob import glob
 from pathlib import Path
 from tkinter import messagebox
-from typing import cast
+from typing import cast, TYPE_CHECKING
 from shutil import move
 
 from . import app_utils
-from ..._gui.ui_creator import UICreator
 from ... import _utils
 from ..._core.keys.loader import KeyLoader
 from ..._core.keys.manager import SingleKeyManager, MultiKeyManager
 from ..._gui.tabs.key_management_tab import KeyManagementTab
+from ..._gui.ui_creator import UICreator
 from ..._utils import DirType, Status
 from ..._utils.ui_state_manager import get_ui_state_manager
+
+if TYPE_CHECKING:
+    from ..._utils.ui_state_manager import UIStateManager
 
 
 class Initializer:
     """数字签名窗口初始化器"""
     def __init__(self, root: tk.Tk) -> None:
-        self.__ui_state_mgr = get_ui_state_manager()
+        self.__ui_state_mgr: UIStateManager = get_ui_state_manager()
         
-        self.current_km: SingleKeyManager | None = None  # 当前密钥管理器
-        self.multi_km: MultiKeyManager = MultiKeyManager()
+        self.__current_km: SingleKeyManager | None = None  # 当前密钥管理器
+        self.__multi_km: MultiKeyManager = MultiKeyManager()
         
-        self.key_loader: KeyLoader = KeyLoader(
-            multi_key_manager=self.multi_km,
+        self.__key_loader: KeyLoader = KeyLoader(
+            multi_key_manager=self.__multi_km,
             parent=root,
             key_loaded_callback=self.__on_key_loaded,
             update_status_callback=self.__ui_state_mgr.update_status,
         )
         
-        self.ui: UICreator = UICreator(root, self.multi_km, self.key_loader)
+        self.__ui: UICreator = UICreator(root, self.__multi_km, self.__key_loader)
         
+        
+    @property
+    def current_km(self) -> SingleKeyManager | None:
+        return self.__current_km
+    
+    @property
+    def ui(self) -> UICreator:
+        return self.__ui
+    
     
     """public methods"""
     def auto_load_current_key(self) -> None:
         """程序启动时自动加载当前密钥"""
-        if self.multi_km.current_key_id is None:
+        if self.__multi_km.current_key_id is None:
             self.__ui_state_mgr.update_status("请先在密钥管理标签页加载密钥对")
             return
 
-        self.ui.key_tab = cast(KeyManagementTab, self.ui.key_tab)
+        key_tab = cast(KeyManagementTab, self.__ui.key_tab)
         try:
             # 使用KeyLoader静默加载
-            loading_result = self.key_loader.load_key(self.multi_km.current_key_id, silent=True)
+            loading_result = self.__key_loader.load_key(self.__multi_km.current_key_id, silent=True)
             success = loading_result.is_success()
             result = loading_result.data
             
             if success and isinstance(result, SingleKeyManager):
                 # 设置密钥管理器
                 self.__set_current_key_manager(result)
-                app_utils.update_directory_info(self.ui.dir_labels)
-                self.ui.key_tab.loaded_key_id = self.multi_km.current_key_id
-                self.__ui_state_mgr.update_status(f"自动加载密钥成功: {self.multi_km.current_key_id}")
+                app_utils.update_directory_info(self.__ui.dir_labels)
+                key_tab.loaded_key_id = self.__multi_km.current_key_id
+                self.__ui_state_mgr.update_status(f"自动加载密钥成功: {self.__multi_km.current_key_id}")
             elif not success and loading_result.status == Status.NEED_PASSWORD:
-                self.__ui_state_mgr.update_status(f"密钥 '{self.multi_km.current_key_id}' 已加密，请手动加载")
+                self.__ui_state_mgr.update_status(f"密钥 '{self.__multi_km.current_key_id}' 已加密，请手动加载")
             else:
                 self.__ui_state_mgr.update_status("自动加载密钥失败，请手动加载")
 
@@ -64,7 +76,7 @@ class Initializer:
             self.__ui_state_mgr.update_status(f"自动加载密钥出错: {e}")
 
         # 更新密钥标签页显示
-        self.ui.key_tab.update_key_status()
+        key_tab.update_key_status()
     
     
     """private methods"""
@@ -72,53 +84,53 @@ class Initializer:
         """密钥加载成功时的回调"""
         if key_manager is None or not hasattr(key_manager, "private_key"):
             self.__ui_state_mgr.update_status("密钥管理器无效，无法创建数字签名实例")
-            self.current_km = None
-            self.multi_km.current_key_id = None
+            self.__current_km = None
+            self.__multi_km.current_key_id = None
 
             # 通知KeyManagementTab加载失败
-            if self.ui.key_tab:
-                self.ui.key_tab.loaded_key_id = None
+            if self.__ui.key_tab:
+                self.__ui.key_tab.loaded_key_id = None
             return
 
         try:
             key_id = getattr(key_manager, "key_id", None)
             if key_id is None:
-                key_id = self.multi_km.current_key_id
+                key_id = self.__multi_km.current_key_id
 
             if key_id:
-                self.multi_km.current_key_id = key_id
-                save_result = self.multi_km.save_keys_config()
+                self.__multi_km.current_key_id = key_id
+                save_result = self.__multi_km.save_keys_config()
                 if not save_result.is_success():
                     messagebox.showerror("密钥配置保存失败", f"密钥加载成功但配置保存失败：{save_result.msg}")
                     
                 # 通知KeyManagementTab密钥已真正加载
-                if self.ui.key_tab:
-                    self.ui.key_tab.loaded_key_id = key_id
+                if self.__ui.key_tab:
+                    self.__ui.key_tab.loaded_key_id = key_id
 
-            self.current_km = key_manager
+            self.__current_km = key_manager
             self.__update_all_tabs_key_manager()
 
             self.__ui_state_mgr.update_status(f"密钥对 '{key_id}' 已加载并准备就绪")
-            app_utils.update_directory_info(self.ui.dir_labels)
+            app_utils.update_directory_info(self.__ui.dir_labels)
 
         except Exception as e:
             self.__ui_state_mgr.update_status(f"创建数字签名实例失败: {e}")
-            self.current_km = None
-            self.multi_km.current_key_id = None
+            self.__current_km = None
+            self.__multi_km.current_key_id = None
 
             # 通知KeyManagementTab加载失败
-            if self.ui.key_tab:
-                self.ui.key_tab.loaded_key_id = None
+            if self.__ui.key_tab:
+                self.__ui.key_tab.loaded_key_id = None
 
     def __set_current_key_manager(self, key_manager: SingleKeyManager) -> None:
         """设置当前密钥管理器"""
         if not hasattr(key_manager, "private_key"):
-            self.current_km = None
+            self.__current_km = None
             return
 
         try:
             # 创建数字签名实例
-            self.current_km = key_manager
+            self.__current_km = key_manager
 
             # 更新所有标签页
             self.__update_all_tabs_key_manager()
@@ -126,20 +138,20 @@ class Initializer:
             # 更新状态
             key_id = getattr(key_manager, "key_id", "未知")
             self.__ui_state_mgr.update_status(f"密钥对 '{key_id}' 已加载并准备就绪")
-            app_utils.update_directory_info(self.ui.dir_labels)
+            app_utils.update_directory_info(self.__ui.dir_labels)
 
         except Exception as e:
             messagebox.showerror("数字签名实例设置失败", f"{e}")
-            self.current_km = None
+            self.__current_km = None
 
     def __update_all_tabs_key_manager(self) -> None:
         """更新所有标签页的密钥管理器"""
-        self.current_km = cast(SingleKeyManager, self.current_km)
-        if self.ui.text_tab:
-            self.ui.text_tab.km = self.current_km
+        self.__current_km = cast(SingleKeyManager, self.__current_km)
+        if self.__ui.text_tab:
+            self.__ui.text_tab.km = self.__current_km
 
-        if self.ui.file_tab:
-            self.ui.file_tab.km = self.current_km
+        if self.__ui.file_tab:
+            self.__ui.file_tab.km = self.__current_km
            
 
 def migrate_existing_files() -> None:
