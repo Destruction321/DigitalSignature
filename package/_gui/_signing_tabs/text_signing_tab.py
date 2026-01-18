@@ -24,6 +24,31 @@ class TextSigningTab(BaseSigningTab):
         self._setup_ui()
 
 
+    def _create_editor(self) -> None:
+        """创建文本编辑区域"""
+        editor_frame = LabelFrame(self._parent, text="文本编辑", padding=5)
+        editor_frame.grid(row=0, column=0, sticky=tk.NSEW, pady=2)
+        editor_frame.columnconfigure(0, weight=1)
+        editor_frame.rowconfigure(0, weight=1)
+
+        self.__text_editor = self._create_scrolled_text(
+            editor_frame,
+            height=10,
+            font=("Consolas", 10)
+        )
+        self.__text_editor.grid(row=0, column=0, sticky=tk.NSEW)
+
+        default_text = """哈尔滨工程大学 - 数据安全课程设计
+数字签名系统
+
+学号：[请输入你的学号]
+姓名：[请输入你的姓名]
+专业：计算机科学与技术
+日期：2025年秋季学期
+
+您可以在此编辑任意文本内容，然后进行数字签名操作。"""
+        self.__text_editor.insert("1.0", default_text)
+
     def _get_content(self) -> str:
         if self.__text_editor:
             return self.__text_editor.get("1.0", tk.END).strip()
@@ -87,31 +112,6 @@ class TextSigningTab(BaseSigningTab):
     def __on_save_success(self, file_path: str) -> None:
         """保存文本成功回调"""
         self._ui_state_mgr.update_status(f"文本已保存: {file_path}")
-            
-    def _create_editor(self) -> None:
-        """创建文本编辑区域"""
-        editor_frame = LabelFrame(self._parent, text="文本编辑", padding=5)
-        editor_frame.grid(row=0, column=0, sticky=tk.NSEW, pady=2)
-        editor_frame.columnconfigure(0, weight=1)
-        editor_frame.rowconfigure(0, weight=1)
-
-        self.__text_editor = self._create_scrolled_text(
-            editor_frame,
-            height=10,
-            font=("Consolas", 10)
-        )
-        self.__text_editor.grid(row=0, column=0, sticky=tk.NSEW)
-
-        default_text = """哈尔滨工程大学 - 数据安全课程设计
-数字签名系统
-
-学号：[请输入你的学号]
-姓名：[请输入你的姓名]
-专业：计算机科学与技术
-日期：2025年秋季学期
-
-您可以在此编辑任意文本内容，然后进行数字签名操作。"""
-        self.__text_editor.insert("1.0", default_text)
 
     def __create_temp_file(self, content: str, prefix: str | None = None) -> str:
         """临时文件创建"""

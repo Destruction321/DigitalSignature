@@ -126,7 +126,7 @@ class MultiKeyManager:
         Returns:
             load_result (Result): 加载结果，成功时返回当前密钥对的管理器
         """
-        no_key_id = self.__no_key(key_id, self.__key_pairs)
+        no_key_id = self.__no_key(key_id)
         if no_key_id:
             return no_key_id
         
@@ -181,7 +181,7 @@ class MultiKeyManager:
         Returns:
             delete_result (Result): 删除结果
         """
-        no_key_id = self.__no_key(key_id, self.__key_pairs)
+        no_key_id = self.__no_key(key_id)
         if no_key_id:
             return no_key_id
         
@@ -222,7 +222,7 @@ class MultiKeyManager:
         Returns:
             change_result (Result): 修改结果
         """
-        no_key_id = self.__no_key(key_id, self.__key_pairs)
+        no_key_id = self.__no_key(key_id)
         if no_key_id:
             return no_key_id
         
@@ -305,7 +305,7 @@ class MultiKeyManager:
         Returns:
             encryption_status_result (Result): 成功状态和加密状态描述
         """
-        no_key_id = self.__no_key(key_id, self.__key_pairs)
+        no_key_id = self.__no_key(key_id)
         if no_key_id:
             return no_key_id
         
@@ -327,8 +327,8 @@ class MultiKeyManager:
             (private_key_path, public_key_path) (tuple[str, str]): 私钥和公钥的文件路径
         """
         
-        PRIVATE_, PUBLIC_, ENCRYPTED, _PEM = _get_consts(is_encrypted)
-        private_key_file = f"{PRIVATE_}{key_id}_{key_size}{ENCRYPTED}{_PEM}"
+        PRIVATE_, PUBLIC_, _ENCRYPTED, _PEM = _get_consts(is_encrypted)
+        private_key_file = f"{PRIVATE_}{key_id}_{key_size}{_ENCRYPTED}{_PEM}"
         public_key_file = f"{PUBLIC_}{key_id}_{key_size}{_PEM}"
 
         keys_dir = _utils.get_path(_utils.DirType.KEYS)
@@ -337,16 +337,17 @@ class MultiKeyManager:
             str(Path(keys_dir, public_key_file))
         )
 
-    @staticmethod
-    def __no_key(key_id: str, key_pairs: dict[str, _KeyPairInfo]) -> Result | None:
+
+    """private methods"""
+    def __no_key(self, key_id: str) -> Result | None:
         """检查密钥存在性"""
         if not key_id.strip():
             return Result(status=Status.PARAM_EMPTY)
-        if key_id not in key_pairs:
+        if key_id not in self.__key_pairs:
             return Result(status=Status.KEY_NOT_FOUND)
         
 
-def _get_consts(is_encrypted: bool = False):
+def _get_consts(is_encrypted: bool = False) -> tuple[str, str, str, str]:
     """字符串导出"""
     return (
         f"{_utils.KeyType.PRIVATE.value}_",

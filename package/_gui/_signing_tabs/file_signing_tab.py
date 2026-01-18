@@ -25,6 +25,39 @@ class FileSigningTab(BaseSigningTab):
         self._setup_ui()
 
 
+    def _create_editor(self) -> None:
+        """创建文件选择区域"""
+        file_frame = ttk.LabelFrame(self._parent, text="文件操作", padding=5)
+        file_frame.grid(row=0, column=0, sticky=tk.EW, pady=2)
+        file_frame.columnconfigure(1, weight=1)
+
+        ttk.Label(file_frame, text="文件路径:").grid(row=0, column=0, padx=5, pady=5, sticky=tk.W)
+        self.__file_path_entry = ttk.Entry(file_frame)
+        self.__file_path_entry.grid(row=0, column=1, padx=5, pady=5, sticky=tk.EW)
+        ttk.Button(
+            file_frame,
+            text="浏览文件",
+            command=lambda: self._browse_file(
+                title="选择文件",
+                file_types=[("所有文件", "*.*"), ("文本文件", "*.txt"), ("文档", "*.docx *.pdf")],
+                callback=self.__on_file_selected
+            )
+        ).grid(row=0, column=2, padx=5, pady=5)
+
+        ttk.Label(file_frame, text="签名文件:").grid(row=1, column=0, padx=5, pady=5, sticky=tk.W)
+        self.__signature_path_entry = ttk.Entry(file_frame)
+        self.__signature_path_entry.grid(row=1, column=1, padx=5, pady=5, sticky=tk.EW)
+        ttk.Button(
+            file_frame,
+            text="浏览签名文件",
+            command=lambda: self._browse_file(
+                title="选择签名文件",
+                initial_dir=get_path(DirType.SIGNATURES),
+                file_types=[("签名文件", "*.sig"), ("所有文件", "*.*")],
+                callback=self.__on_signature_selected
+            )
+        ).grid(row=1, column=2, padx=5, pady=5)
+
     def _get_content(self) -> str:
         if self.__file_path_entry:
             return self.__file_path_entry.get().strip()
@@ -93,39 +126,6 @@ class FileSigningTab(BaseSigningTab):
 
 
     """private methods"""
-    def _create_editor(self) -> None:
-        """创建文件选择区域"""
-        file_frame = ttk.LabelFrame(self._parent, text="文件操作", padding=5)
-        file_frame.grid(row=0, column=0, sticky=tk.EW, pady=2)
-        file_frame.columnconfigure(1, weight=1)
-
-        ttk.Label(file_frame, text="文件路径:").grid(row=0, column=0, padx=5, pady=5, sticky=tk.W)
-        self.__file_path_entry = ttk.Entry(file_frame)
-        self.__file_path_entry.grid(row=0, column=1, padx=5, pady=5, sticky=tk.EW)
-        ttk.Button(
-            file_frame,
-            text="浏览文件",
-            command=lambda: self._browse_file(
-                title="选择文件",
-                file_types=[("所有文件", "*.*"), ("文本文件", "*.txt"), ("文档", "*.docx *.pdf")],
-                callback=self.__on_file_selected
-            )
-        ).grid(row=0, column=2, padx=5, pady=5)
-
-        ttk.Label(file_frame, text="签名文件:").grid(row=1, column=0, padx=5, pady=5, sticky=tk.W)
-        self.__signature_path_entry = ttk.Entry(file_frame)
-        self.__signature_path_entry.grid(row=1, column=1, padx=5, pady=5, sticky=tk.EW)
-        ttk.Button(
-            file_frame,
-            text="浏览签名文件",
-            command=lambda: self._browse_file(
-                title="选择签名文件",
-                initial_dir=get_path(DirType.SIGNATURES),
-                file_types=[("签名文件", "*.sig"), ("所有文件", "*.*")],
-                callback=self.__on_signature_selected
-            )
-        ).grid(row=1, column=2, padx=5, pady=5)
-
     def __on_file_selected(self, file_path: str) -> None:
         """选择文件"""
         file_path_entry = cast(tk.Entry, self.__file_path_entry)

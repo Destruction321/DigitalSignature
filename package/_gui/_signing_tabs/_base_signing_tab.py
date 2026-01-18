@@ -49,7 +49,7 @@ class BaseSigningTab(ABC):
         pass
     
     @abstractmethod
-    def _get_content(self) -> str :
+    def _get_content(self) -> str:
         """获取文本内容"""
         pass
 
