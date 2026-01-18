@@ -1,7 +1,7 @@
 # main.py
 """数字签名系统主程序入口"""
-import tkinter as tk
 from pathlib import Path
+from tkinter import Tk
 
 from package import DIRS
 from package.app import APP
@@ -13,7 +13,7 @@ for dir_path in DIRS.values():
     
 # 启动应用程序
 try:
-    root = tk.Tk()
+    root = Tk()
     _app = APP(root)
     root.mainloop()
 except Exception as e:
