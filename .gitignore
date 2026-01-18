@@ -3,6 +3,6 @@
 /build*
 /data*
 /dist
-/README.md
 /__pycache__
 /*_backup_*
+

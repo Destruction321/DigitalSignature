@@ -1,8 +1,7 @@
-"""build_simple.py - 最简单的构建脚本"""
-import os
-import sys
-import subprocess
+"""构建脚本"""
+import subprocess, sys
 from pathlib import Path
+from shutil import which
 
 def get_pyinstaller_exe():
     """获取 pyinstaller.exe 的路径"""
@@ -21,9 +20,8 @@ def get_pyinstaller_exe():
             return exe_path
     
     # 方法3：从 PATH 中查找
-    import shutil
     try:
-        exe_path = shutil.which("pyinstaller.exe")
+        exe_path = which("pyinstaller.exe")
         if exe_path:
             return Path(exe_path)
     except:
@@ -38,11 +36,11 @@ def main():
     pyinstaller_exe = get_pyinstaller_exe()
     
     if not pyinstaller_exe:
-        print("❌ 找不到 pyinstaller.exe")
-        print("请确保已安装 PyInstaller: pip install pyinstaller")
+        print("\033[31m找不到 pyinstaller.exe\033[0m")
+        print("\033[31m请确保已安装 PyInstaller: pip install pyinstaller\033[0m")
         return
     
-    print(f"✅ 找到 PyInstaller: {pyinstaller_exe}")
+    print(f"\033[33m找到 PyInstaller: {pyinstaller_exe}\033[0m")
 
     # 构建命令
     cmd = [
@@ -58,37 +56,39 @@ def main():
         str(project_root / "main.py")
     ]
     
-    print(f"\n执行命令:")
-    print(" ".join(cmd))
+    print(f"\033[35m\n执行命令:\033[0m")
+    print(f"\033[34m{" ".join(cmd)}\033[0m")
     
     # 直接运行，不捕获输出，实时显示
     try:
         subprocess.run(cmd, check=True)
-        print("\n✅ 构建完成！")
+        print("\n\033[33m构建完成！\033[0m")
         
         # 显示结果
         exe_path = project_root / "dist" / "DS_System"
 
         if not exe_path.exists():
-            print(f"\n❌ 输出目录不存在！")
+            print(f"\n\033[31m输出目录不存在！\033[0m")
             return
         
         total_size = 0
         for file_path in exe_path.rglob('*'):  # rglob 递归遍历
-            if file_path.is_file():
-                try:
-                    total_size += file_path.stat().st_size
-                except OSError:
-                    continue
+            if not file_path.is_file():
+                continue
+
+            try:
+                total_size += file_path.stat().st_size
+            except OSError:
+                continue
         
-        total_size /= 1024
-        print(f"输出目录: {exe_path}")
-        print(f"文件大小: {total_size:.1f} MB")
+        total_size /= (1024 * 1024)
+        print(f"\033[33m输出目录: {exe_path}\033[0m")
+        print(f"\033[33m目录大小: {total_size:.1f} MB\033[0m")
             
     except subprocess.CalledProcessError as e:
-        print(f"\n❌ 构建失败: {e}")
+        print(f"\n\033[31m构建失败: {e}\033[0m")
     except Exception as e:
-        print(f"\n❌ 发生错误: {e}")
+        print(f"\n\033[31m发生错误: {e}\033[0m")
 
 if __name__ == "__main__":
     main()
