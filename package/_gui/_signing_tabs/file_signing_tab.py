@@ -119,10 +119,10 @@ class FileSigningTab(BaseSigningTab):
         except Exception as e:
             self._handle_operation_error("获取文件哈希", e)
 
-    def _update_signature_path(self, signature_file: str) -> None:
+    def _update_signature_path(self, signature_path: str) -> None:
         if self.__signature_path_entry:
             self.__signature_path_entry.delete(0, tk.END)
-            self.__signature_path_entry.insert(0, signature_file)
+            self.__signature_path_entry.insert(0, signature_path)
 
 
     """private methods"""

@@ -39,9 +39,8 @@ class PasswordValidator:
         验证旧密码并重置为新密码
         
         Args:
-            key_id: 密钥ID
-            context: 操作上下文（PassWord.CHANGE=更改密码, PassWord.RECOVERY=恢复配置）
-            max_attempts: 最大密码尝试次数
+            key_id (str): 密钥ID
+            context (PassWord): 操作上下文（PassWord.CHANGE=更改密码, PassWord.RECOVERY=恢复配置）
             
         Returns:
             reset_result (Result): 重置结果

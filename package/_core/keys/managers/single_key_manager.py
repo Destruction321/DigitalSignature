@@ -6,7 +6,7 @@ from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric.rsa import RSAPrivateKey, RSAPublicKey
 
-from .._encryption import DecryptError, encrypt_private_key, decrypt_private_key
+from .. import _encryption
 from ...._utils import Status, Result
 
 
@@ -75,7 +75,7 @@ class SingleKeyManager:
             self.__public_key = cast(RSAPublicKey, self.__public_key)
             
             if password is not None:
-                encrypted_key_data = encrypt_private_key(self.__private_key, password)
+                encrypted_key_data = _encryption.encrypt_private_key(self.__private_key, password)
                 with open(private_key_path, "w") as f:
                     f.write(encrypted_key_data)
             else:
@@ -123,10 +123,10 @@ class SingleKeyManager:
             with open(key_path, "r") as key_file:
                 encrypted_data = key_file.read().strip()
                 
-            self.__private_key = decrypt_private_key(encrypted_data, password)
+            self.__private_key = _encryption.decrypt_private_key(encrypted_data, password)
             return Result(status=Status.SUCCESS)
         
-        except DecryptError as e:
+        except _encryption.DecryptError as e:
             return Result(status=Status.PASSWORD_ERROR)
             
         except Exception as e:

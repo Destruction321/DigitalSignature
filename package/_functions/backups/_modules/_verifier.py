@@ -1,7 +1,7 @@
 # package/_functions/backups/_modules/_verifier.py
 """备份验证器，负责处理备份完整性验证"""
-import threading
 import tkinter as tk
+from threading import Thread
 from pathlib import Path
 from tkinter import ttk, messagebox
 from tkinter.scrolledtext import ScrolledText
@@ -50,7 +50,7 @@ class BackupVerifier:
         
         self.__create_single_verify_dialog(backup)
         
-        thread = threading.Thread(
+        thread = Thread(
             target=self.__single_verification_thread,
             args=(Path(backup_path), backup, callback),
             daemon=True
@@ -73,7 +73,7 @@ class BackupVerifier:
         self.__create_batch_verify_dialog(len(backup_items))
 
         # 启动验证线程
-        thread = threading.Thread(
+        thread = Thread(
             target=self.__batch_verification_thread,
             args=(backup_items, callback),
             daemon=True

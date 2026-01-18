@@ -78,7 +78,12 @@ class BaseSigningTab(ABC):
 
     """可选接口"""
     def _update_signature_path(self, _signature_path: str) -> None:
-        """更新签名路径显示 - 文件签名专用"""
+        """
+        更新签名路径显示 - 文件签名专用
+        
+        Args:
+            signature_path (str): 选择的签名文件路径
+        """
         pass
 
     def _show_hash(self) -> None:
