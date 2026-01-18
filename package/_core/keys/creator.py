@@ -9,12 +9,12 @@ from typing import Callable, cast, TYPE_CHECKING
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives.asymmetric import rsa
 
-from .manager import SingleKeyManager
+from .managers import SingleKeyManager
 from ..._utils import ENCRYPTED, Status, Result
 
 if TYPE_CHECKING:
     from tkinter.ttk import Combobox
-    from .manager import MultiKeyManager
+    from .managers import MultiKeyManager
 
 
 @dataclass

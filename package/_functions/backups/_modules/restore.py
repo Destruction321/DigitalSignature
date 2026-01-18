@@ -5,7 +5,7 @@ from pathlib import Path
 from tkinter import ttk, messagebox
 from typing import Any, Callable, cast
 
-from . import backup_utils
+from .. import backup_utils
 
 
 class BackupRestore:

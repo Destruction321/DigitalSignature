@@ -11,7 +11,7 @@ from ..._utils import DirType, Status, Result
 
 
 if TYPE_CHECKING:
-    from .manager import MultiKeyManager
+    from .managers import MultiKeyManager
 
 
 class KeyRecoveryManager:

@@ -7,7 +7,7 @@ from tkinter import ttk, messagebox
 from tkinter.scrolledtext import ScrolledText
 from typing import Any, Callable, cast
 
-from . import backup_utils
+from .. import backup_utils
 from ...._utils import Status, Result, format_size
 
 

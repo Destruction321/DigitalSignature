@@ -4,17 +4,18 @@ import tkinter as tk
 from tkinter import messagebox, ttk
 from typing import cast, TYPE_CHECKING
 
-from ._modules import backup_utils
-from ._modules.manager import BackupManager
+from . import backup_utils
+
+from ._modules import manager
 from ._modules.restore import BackupRestore
-from ...app._modules import app_utils
-from ..._gui.tabs.key_management_tab import KeyManagementTab
+from ...app import app_utils
 from ..._utils import DirType
 from ..._utils.ui_state_manager import get_ui_state_manager
 
 if TYPE_CHECKING:
     from ..._core.keys.loader import KeyLoader
-    from ..._core.keys.manager import MultiKeyManager
+    from ..._core.keys.managers import MultiKeyManager
+    from ..._gui.key_management_tab import KeyManagementTab
     from ..._utils.ui_state_manager import UIStateManager
         
 
@@ -71,8 +72,7 @@ class BackUps:
     def backup_manager_dialog(self) -> None:
         """统一备份管理对话框"""
         parent_window = cast(tk.Widget, self.__root.winfo_toplevel())
-        dialog = BackupManager(parent_window, self.__ui_state_mgr.update_status)
-        dialog.show()
+        manager.show(parent_window, self.__ui_state_mgr.update_status)
 
 
     """private methods"""

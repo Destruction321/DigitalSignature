@@ -8,7 +8,7 @@ from .._utils import Status, Result, PassWord
 
 if TYPE_CHECKING:
     from tkinter import Widget
-    from .._core.keys.manager import MultiKeyManager
+    from .._core.keys.managers import MultiKeyManager
 
 
 class _SetNewPassword(TypedDict):

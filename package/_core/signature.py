@@ -1,7 +1,6 @@
 # package/_core/signature.py
 """数字签名核心算法"""
 from pathlib import Path
-from tkinter.messagebox import showerror
 from typing import cast, TYPE_CHECKING
 
 from cryptography.exceptions import InvalidSignature
@@ -12,7 +11,7 @@ from cryptography.hazmat.primitives.hashes import SHA256
 from .._utils import DirType, get_path, Status, Result
 
 if TYPE_CHECKING:
-    from .keys.manager import SingleKeyManager
+    from .keys.managers import SingleKeyManager
 
 
 def sign_file(key_manager: SingleKeyManager, file_path: Path, signature_path: str | None = None) -> Result:

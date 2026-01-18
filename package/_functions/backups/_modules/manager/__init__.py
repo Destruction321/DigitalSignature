@@ -1,0 +1,34 @@
+# package/_functions/backups/_modules/manager/__init__.py
+from tkinter import TclError, Toplevel
+from typing import Callable, TYPE_CHECKING
+
+from . import _dialog_creator
+from ...backup_utils import list_backups_with_integrity
+
+if TYPE_CHECKING:
+    from tkinter import Widget
+
+
+def show(parent: Widget, update_status_callback: Callable[[str], None]) -> None:
+    """
+    显示统一备份管理对话框
+    
+    Args:
+        parent (tk.Widget): 父窗口
+        update_status_callback (Callable[[str], None]): 状态更新回调函数
+    """
+    backups = list_backups_with_integrity()
+
+    dialog = Toplevel(parent)
+    dialog.title("备份管理")
+    dialog.geometry("850x650")
+
+    try:
+        parent_top_level = parent.winfo_toplevel()
+        dialog.transient(parent_top_level)
+    except TclError:
+        dialog.transient()
+
+    dialog.grab_set()
+    _dialog_creator.center_dialog(parent, dialog)
+    _dialog_creator.create_ui(parent, backups, dialog, update_status_callback)

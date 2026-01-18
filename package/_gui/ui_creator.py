@@ -5,19 +5,19 @@ from pathlib import Path
 from tkinter import ttk
 from typing import cast, Callable, TYPE_CHECKING
 
-from ..app._modules import app_utils
-from .._functions.cleanups.cleanups import CleanUps
+from .key_management_tab import KeyManagementTab
+from ._signing_tabs.file_signing_tab import FileSigningTab
+from ._signing_tabs.text_signing_tab import TextSigningTab
 from .. import _utils
-from .tabs.key_management_tab import KeyManagementTab
-from .tabs.signing_tabs.file_signing_tab import FileSigningTab
-from .tabs.signing_tabs.text_signing_tab import TextSigningTab
+from ..app import app_utils
+from .._functions.cleanups.cleanups import CleanUps
 from .._functions.backups.backups import BackUps
 from .._utils import DirType
 from .._utils.ui_state_manager import get_ui_state_manager
 
 if TYPE_CHECKING:
     from .._core.keys.loader import KeyLoader
-    from .._core.keys.manager import MultiKeyManager
+    from .._core.keys.managers import MultiKeyManager
 
 
 class UICreator:
@@ -143,8 +143,9 @@ class UICreator:
         button_row1: ttk.Frame = ttk.Frame(tools_container)
         button_row1.pack(fill=tk.X, expand=True, pady=2)
 
-        buttons_row1: list[tuple[str, Callable[[], None]]] = [
-            ("重新加载密钥", lambda: app_utils.reload_current_key(
+        buttons_row1: list[tuple[str, Callable[[], None]]] = [(
+            "重新加载密钥",
+            lambda: app_utils.reload_current_key(
                 multi_km=self.__multi_km,
                 key_loader=self.__key_loader,
                 click_reload_btn=True

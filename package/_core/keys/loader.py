@@ -4,13 +4,13 @@ from tkinter import messagebox
 from tkinter.simpledialog import askstring
 from typing import Any, Callable, cast, TYPE_CHECKING
 
-from .manager import SingleKeyManager
+from .managers import SingleKeyManager
 from ... import _utils
 from ..._utils import Status, Result
 
 if TYPE_CHECKING:
     from tkinter import Tk
-    from .manager import MultiKeyManager
+    from .managers import MultiKeyManager
 
 
 class KeyLoader:
