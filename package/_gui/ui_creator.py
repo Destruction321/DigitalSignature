@@ -6,12 +6,11 @@ from tkinter import ttk
 from typing import cast, Callable, TYPE_CHECKING
 
 from ._key_management_tab import KeyManagementTab
-from ._signing_tabs.file_signing_tab import FileSigningTab
-from ._signing_tabs.text_signing_tab import TextSigningTab
+from ._signing_tabs import FileSigningTab, TextSigningTab
 from .. import _utils
 from ..app import app_utils
-from .._backups.backups import BackUps
-from .._cleanups.cleanups import CleanUps
+from .._backups import BackUps
+from .._cleanups import CleanUps
 from .._utils import DirType
 from .._utils.ui_state_manager import get_ui_state_manager
 
