@@ -12,7 +12,6 @@ from . import app_utils
 from .. import _utils
 from .._core.keys.loader import KeyLoader
 from .._core.keys.managers import SingleKeyManager, MultiKeyManager
-from .._gui.key_management_tab import KeyManagementTab
 from .._gui.ui_creator import UICreator
 from .._utils import DirType, Status
 from .._utils.ui_state_manager import get_ui_state_manager
@@ -55,7 +54,10 @@ class Initializer:
             self.__ui_state_mgr.update_status("请先在密钥管理标签页加载密钥对")
             return
 
-        key_tab = cast(KeyManagementTab, self.__ui.key_tab)
+        if self.__ui.key_tab is None:
+            messagebox.showerror("错误", "密钥管理页未初始化")
+            return
+
         try:
             # 使用KeyLoader静默加载
             loading_result = self.__key_loader.load_key(self.__multi_km.current_key_id, silent=True)
@@ -66,7 +68,7 @@ class Initializer:
                 # 设置密钥管理器
                 self.__set_current_key_manager(result)
                 app_utils.update_directory_info(self.__ui.dir_labels)
-                key_tab.loaded_key_id = self.__multi_km.current_key_id
+                self.__ui.key_tab.loaded_key_id = self.__multi_km.current_key_id
                 self.__ui_state_mgr.update_status(f"自动加载密钥成功: {self.__multi_km.current_key_id}")
             elif not success and loading_result.status == Status.NEED_PASSWORD:
                 self.__ui_state_mgr.update_status(f"密钥 '{self.__multi_km.current_key_id}' 已加密，请手动加载")
@@ -77,7 +79,7 @@ class Initializer:
             self.__ui_state_mgr.update_status(f"自动加载密钥出错: {e}")
 
         # 更新密钥标签页显示
-        key_tab.update_key_status()
+        self.__ui.key_tab.update_key_status()
     
     
     """private methods"""

@@ -5,13 +5,13 @@ from pathlib import Path
 from tkinter import ttk
 from typing import cast, Callable, TYPE_CHECKING
 
-from .key_management_tab import KeyManagementTab
+from ._key_management_tab import KeyManagementTab
 from ._signing_tabs.file_signing_tab import FileSigningTab
 from ._signing_tabs.text_signing_tab import TextSigningTab
 from .. import _utils
 from ..app import app_utils
-from .._functions.cleanups.cleanups import CleanUps
-from .._functions.backups.backups import BackUps
+from .._backups.backups import BackUps
+from .._cleanups.cleanups import CleanUps
 from .._utils import DirType
 from .._utils.ui_state_manager import get_ui_state_manager
 
@@ -126,7 +126,7 @@ class UICreator:
             root=self.__root,
             backup_buttons=self.__backup_buttons,
             dir_labels=self.__dir_labels,
-            key_tab=self.__key_tab,
+            refresh_callback=self.__key_tab.refresh_key_list,
             multi_km=self.__multi_km,
             key_loader=self.__key_loader
         )
