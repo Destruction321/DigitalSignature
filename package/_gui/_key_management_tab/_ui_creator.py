@@ -1,4 +1,4 @@
-# package/_gui/key_management_tab/ui_creator.py
+# package/_gui/_key_management_tab/ui_creator.py
 """密钥管理标签页UI创建器"""
 import tkinter as tk
 from tkinter import ttk, messagebox

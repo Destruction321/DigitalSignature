@@ -1,4 +1,4 @@
-# package/_functions/cleanups/cleanups.py
+# package/_cleanups/cleanups.py
 """数字签名窗口清理模块"""
 import tkinter as tk
 from tkinter import messagebox, ttk

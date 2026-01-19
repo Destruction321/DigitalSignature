@@ -1,4 +1,4 @@
-# package/_functions/backups/_modules/manager/__init__.py
+# package/_backups/_modules/manager/__init__.py
 from tkinter import TclError, Toplevel
 from typing import Callable, TYPE_CHECKING
 

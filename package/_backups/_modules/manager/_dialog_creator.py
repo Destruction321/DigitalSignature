@@ -1,4 +1,4 @@
-# package/_functions/backups/_modules/manager/_dialog_creator.py
+# package/_backups/_modules/manager/_dialog_creator.py
 """备份管理对话框创建"""
 import tkinter as tk
 from tkinter import ttk

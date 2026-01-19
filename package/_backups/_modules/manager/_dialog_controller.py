@@ -1,4 +1,4 @@
-# package/_functions/backups/_modules/manager/_dialog_controller.py
+# package/_backups/_modules/manager/_dialog_controller.py
 """备份管理对话框控制器"""
 import tkinter as tk
 from pathlib import Path

@@ -1,4 +1,4 @@
-# package/_gui/key_management_tab/__init__.py
+# package/_gui/_key_management_tab/__init__.py
 """密钥管理标签页"""
 import tkinter as tk
 from typing import TYPE_CHECKING

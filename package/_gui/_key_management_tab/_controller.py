@@ -1,4 +1,4 @@
-# package/_gui/key_management_tab/controller.py
+# package/_gui/_key_management_tab/controller.py
 """密钥管理标签页控制器"""
 import tkinter as tk
 from tkinter import messagebox

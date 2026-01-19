@@ -1,4 +1,4 @@
-# package/_functions/password_validator.py
+# package/_key_management_tab/_password_validator.py
 """密码验证和重置器"""
 from tkinter import messagebox, simpledialog
 from typing import Callable, cast, TYPE_CHECKING, TypedDict
