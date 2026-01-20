@@ -11,7 +11,7 @@ from .._backup_utils import verify_backup_integrity
 from ..._utils import Status, Result, format_size
 
 
-class BackupVerifier:
+class Verifier:
     """备份验证器，负责处理备份完整性验证"""
     def __init__(self, parent: tk.Widget) -> None:
         self.__parent: tk.Widget = parent
@@ -87,13 +87,13 @@ class BackupVerifier:
         """单个备份验证线程函数"""
         try:
             verify_result = verify_backup_integrity(backup_path)
-            cast(tk.Toplevel, self.__verify_dialog).after(0, lambda: self.__update_single_result(
-                verify_result, backup, callback
-            ))
+            
         except Exception as e:
-            cast(tk.Toplevel, self.__verify_dialog).after(0, lambda: self.__update_single_result(
-                Result(status=Status.BACKUP_VERIFY_FAILED, msg=f"验证失败: {str(e)}"), backup, callback
-            ))
+            verify_result = Result(status=Status.BACKUP_VERIFY_FAILED, msg=f"验证失败: {str(e)}")
+            
+        cast(
+            tk.Toplevel, self.__verify_dialog
+        ).after(0, lambda: self.__update_single_result(verify_result, backup, callback))
 
     def __batch_verification_thread(self, backup_items: list[dict[str, Any]],
                                     callback: Callable[[list[dict[str, Any]]], None]) -> None:
@@ -112,14 +112,9 @@ class BackupVerifier:
             else:
                 invalid_count += 1
 
-            # 短暂暂停，避免UI卡顿
-            import time
-            time.sleep(0.1)
-
         # 完成验证
         cast(tk.Toplevel, self.__progress_dialog).after(
-            0,
-            lambda: self.__finish_batch_verification(
+            0, lambda: self.__finish_batch_verification(
                 valid_count, invalid_count, total_count, callback, backup_items
             )
         )

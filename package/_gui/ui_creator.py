@@ -8,11 +8,11 @@ from typing import cast, Callable, TYPE_CHECKING
 from ._key_management_tab import KeyManagementTab
 from ._signing_tabs import FileSigningTab, TextSigningTab
 from .. import _utils
-from ..app import app_utils
 from .._backups import BackUps
 from .._cleanups import CleanUps
 from .._utils import DirType
 from .._utils.ui_state_manager import get_ui_state_manager
+from ..app import app_utils
 
 if TYPE_CHECKING:
     from .._core.keys.loader import KeyLoader
@@ -26,10 +26,11 @@ class UICreator:
         self.__multi_km: MultiKeyManager = multi_km
         self.__key_loader: KeyLoader = key_loader
         self.__backup_buttons: dict[str, ttk.Button] = {}
-        self.__dir_labels: dict[DirType, ttk.Label] = {}  # 目录标签
         self.__cleanups: CleanUps | None = None
         self.__backups: BackUps | None = None
         self.__status_label: ttk.Label | None = None  # 状态标签
+        
+        self.__dir_labels: dict[DirType, ttk.Label] = {}  # 目录标签
         self.__key_tab: KeyManagementTab | None = None  # 密钥管理标签页
         self.__text_tab: TextSigningTab | None = None  # 文本签名标签页
         self.__file_tab: FileSigningTab | None = None  # 文件签名标签页

@@ -7,7 +7,7 @@ from typing import cast, Callable, TYPE_CHECKING
 from . import _backup_utils
 
 from ._modules import manager
-from ._modules.restore import BackupRestore
+from ._modules.restore import Restore
 from ..app import app_utils
 from .._utils import DirType
 from .._utils.ui_state_manager import get_ui_state_manager
@@ -59,12 +59,12 @@ class BackUps:
             messagebox.showinfo("恢复备份", "没有找到可用的备份文件")
             return
 
-        dialog = BackupRestore(
-            self.__root,
-            self.__ui_state_mgr.update_status,
-            lambda: app_utils.update_directory_info(self.__dir_labels),
-            self.__refresh_callback,
-            lambda: app_utils.reload_current_key(self.__multi_km, self.__key_loader)
+        dialog = Restore(
+            parent=self.__root,
+            update_status_callback=self.__ui_state_mgr.update_status,
+            update_dir_callback=lambda: app_utils.update_directory_info(self.__dir_labels),
+            refresh_key_callback=self.__refresh_callback,
+            reload_key_callback=lambda: app_utils.reload_current_key(self.__multi_km, self.__key_loader)
         )
         dialog.show()
 

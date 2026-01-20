@@ -10,7 +10,7 @@ from typing import Any, Callable, Final
 from .. import _utils
 from .._utils import DirType, Status, Result
 
-_BACKUP_: Final[str] = "_backup_"
+_BACKUP_: Final[str] = DirType.BACKUP.name
 
 _DATA: Final[str] = "data"
 
@@ -130,27 +130,26 @@ def verify_backup_integrity(backup_dir: Path) -> Result:
 
         # 计算当前备份的校验和
         current_checksum, current_file_count, current_total_size = _calculate_backup_checksum(backup_dir)
+        message: str = ""
 
         # 验证校验和
         if stored_checksum != current_checksum:
-            message = "备份完整性验证失败：校验和不匹配"
-            return Result(status=Status.BACKUP_VERIFY_FAILED, data=checksum_data, msg=message)
+            message += "备份完整性验证失败：\n校验和不匹配"
 
         # 验证文件数量
         if file_count != current_file_count:
-            message = f"备份完整性验证失败：文件数量不匹配（应有{file_count}个，实有{current_file_count}个）"
-            return Result(status=Status.BACKUP_VERIFY_FAILED, data=checksum_data, msg=message)
+            message += f"\n文件数量不匹配（应有{file_count}个，实有{current_file_count}个）"
 
         # 验证文件大小
         if total_size != current_total_size:
-            message = f"备份完整性验证失败：文件大小不匹配（应有{total_size}字节，实有{current_total_size}字节）"
+            message += f"\n文件大小不匹配（应有{total_size}字节，实有{current_total_size}字节）"
             return Result(status=Status.BACKUP_VERIFY_FAILED, data=checksum_data, msg=message)
 
         message = f"备份完整性验证通过（{backup_type}，{file_count}个文件，{_utils.format_size(total_size)}）"
         return Result(status=Status.BACKUP_VERIFY_SUCCESS, data=checksum_data, msg=message)
     
     except Exception as e:
-        return Result(status=Status.BACKUP_VERIFY_SUCCESS, data={}, msg=f"备份完整性验证失败：{e}")
+        return Result(status=Status.BACKUP_VERIFY_FAILED, data={}, msg=f"备份完整性验证失败：{e}")
 
 def list_backups() -> list[dict[str, Any]]:
     """

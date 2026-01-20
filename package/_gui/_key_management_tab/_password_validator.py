@@ -172,14 +172,10 @@ class PasswordValidator:
         if self.__update_security_callback:
             self.__update_security_callback(True)
             
-        self.__update_status(f"{context_text}密钥密码: {key_id}")
+        if self.__update_status_callback:
+            self.__update_status_callback(f"{context_text}密钥密码: {key_id}")
         
         # 成功结果
         status_desc = "设置加密" if new_password else "移除加密"
         message = f"{context_text}成功（{status_desc}）"
         return Result(status=Status.SUCCESS, msg=message)
-
-    def __update_status(self, message: str) -> None:
-        """更新状态"""
-        if self.__update_status_callback:
-            self.__update_status_callback(message)

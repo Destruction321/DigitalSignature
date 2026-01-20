@@ -8,7 +8,7 @@ from typing import Any, Callable, cast
 from .. import _backup_utils
 
 
-class BackupRestore:
+class Restore:
     """备份恢复器"""
     def __init__(self, parent: tk.Tk,
                  update_status_callback: Callable[[str], None],

@@ -24,10 +24,7 @@ class Initializer:
     """数字签名窗口初始化器"""
     def __init__(self, root: tk.Tk) -> None:
         self.__ui_state_mgr: UIStateManager = get_ui_state_manager()
-        
-        self.__current_km: SingleKeyManager | None = None  # 当前密钥管理器
         self.__multi_km: MultiKeyManager = MultiKeyManager()
-        
         self.__key_loader: KeyLoader = KeyLoader(
             multi_key_manager=self.__multi_km,
             parent=root,
@@ -35,6 +32,7 @@ class Initializer:
             update_status_callback=self.__ui_state_mgr.update_status,
         )
         
+        self.__current_km: SingleKeyManager | None = None  # 当前密钥管理器
         self.__ui: UICreator = UICreator(root, self.__multi_km, self.__key_loader)
         
         

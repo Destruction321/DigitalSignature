@@ -5,7 +5,7 @@ from pathlib import Path
 from tkinter import ttk, messagebox
 from typing import Any, cast, Callable, TYPE_CHECKING
 
-from .._verifier import BackupVerifier
+from .._verifier import Verifier
 from ... import _backup_utils
 from ...._utils import format_size
 
@@ -16,8 +16,8 @@ if TYPE_CHECKING:
 class Controller:
     """对话框控制器"""
     def __init__(self, initializer: Initializer, parent: tk.Widget) -> None:
-        self.__initializer = initializer  # 访问对话框UI控件
-        self.__verifier = BackupVerifier(parent)
+        self.__initializer: Initializer = initializer  # 访问对话框UI控件
+        self.__verifier: Verifier = Verifier(parent)
         self.__backup_items: list[dict] = []
         
     
