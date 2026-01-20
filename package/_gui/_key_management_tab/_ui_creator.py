@@ -24,12 +24,12 @@ class UICreator:
         self.__password_entry: tk.Entry | None = None
         self.__ui_state_mgr: UIStateManager = get_ui_state_manager()
         
-        self.__parent: tk.Widget = parent
         self.__key_listbox: tk.Listbox | None = None
         self.__key_status_label: ttk.Label | None = None
         self.__security_status_label: ttk.Label | None = None
-        self.__multi_km: MultiKeyManager = multi_key_manager
         
+        self.__parent: tk.Widget = parent
+        self.__multi_km: MultiKeyManager = multi_key_manager
         self.__controller: Controller = Controller(self, key_loader)
 
 

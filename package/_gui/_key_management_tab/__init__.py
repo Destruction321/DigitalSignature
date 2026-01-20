@@ -13,8 +13,10 @@ if TYPE_CHECKING:
 class KeyManagementTab:
     """密钥管理标签页"""
     def __init__(self, parent: tk.Widget, multi_key_manager: MultiKeyManager, key_loader: KeyLoader) -> None:
+        # 创建UI控制器
         self.__ui: UICreator = UICreator(parent, multi_key_manager, key_loader)
         
+        # 创建标签页UI
         self.__ui.setup_ui()
         
         self.__ui.controller.update_security_status(self.__ui.multi_km.config_secure)

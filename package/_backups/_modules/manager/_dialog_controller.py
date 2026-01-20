@@ -6,7 +6,7 @@ from tkinter import ttk, messagebox
 from typing import Any, cast, Callable, TYPE_CHECKING
 
 from .._verifier import BackupVerifier
-from ... import backup_utils
+from ... import _backup_utils
 from ...._utils import format_size
 
 if TYPE_CHECKING:
@@ -24,7 +24,7 @@ class Controller:
     """public methods -- bind to buttons"""
     def refresh_list(self, click_btn: bool = False) -> None:
         """刷新备份列表"""
-        backups = backup_utils.list_backups_with_integrity()
+        backups = _backup_utils.list_backups_with_integrity()
         self.__populate_list(backups)
 
         # 更新统计信息
@@ -79,7 +79,7 @@ class Controller:
             return
         
         try:
-            delete_result = backup_utils.delete_backup(selected_backup["name"])
+            delete_result = _backup_utils.delete_backup(selected_backup["name"])
             if delete_result.is_success():
                 update_status_callback(f"备份删除成功: {selected_backup["name"]}")
                 messagebox.showinfo("删除成功", f"备份删除成功！\n\n{delete_result.msg}")

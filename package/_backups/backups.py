@@ -4,7 +4,7 @@ import tkinter as tk
 from tkinter import messagebox, ttk
 from typing import cast, Callable, TYPE_CHECKING
 
-from . import backup_utils
+from . import _backup_utils
 
 from ._modules import manager
 from ._modules.restore import BackupRestore
@@ -54,7 +54,7 @@ class BackUps:
 
     def restore_backup_dialog(self) -> None:
         """恢复备份对话框"""
-        backups = backup_utils.list_backups_with_integrity()
+        backups = _backup_utils.list_backups_with_integrity()
         if not backups:
             messagebox.showinfo("恢复备份", "没有找到可用的备份文件")
             return
@@ -77,22 +77,22 @@ class BackUps:
     """private methods"""
     def __backup_all_data(self) -> None:
         """备份所有数据"""
-        backup_result = backup_utils.create_backup(DirType.FULL)
+        backup_result = _backup_utils.create_backup(DirType.FULL)
         self.__handle_backup_result(backup_result.is_success(), backup_result.msg, "数据备份")
 
     def __backup_keys_only(self) -> None:
         """仅备份密钥"""
-        backup_result = backup_utils.create_backup(DirType.KEYS)
+        backup_result = _backup_utils.create_backup(DirType.KEYS)
         self.__handle_backup_result(backup_result.is_success(), backup_result.msg, "密钥备份")
 
     def __backup_texts_only(self) -> None:
         """仅备份文本"""
-        backup_result = backup_utils.create_backup(DirType.TEXTS)
+        backup_result = _backup_utils.create_backup(DirType.TEXTS)
         self.__handle_backup_result(backup_result.is_success(), backup_result.msg, "文本备份")
 
     def __backup_signatures_only(self) -> None:
         """仅备份签名"""
-        backup_result = backup_utils.create_backup(DirType.SIGNATURES)
+        backup_result = _backup_utils.create_backup(DirType.SIGNATURES)
         self.__handle_backup_result(backup_result.is_success(), backup_result.msg, "签名备份")
 
     def __handle_backup_result(self, success: bool, result: str, operation: str) -> None:

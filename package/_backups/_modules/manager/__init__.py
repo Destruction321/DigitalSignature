@@ -3,7 +3,7 @@ from tkinter import TclError, Toplevel
 from typing import Callable, TYPE_CHECKING
 
 from . import _dialog_creator
-from ...backup_utils import list_backups_with_integrity
+from ..._backup_utils import list_backups_with_integrity
 
 if TYPE_CHECKING:
     from tkinter import Widget

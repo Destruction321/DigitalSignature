@@ -7,7 +7,7 @@ from tkinter import ttk, messagebox
 from tkinter.scrolledtext import ScrolledText
 from typing import Any, Callable, cast
 
-from .. import backup_utils
+from .._backup_utils import verify_backup_integrity
 from ..._utils import Status, Result, format_size
 
 
@@ -86,7 +86,7 @@ class BackupVerifier:
                                      callback: Callable[[dict[str, Any]], None]) -> None:
         """单个备份验证线程函数"""
         try:
-            verify_result = backup_utils.verify_backup_integrity(backup_path)
+            verify_result = verify_backup_integrity(backup_path)
             cast(tk.Toplevel, self.__verify_dialog).after(0, lambda: self.__update_single_result(
                 verify_result, backup, callback
             ))
@@ -137,7 +137,7 @@ class BackupVerifier:
 
         try:
             if backup_path and backup_path.exists():
-                verify_result = backup_utils.verify_backup_integrity(backup_path)
+                verify_result = verify_backup_integrity(backup_path)
                 
                 is_valid = verify_result.is_success()
                 message = verify_result.msg
