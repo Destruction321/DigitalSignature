@@ -10,7 +10,7 @@ from typing import Any, Callable, Final
 from .. import _utils
 from .._utils import DirType, Status, Result
 
-_BACKUP_: Final[str] = DirType.BACKUP.name
+_BACKUP_: Final[str] = DirType.BACKUP.value
 
 _DATA: Final[str] = "data"
 

@@ -6,11 +6,10 @@ from typing import cast, Callable, TYPE_CHECKING
 
 from . import _backup_utils
 
-from ._modules import manager
-from ._modules.restore import Restore
-from ..app import app_utils
+from ._modules import Restore, manager
 from .._utils import DirType
 from .._utils.ui_state_manager import get_ui_state_manager
+from ..app import app_utils
 
 if TYPE_CHECKING:
     from .._core.keys.loader import KeyLoader
