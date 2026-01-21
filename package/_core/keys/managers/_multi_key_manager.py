@@ -3,7 +3,7 @@
 from pathlib import Path
 from typing import Callable, cast, TYPE_CHECKING, TypedDict
 
-from .single_key_manager import SingleKeyManager
+from ._single_key_manager import SingleKeyManager
 from .._config import save_config
 from .._encryption import DecryptError
 from .._recovery import KeyRecoveryManager
