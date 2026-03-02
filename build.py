@@ -52,9 +52,16 @@ def main():
         "--workpath", str(project_root / "build"),
         "--distpath", str(project_root / "dist"),
         "--specpath", str(project_root / "build_resources"),
-        "--icon", str(project_root / "build_resources" / "icon.ico"),
-        str(project_root / "main.py")
     ]
+
+    icon_path = project_root / "build_resources" / "icon.ico"
+    if icon_path.exists():
+        print(f"\033[33m发现图标文件：{icon_path}\033[0m")
+        cmd.extend(["--icon", str(icon_path)])
+    else:
+        print(f"\033[31m警告: 图标文件不存在: {icon_path}\033[0m")
+    
+    cmd.append(str(project_root / "main.py"))
     
     print(f"\033[35m\n执行命令:\033[0m")
     print(f"\033[34m{" ".join(cmd)}\033[0m")
