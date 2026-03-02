@@ -6,16 +6,16 @@ from tkinter import Tk
 from package import DIRS
 from package.app import APP
 
-
-# 创建数据目录
-for dir_path in DIRS.values():
-    Path(dir_path).mkdir(parents=True, exist_ok=True)
-    
-# 启动应用程序
 try:
+    # 创建数据目录
+    for dir_path in DIRS.values():
+        Path(dir_path).mkdir(parents=True, exist_ok=True)
+    
+    # 启动应用程序
     root = Tk()
     _app = APP(root)
     root.mainloop()
+    
 except Exception as e:
     from tkinter.messagebox import showerror
     showerror("启动应用程序失败", f"{e}")
