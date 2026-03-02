@@ -139,13 +139,20 @@ class FileSigningTab(BaseSigningTab):
         signature_path_entry.insert(0, file_path)
 
     def __validate_file_exists(self, file_path: str, file_type = "") -> bool:
-        """验证文件存在性"""
-        file_result = self._validate_file_exists(file_path, file_type)
-        if file_result.is_success():
-            return True
+        """验证文件是否存在"""
+        if not file_path or not file_path.strip():
+            self._show_warning(f"请选择有效的{file_type}文件")
+            return False
+
+        if not Path(file_path).exists():
+            self._show_warning(f"{file_type}文件不存在: {file_path}")
+            return False
+
+        if not Path(file_path).is_file():
+            self._show_warning(f"{file_type}文件不是有效的文件: {file_path}")
+            return False
             
-        self._show_warning(file_result.msg)
-        return False
+        return True
     
     def __get_file_hash_info(self, file_path: str) -> dict | Exception:
         """获取文件哈希信息"""

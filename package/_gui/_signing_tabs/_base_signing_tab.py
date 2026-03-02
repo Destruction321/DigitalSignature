@@ -1,7 +1,6 @@
 # package/_gui/tabs/signing_tabs/_base_signing_tab.py
 """签名标签页基类"""
 import tkinter as tk
-from pathlib import Path
 from abc import ABC, abstractmethod
 from tkinter import ttk, messagebox
 from tkinter.filedialog import askopenfilename
@@ -11,7 +10,7 @@ from typing import Callable, TYPE_CHECKING
 from cryptography.hazmat.primitives.hashes import Hash, SHA256
 
 from ..._utils.ui_state_manager import get_ui_state_manager
-from ..._utils import BASE_DIR, Status, Result
+from ..._utils import BASE_DIR
 
 if TYPE_CHECKING:
     from ..._core.keys.managers import SingleKeyManager
@@ -109,25 +108,6 @@ class BaseSigningTab(ABC):
         self.__create_operation_panel(1, title)
         self.__create_result_area(2)
 
-    def _sign_or_verify(self, mode: str) -> None:
-        """
-        签名或验证内容
-        
-        Args:
-            mode (str): 操作模式 ("sign"=签名, "verify"=验证)
-        """
-        validation_result = self._validate_km_and_content()
-        if validation_result is None:
-            return
-
-        km: SingleKeyManager
-        km, content = validation_result
-        
-        if mode == "sign":
-            self._sign_content(km, content)
-        else:
-            self._verify_content(km, content)
-
     def _handle_sign_success(self, signature_file: str, content_path: str, content_hash: str) -> None:
         """
         处理签名成功
@@ -215,35 +195,14 @@ class BaseSigningTab(ABC):
         self._ui_state_mgr.show_result(text, self.__tab_type)
 
     def _show_warning(self, message: str) -> None:
-        """显示警告信息 - 统一状态管理"""
-        messagebox.showwarning("警告", message)
-        self._ui_state_mgr.update_status(f"警告: {message}")
-
-    @staticmethod
-    def _validate_file_exists(file_path: str, file_description: str = "") -> Result:
         """
-        验证文件是否存在
+        显示警告信息
         
         Args:
-            file_path (str): 文件路径
-            file_description (str): 文件描述（用于错误消息）
-
-        Returns:
-            (status, error) (tuple[bool, str]): 返回验证结果和错误消息
+            message (str): 警告消息文本
         """
-        if not file_path or not file_path.strip():
-            message = f"请选择有效的{file_description}文件"
-            return Result(status=Status.FILE_NOT_FOUND, msg=message)
-
-        if not Path(file_path).exists():
-            message = f"{file_description}文件不存在: {file_path}"
-            return Result(status=Status.FILE_NOT_FOUND, msg=message)
-
-        if not Path(file_path).is_file():
-            message = f"{file_description}文件不是有效的文件: {file_path}"
-            return Result(status=Status.FILE_NOT_FOUND, msg=message)
-
-        return Result(status=Status.SUCCESS)
+        messagebox.showwarning("警告", message)
+        self._ui_state_mgr.update_status(f"警告: {message}")
 
     def _handle_operation_error(self, operation_name: str, error: Exception) -> None:
         """
@@ -314,29 +273,6 @@ class BaseSigningTab(ABC):
 
         return g_file_hash.hex()
 
-    @staticmethod
-    def _create_scrolled_text(parent: tk.Widget, height: int = 8,
-                              font: tuple[str, int] = ("Consolas", 9),
-                              wrap: str = tk.WORD) -> ScrolledText:
-        """
-        创建滚动文本框
-        
-        Args:
-            parent (tk.Widget): 父组件
-            height (int): 高度（行数），默认为8
-            font (tuple[str, int]): 字体
-            wrap (str): 换行方式
-
-        Returns:
-            scrolledtext (ScrolledText): 滚动文本框组件
-        """
-        return ScrolledText(
-            parent,
-            height=height,
-            font=font,
-            wrap=wrap
-        )
-
 
     """private methods"""
     def __show_info(self, message: str) -> None:
@@ -356,14 +292,9 @@ class BaseSigningTab(ABC):
         op_frame.grid(row=row, column=0, sticky=tk.EW, pady=2)
         op_frame.columnconfigure(0, weight=1)
 
-        buttons = self.__get_operation_buttons(title)
-        self.__create_button_row(op_frame, buttons)
-
-    @staticmethod
-    def __create_button_row(parent: tk.Widget, buttons: list[dict[str, Callable[[], None]]]) -> ttk.Frame:
-        """创建按钮行"""
-        button_row: ttk.Frame = ttk.Frame(parent)
+        button_row: ttk.Frame = ttk.Frame(op_frame)
         button_row.pack(fill=tk.X, expand=True)
+        buttons = self.__get_operation_buttons(title)
 
         for button_config in buttons:
             ttk.Button(
@@ -372,8 +303,6 @@ class BaseSigningTab(ABC):
                 command=button_config["command"]
             ).pack(side=tk.LEFT, expand=True, fill=tk.X, padx=2)
 
-        return button_row
-
     def __create_result_area(self, row: int) -> None:
         """创建结果区域"""
         result_frame = ttk.LabelFrame(self._parent, text="操作结果", padding=5)
@@ -381,7 +310,7 @@ class BaseSigningTab(ABC):
         result_frame.columnconfigure(0, weight=1)
         result_frame.rowconfigure(0, weight=1)
 
-        self.__result_text = self._create_scrolled_text(result_frame)
+        self.__result_text = ScrolledText(result_frame, height=8, font=("Consolas", 9), wrap=tk.WORD)
         self.__result_text.grid(row=0, column=0, sticky=tk.NSEW)
 
     def __show_result_text(self, is_valid: bool, content_path: str, signature_path: str, content_hash: str) -> None:
@@ -403,8 +332,8 @@ class BaseSigningTab(ABC):
     def __get_operation_buttons(self, title: str) -> list:
         """获取操作按钮配置"""
         buttons = [
-            {"text": f"签名{title}", "command": lambda: self._sign_or_verify(mode="sign")},
-            {"text": f"验证{title}签名", "command": lambda: self._sign_or_verify(mode="verify")},
+            {"text": f"签名{title}", "command": lambda: self.__sign_or_verify(mode="sign")},
+            {"text": f"验证{title}签名", "command": lambda: self.__sign_or_verify(mode="verify")},
             {"text": "清空结果", "command": self.__clear_results}
         ]
 
@@ -415,6 +344,20 @@ class BaseSigningTab(ABC):
             buttons.insert(3, {"text": "保存文本", "command": self._save_content})
 
         return buttons
+
+    def __sign_or_verify(self, mode: str) -> None:
+        """签名或验证内容"""
+        validation_result = self._validate_km_and_content()
+        if validation_result is None:
+            return
+
+        km: SingleKeyManager
+        km, content = validation_result
+        
+        if mode == "sign":
+            self._sign_content(km, content)
+        else:
+            self._verify_content(km, content)
 
     def __clear_results(self) -> None:
         """清空结果显示区域"""

@@ -4,6 +4,7 @@ import tkinter as tk
 from pathlib import Path
 from tkinter import messagebox
 from tkinter.filedialog import asksaveasfilename
+from tkinter.scrolledtext import ScrolledText
 from tkinter.ttk import LabelFrame
 from datetime import datetime
 from typing import Callable, TYPE_CHECKING
@@ -31,11 +32,7 @@ class TextSigningTab(BaseSigningTab):
         editor_frame.columnconfigure(0, weight=1)
         editor_frame.rowconfigure(0, weight=1)
 
-        self.__text_editor = self._create_scrolled_text(
-            editor_frame,
-            height=10,
-            font=("Consolas", 10)
-        )
+        self.__text_editor = ScrolledText(editor_frame, height=10, font=("Consolas", 10), wrap=tk.WORD)
         self.__text_editor.grid(row=0, column=0, sticky=tk.NSEW)
 
         default_text = """哈尔滨工程大学 - 数据安全课程设计
