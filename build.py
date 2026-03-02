@@ -3,8 +3,13 @@ import subprocess, sys
 from pathlib import Path
 from shutil import which
 
-def get_pyinstaller_exe():
-    """获取 pyinstaller.exe 的路径"""
+def get_pyinstaller_exe() -> Path | None:
+    """
+    获取 pyinstaller.exe 的路径
+    
+    Returns:
+        exe_path (Path | None): pyinstaller.exe 的完整路径，如果未找到则返回 None
+    """
     # 方法1：从当前 Python 环境的 Scripts 目录查找
     python_dir = Path(sys.executable).parent
     exe_path = python_dir / "Scripts" / "pyinstaller.exe"
@@ -29,20 +34,17 @@ def get_pyinstaller_exe():
     
     return None
 
-def main():
-    project_root = Path(__file__).parent
+def build_command(pyinstaller_exe: Path, project_root: Path) -> list[str]:
+    """
+    构建 PyInstaller 命令
     
-    # 查找 pyinstaller.exe
-    pyinstaller_exe = get_pyinstaller_exe()
-    
-    if not pyinstaller_exe:
-        print("\033[31m找不到 pyinstaller.exe\033[0m")
-        print("\033[31m请确保已安装 PyInstaller: pip install pyinstaller\033[0m")
-        return
-    
-    print(f"\033[33m找到 PyInstaller: {pyinstaller_exe}\033[0m")
-
-    # 构建命令
+    Args:
+        pyinstaller_exe (Path): pyinstaller.exe 的路径
+        project_root (Path): 项目根目录的路径
+        
+    Returns:
+        cmd (list[str]): 构建命令列表
+    """
     cmd = [
         str(pyinstaller_exe),
         "--clean",
@@ -62,11 +64,16 @@ def main():
         print(f"\033[31m警告: 图标文件不存在: {icon_path}\033[0m")
     
     cmd.append(str(project_root / "main.py"))
+    return cmd
+
+def build_dist(cmd: list[str], project_root: Path) -> None:
+    """
+    执行构建命令并显示结果
     
-    print(f"\033[35m\n执行命令:\033[0m")
-    print(f"\033[34m{" ".join(cmd)}\033[0m")
-    
-    # 直接运行，不捕获输出，实时显示
+    Args:
+        cmd (list[str]): 构建命令列表
+        project_root (Path): 项目根目录的路径
+    """
     try:
         subprocess.run(cmd, check=True)
         print("\n\033[33m构建完成！\033[0m")
@@ -97,5 +104,24 @@ def main():
     except Exception as e:
         print(f"\n\033[31m发生错误: {e}\033[0m")
 
+
 if __name__ == "__main__":
-    main()
+    # 查找 pyinstaller.exe
+    pyinstaller_exe = get_pyinstaller_exe()
+    
+    if not pyinstaller_exe:
+        print("\033[31m找不到 pyinstaller.exe\033[0m")
+        print("\033[31m请确保已安装 PyInstaller: pip install pyinstaller\033[0m")
+    
+    else:
+        print(f"\033[33m找到 PyInstaller: {pyinstaller_exe}\033[0m")
+
+        # 构建命令
+        project_root = Path(__file__).parent
+        cmd = build_command(pyinstaller_exe, project_root)
+        
+        print(f"\033[35m\n执行命令:\033[0m")
+        print(f"\033[34m{" ".join(cmd)}\033[0m")
+        
+        # 执行构建
+        build_dist(cmd, project_root)
