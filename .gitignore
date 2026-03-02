@@ -3,6 +3,5 @@
 /build*
 /data*
 /dist
-*/__pycache__/
+**/__pycache__
 /*_backup_*
-
