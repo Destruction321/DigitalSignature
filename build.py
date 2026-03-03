@@ -120,8 +120,7 @@ if __name__ == "__main__":
         project_root = Path(__file__).parent
         cmd = build_command(pyinstaller_exe, project_root)
         
+        # 执行构建命令
         print(f"\033[35m\n执行命令:\033[0m")
         print(f"\033[34m{" ".join(cmd)}\033[0m")
-        
-        # 执行构建
         build_dist(cmd, project_root)
