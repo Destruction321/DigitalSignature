@@ -1,5 +1,7 @@
+# build.py
 """构建脚本"""
-import subprocess, sys
+import sys
+from subprocess import run, CalledProcessError
 from pathlib import Path
 from shutil import which
 
@@ -15,7 +17,6 @@ def get_pyinstaller_exe() -> Path | None:
     exe_path = python_dir / "Scripts" / "pyinstaller.exe"
     
     if exe_path.exists():
-        print(f"\033[33m发现 PyInstaller: {exe_path}\033[0m")
         return exe_path
     
     # 方法2：从虚拟环境目录查找
@@ -23,14 +24,12 @@ def get_pyinstaller_exe() -> Path | None:
         venv_dir = Path(sys.prefix)
         exe_path = venv_dir / "Scripts" / "pyinstaller.exe"
         if exe_path.exists():
-            print(f"\033[33m发现 PyInstaller: {exe_path}\033[0m")
             return exe_path
     
     # 方法3：从 PATH 中查找
     try:
         exe_path = which("pyinstaller.exe")
         if exe_path:
-            print(f"\033[33m发现 PyInstaller: {exe_path}\033[0m")
             return Path(exe_path)
     except:
         pass
@@ -78,7 +77,7 @@ def build_dist(cmd: list[str], project_root: Path) -> None:
         project_root (Path): 项目根目录的路径
     """
     try:
-        subprocess.run(cmd, check=True)
+        run(cmd, check=True)
         print("\n\033[33m构建完成！\033[0m")
         
         # 显示结果
@@ -102,7 +101,7 @@ def build_dist(cmd: list[str], project_root: Path) -> None:
         print(f"\033[33m输出目录: {exe_path}\033[0m")
         print(f"\033[33m目录大小: {total_size:.1f} MB\033[0m")
             
-    except subprocess.CalledProcessError as e:
+    except CalledProcessError as e:
         print(f"\n\033[31m构建失败: {e}\033[0m")
     except Exception as e:
         print(f"\n\033[31m发生错误: {e}\033[0m")

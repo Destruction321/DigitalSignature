@@ -49,7 +49,7 @@ def create_backup(backup_type: DirType = DirType.FULL, backup_dir: str | None = 
         backup_dir (str | None): 备份目录路径（None=自动生成目录）
         
     Returns:
-        backup_result (Result): 备份结果
+        result (Result): 备份结果，成功时包含备份路径和结果消息
     """
     operation = _BACKUP_OPERATIONS.get(backup_type)
     if not operation:
@@ -80,7 +80,7 @@ def list_backups_with_integrity() -> Result:
     列出所有备份目录，包含完整性验证信息
     
     Returns:
-        backups (list[dict[str, Any]]): 备份信息列表，每项包含完整性验证结果
+        result (Result): 备份列表结果，成功时添加完整性验证结果
     """
     backups = list_backups()
     if not backups.is_success():
@@ -159,7 +159,7 @@ def list_backups() -> Result:
     列出所有备份目录
     
     Returns:
-        backups (list[dict[str, Any]]): 备份信息列表
+        result (Result): 备份列表结果，成功时包含备份信息列表，每项包含名称、路径、创建时间和大小
     """
     backups: list[dict[str, Any]] = []
     current_dir = Path.cwd()

@@ -8,9 +8,10 @@ from package import DIRS
 from package.app import APP
 
 
-def _initialize_loggers(test: bool = False) -> None:
+def _initialize_loggers() -> None:
     """初始化日志记录器"""
     log_dir = Path("logs")
+    test = not log_dir.exists()
     log_dir.mkdir(parents=True, exist_ok=True)
 
     # 创建根 logger
@@ -37,12 +38,14 @@ def _initialize_loggers(test: bool = False) -> None:
     logger.addHandler(warn_handler)
 
     # 测试日志
-    if test:
-        logging.debug("这是 debug 信息")
-        logging.info("这是 info 信息")
-        logging.warning("这是 warning 信息")
-        logging.error("这是 error 信息")
-        logging.critical("这是 critical 信息")
+    if not test:
+        return
+    
+    logging.debug("这是 debug 信息")
+    logging.info("这是 info 信息")
+    logging.warning("这是 warning 信息")
+    logging.error("这是 error 信息")
+    logging.critical("这是 critical 信息")
 
 
 if __name__ == "__main__":
