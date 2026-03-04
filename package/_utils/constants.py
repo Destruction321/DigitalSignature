@@ -36,6 +36,7 @@ class FileType(Enum):
 class Status(Enum):
     # 通用状态
     SUCCESS = ("SUCCESS", "操作成功")
+    FAILED = ("FAILED", "操作失败")
     PARAM_EMPTY = ("PARAM_EMPTY", "关键参数为空")
     FILE_NOT_FOUND = ("FILE_NOT_FOUND", "文件不存在")
     DIR_NOT_FOUND = ("DIR_NOT_FOUND", "目录不存在")

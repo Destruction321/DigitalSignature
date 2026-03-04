@@ -25,6 +25,11 @@ class Controller:
     def refresh_list(self, click_btn: bool = False) -> None:
         """刷新备份列表"""
         backups = _backup_utils.list_backups_with_integrity()
+        if not backups.is_success():
+            messagebox.showerror("刷新备份", backups.msg)
+            return
+        
+        backups = backups.data
         self.__populate_list(backups)
 
         # 更新统计信息

@@ -1,5 +1,6 @@
 # package/_backups/_modules/manager/__init__.py
 from tkinter import TclError, Toplevel
+from tkinter.messagebox import showerror
 from typing import Callable, TYPE_CHECKING
 
 from . import _dialog_creator
@@ -18,6 +19,9 @@ def show(parent: Widget, update_status_callback: Callable[[str], None]) -> None:
         update_status_callback (Callable[[str], None]): 状态更新回调函数
     """
     backups = list_backups_with_integrity()
+    if not backups.is_success():
+        showerror("备份管理", backups.msg)
+        return
 
     dialog = Toplevel(parent)
     dialog.title("备份管理")
@@ -31,4 +35,4 @@ def show(parent: Widget, update_status_callback: Callable[[str], None]) -> None:
 
     dialog.grab_set()
     _dialog_creator.center_dialog(parent, dialog)
-    _dialog_creator.create_ui(parent, backups, dialog, update_status_callback)
+    _dialog_creator.create_ui(parent, backups.data, dialog, update_status_callback)

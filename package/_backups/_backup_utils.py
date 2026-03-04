@@ -3,6 +3,7 @@
 import json, shutil
 from datetime import datetime
 from hashlib import sha256
+from logging import warning
 from os.path import relpath
 from pathlib import Path
 from typing import Any, Callable, Final
@@ -74,7 +75,7 @@ def create_backup(backup_type: DirType = DirType.FULL, backup_dir: str | None = 
             
     return Result(status=Status.BACKUP_SUCCESS, data=backup_path, msg=backup_result.msg)
 
-def list_backups_with_integrity() -> list[dict[str, Any]]:
+def list_backups_with_integrity() -> Result:
     """
     列出所有备份目录，包含完整性验证信息
     
@@ -82,8 +83,10 @@ def list_backups_with_integrity() -> list[dict[str, Any]]:
         backups (list[dict[str, Any]]): 备份信息列表，每项包含完整性验证结果
     """
     backups = list_backups()
+    if not backups.is_success():
+        return Result(status=backups.status, data=[], msg=backups.msg)
 
-    for backup in backups:
+    for backup in backups.data:
         # 验证备份完整性
         verify_result = verify_backup_integrity(backup["path"])
 
@@ -151,7 +154,7 @@ def verify_backup_integrity(backup_dir: Path) -> Result:
     except Exception as e:
         return Result(status=Status.BACKUP_VERIFY_FAILED, data={}, msg=f"备份完整性验证失败：{e}")
 
-def list_backups() -> list[dict[str, Any]]:
+def list_backups() -> Result:
     """
     列出所有备份目录
     
@@ -175,18 +178,20 @@ def list_backups() -> list[dict[str, Any]]:
                 }
                 backups.append(backup_info)
             except Exception as e:
-                print(f"获取备份信息失败 {item}: {e}")
+                warning(f"无法访问备份目录 {item}: {e}")
                 continue
 
         backups.sort(key=lambda x: x["created_time"], reverse=True)
-        return backups
+        return Result(status=Status.SUCCESS, data=backups)
 
-    except (FileNotFoundError, PermissionError):
-        return []
+    except FileNotFoundError:
+        return Result(status=Status.NO_BACKUP_FILE, data=[], msg="没有找到备份目录")
+    
+    except PermissionError:
+        return Result(status=Status.PERMISSION_DENIED, data=[], msg="权限不足，无法访问备份目录")
     
     except Exception as e:
-        print(f"列出备份时发生错误: {e}")
-        return []
+        return Result(status=Status.FAILED, data=[], msg=f"列出备份时发生错误: {e}")
 
 def restore_backup(backup_dir: Path, overwrite: bool = False, backup_type: DirType | None = None) -> Result:
     """
@@ -393,7 +398,7 @@ def _calculate_backup_checksum(backup_dir: Path) -> tuple[str, int, int]:
                         
             except Exception as e:
                 # 如果某个文件无法读取，继续处理其他文件
-                print(f"警告：无法读取文件 {file_path}: {e}")
+                warning(f"警告：无法读取文件 {file_path}: {e}")
                 continue
 
     return hash_sha256.hexdigest(), file_count, total_size

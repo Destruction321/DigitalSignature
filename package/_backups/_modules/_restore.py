@@ -33,8 +33,8 @@ class Restore:
         """显示对话框"""
         backups = _backup_utils.list_backups()
 
-        if not backups:
-            messagebox.showinfo("恢复备份", "没有找到可用的备份文件")
+        if not backups.data:
+            messagebox.showinfo("恢复备份", backups.msg)
             return
 
         self.__dialog = tk.Toplevel(self.__parent)
@@ -48,7 +48,7 @@ class Restore:
         y = (self.__parent.winfo_screenheight() - self.__dialog.winfo_height()) // 2
         self.__dialog.geometry(f"+{x}+{y}")
 
-        self.__create_ui(backups)
+        self.__create_ui(backups.data)
         cast(tk.Listbox, self.__listbox).bind("<Double-Button-1>", lambda _event: self.__on_restore())
 
 

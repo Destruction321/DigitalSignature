@@ -92,7 +92,8 @@ class Verifier:
             verify_result = Result(status=Status.BACKUP_VERIFY_FAILED, msg=f"验证失败: {str(e)}")
             
         cast(
-            tk.Toplevel, self.__verify_dialog
+            tk.Toplevel,
+            self.__verify_dialog
         ).after(0, lambda: self.__update_single_result(verify_result, backup, callback))
 
     def __batch_verification_thread(self, backup_items: list[dict[str, Any]],

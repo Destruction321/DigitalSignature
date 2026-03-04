@@ -114,6 +114,7 @@ class Initializer:
             self.__create_integrity_label(header_frame, integrity_ratio, len(valid_backups), len(backups))
 
 
+    """public methods"""
     def create_notebook(self, parent: ttk.Frame) -> None:
         """
         创建笔记本控件
@@ -176,6 +177,8 @@ class Initializer:
 
         ttk.Button(right_frame, text="关闭", command=cast(tk.Toplevel, dialog).destroy).pack(side=tk.RIGHT, padx=5)
 
+    
+    """private methods"""
     def __create_integrity_label(self, parent: ttk.Frame, ratio: float, valid_count: int, total_count: int) -> None:
         """创建完整性状态标签"""
         if ratio == 100:

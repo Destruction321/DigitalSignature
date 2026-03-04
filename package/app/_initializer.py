@@ -3,6 +3,7 @@
 import tkinter as tk
 from collections import Counter
 from glob import glob
+from logging import warning
 from pathlib import Path
 from tkinter import messagebox
 from typing import cast, TYPE_CHECKING
@@ -190,7 +191,7 @@ def migrate_existing_files() -> None:
                     move(old_file, new_path)
                     migrated_files.append((category, old_file, new_path))
                 except Exception as e:
-                    print(f"迁移文件失败 {old_file}: {e}")
+                    warning(f"迁移文件失败 {old_file}: {e}")
 
     if not migrated_files:
         return
