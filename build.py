@@ -15,6 +15,7 @@ def get_pyinstaller_exe() -> Path | None:
     exe_path = python_dir / "Scripts" / "pyinstaller.exe"
     
     if exe_path.exists():
+        print(f"\033[33m发现 PyInstaller: {exe_path}\033[0m")
         return exe_path
     
     # 方法2：从虚拟环境目录查找
@@ -22,12 +23,14 @@ def get_pyinstaller_exe() -> Path | None:
         venv_dir = Path(sys.prefix)
         exe_path = venv_dir / "Scripts" / "pyinstaller.exe"
         if exe_path.exists():
+            print(f"\033[33m发现 PyInstaller: {exe_path}\033[0m")
             return exe_path
     
     # 方法3：从 PATH 中查找
     try:
         exe_path = which("pyinstaller.exe")
         if exe_path:
+            print(f"\033[33m发现 PyInstaller: {exe_path}\033[0m")
             return Path(exe_path)
     except:
         pass
