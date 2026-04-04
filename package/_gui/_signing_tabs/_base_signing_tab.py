@@ -7,8 +7,6 @@ from tkinter.filedialog import askopenfilename
 from tkinter.scrolledtext import ScrolledText
 from typing import Callable, TYPE_CHECKING
 
-from cryptography.hazmat.primitives.hashes import Hash, SHA256
-
 from ..._utils.ui_state_manager import get_ui_state_manager
 from ..._utils import BASE_DIR
 
@@ -42,6 +40,25 @@ class BaseSigningTab(ABC):
 
 
     """核心接口"""
+    @property
+    @abstractmethod
+    def _content_label(self) -> tuple[str, str]:
+        """内容类型的显示名称"""
+        pass
+
+    @property
+    @abstractmethod
+    def _editor_row_weight(self) -> int:
+        """编辑区行权重，文件=0，文本=1"""
+        pass
+
+    @property
+    @abstractmethod
+    def _get_extra_buttons(self) -> list[dict]:
+        """子类注入自己的特有按钮"""
+        pass
+    
+    
     @abstractmethod
     def _create_editor(self) -> None:
         """创建核心编辑区域"""
@@ -75,37 +92,13 @@ class BaseSigningTab(ABC):
         pass
 
 
-    """可选接口"""
-    def _update_signature_path(self, _signature_path: str) -> None:
-        """
-        更新签名路径显示 - 文件签名专用
-        
-        Args:
-            signature_path (str): 选择的签名文件路径
-        """
-        pass
-
-    def _show_hash(self) -> None:
-        """显示哈希值 - 文件签名专用"""
-        pass
-
-    def _clear_content(self) -> None:
-        """清空内容 - 文本签名专用"""
-        pass
-
-    def _save_content(self) -> None:
-        """保存内容 - 文本签名专用"""
-        pass
-
-
     """protected methods -- used by subclasses"""
     def _setup_ui(self) -> None:
         """设置用户界面"""
-        title = "文件" if self.__tab_type == "file" else "文本"
         self._parent.columnconfigure(0, weight=1)
         self.__dynamically_adjust_layout()
         self._create_editor()
-        self.__create_operation_panel(1, title)
+        self.__create_operation_panel(1, self._content_label[1])
         self.__create_result_area(2)
 
     def _handle_sign_success(self, signature_file: str, content_path: str, content_hash: str) -> None:
@@ -118,13 +111,12 @@ class BaseSigningTab(ABC):
             content_hash (str): 被签名内容的哈希值
         """
         self._ui_state_mgr.update_status(f"{self.__tab_type.capitalize()}签名成功")
-        self._update_signature_path(signature_file)
 
         result_text = (
             f"{self.__tab_type.capitalize()}签名成功！\n\n"
-            f"{"文件" if self.__tab_type == "file" else "内容"}路径: {content_path}\n"
+            f"{self._content_label[0]}路径: {content_path}\n"
             f"签名文件: {signature_file}\n"
-            f"{"文件" if self.__tab_type == "file" else "文本"}哈希: {content_hash}"
+            f"{self._content_label[1]}哈希: {content_hash}"
         )
         self._show_result(result_text)
         self.__show_info(f"{self.__tab_type.capitalize()}签名成功！")
@@ -253,26 +245,6 @@ class BaseSigningTab(ABC):
         
         return file_path
 
-    @staticmethod
-    def _get_file_hash(file_path: str) -> str:
-        """
-        获取文件的SHA-256哈希值
-        
-        Args:
-            file_path (str): 文件路径
-            
-        Returns:
-            file_hash (str): 文件的SHA-256哈希值（十六进制字符串）
-        """
-        with open(file_path, "rb") as f:
-            g_data = f.read()
-
-        digest = Hash(SHA256())
-        digest.update(g_data)
-        g_file_hash = digest.finalize()
-
-        return g_file_hash.hex()
-
 
     """private methods"""
     def __show_info(self, message: str) -> None:
@@ -282,7 +254,7 @@ class BaseSigningTab(ABC):
 
     def __dynamically_adjust_layout(self) -> None:
         """动态布局调整"""
-        self._parent.rowconfigure(0, weight=0 if self.__tab_type == "file" else 1)
+        self._parent.rowconfigure(0, weight=self._editor_row_weight)
         self._parent.rowconfigure(1, weight=0)
         self._parent.rowconfigure(2, weight=1)
 
@@ -321,29 +293,22 @@ class BaseSigningTab(ABC):
         self._ui_state_mgr.update_status(f"{self.__tab_type.capitalize()}验证{msg[0]}")
         result_text = (
             f"签名验证{msg[0]}！\n\n"
-            f"{"文件" if self.__tab_type == "file" else "内容"}路径: {content_path}\n"
+            f"{self._content_label[0]}路径: {content_path}\n"
             f"签名文件: {signature_path}\n"
-            f"{"文件" if self.__tab_type == "file" else "文本"}哈希: {content_hash}\n\n"
-            f"{"文件" if self.__tab_type == "file" else "内容"}{msg[1]}。{error}"
+            f"{self._content_label[1]}哈希: {content_hash}\n\n"
+            f"{self._content_label[0]}{msg[1]}。{error}"
         )
 
         self._show_result(result_text)
 
     def __get_operation_buttons(self, title: str) -> list:
         """获取操作按钮配置"""
-        buttons = [
+        return [
             {"text": f"签名{title}", "command": lambda: self.__sign_or_verify(mode="sign")},
             {"text": f"验证{title}签名", "command": lambda: self.__sign_or_verify(mode="verify")},
+            *self._get_extra_buttons,
             {"text": "清空结果", "command": self.__clear_results}
         ]
-
-        if self.__tab_type == "file":
-            buttons.insert(2, {"text": "显示哈希", "command": self._show_hash})
-        else:
-            buttons.insert(2, {"text": "清空文本", "command": self._clear_content})
-            buttons.insert(3, {"text": "保存文本", "command": self._save_content})
-
-        return buttons
 
     def __sign_or_verify(self, mode: str) -> None:
         """签名或验证内容"""

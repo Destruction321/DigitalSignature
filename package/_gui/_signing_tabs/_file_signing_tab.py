@@ -1,7 +1,7 @@
 # package/_gui/tabs/signing_tabs/_file_signing_tab.py
 """文件签名标签页，实现核心接口和哈希显示接口"""
-import hashlib
 import tkinter as tk
+from hashlib import sha256
 from pathlib import Path
 from tkinter import ttk
 from typing import cast, TYPE_CHECKING
@@ -23,6 +23,19 @@ class FileSigningTab(BaseSigningTab):
         self.__signature_path_entry: tk.Entry | None = None
 
         self._setup_ui()
+
+
+    @property
+    def _content_label(self) -> tuple[str, str]:
+        return "文件", "文件"
+    
+    @property
+    def _editor_row_weight(self) -> int:
+        return 0
+
+    @property
+    def _get_extra_buttons(self) -> list[dict]:
+        return [{"text": "显示哈希", "command": self.__show_hash}]
 
 
     def _create_editor(self) -> None:
@@ -70,7 +83,8 @@ class FileSigningTab(BaseSigningTab):
         
         try:
             signature_file = signature.sign_file(km, Path(content))
-            file_hash = self._get_file_hash(content)
+            file_hash = sha256(Path(content).read_bytes()).hexdigest()
+            self.__update_signature_path(signature_file.data)
             self._handle_sign_success(signature_file.data, content, file_hash)
 
         except Exception as e:
@@ -86,19 +100,21 @@ class FileSigningTab(BaseSigningTab):
 
         try:
             is_valid = signature.verify_signature(km, content, Path(signature_path))
-            file_hash = self._get_file_hash(content)
+            file_hash = sha256(Path(content).read_bytes()).hexdigest()
             self._handle_verify_success(is_valid.is_success(), signature_path, content, file_hash)
 
         except Exception as e:
             self._handle_operation_error("验证", e)
 
-    def _show_hash(self) -> None:
+    
+    """private methods"""
+    def __show_hash(self) -> None:
         file_path = self._get_content()
         if not self.__validate_file_exists(file_path):
             return
 
         try:
-            file_hash_info = self.__get_file_hash_info(file_path)
+            file_hash_info = self.__get_file_hash_info(Path(file_path))
             if isinstance(file_hash_info, Exception):
                 self._handle_operation_error("获取文件哈希", file_hash_info)
                 return
@@ -119,13 +135,11 @@ class FileSigningTab(BaseSigningTab):
         except Exception as e:
             self._handle_operation_error("获取文件哈希", e)
 
-    def _update_signature_path(self, signature_path: str) -> None:
+    def __update_signature_path(self, signature_path: str) -> None:
         if self.__signature_path_entry:
             self.__signature_path_entry.delete(0, tk.END)
             self.__signature_path_entry.insert(0, signature_path)
 
-
-    """private methods"""
     def __on_file_selected(self, file_path: str) -> None:
         """选择文件"""
         file_path_entry = cast(tk.Entry, self.__file_path_entry)
@@ -154,13 +168,13 @@ class FileSigningTab(BaseSigningTab):
             
         return True
     
-    def __get_file_hash_info(self, file_path: str) -> dict | Exception:
+    def __get_file_hash_info(self, file_path: Path) -> dict | Exception:
         """获取文件哈希信息"""
-        if not Path(file_path).exists():
+        if not file_path.exists():
             return {}
 
-        file_size = Path(file_path).stat().st_size
-        sha256_hash = self.__calculate_file_hash(file_path, "sha256")
+        file_size = file_path.stat().st_size
+        sha256_hash = sha256(file_path.read_bytes()).hexdigest()
         if isinstance(sha256_hash, Exception):
             return sha256_hash
 
@@ -170,16 +184,3 @@ class FileSigningTab(BaseSigningTab):
             "sha256": sha256_hash,
             "size_formatted": f"{file_size} 字节"
         }
-
-    @staticmethod
-    def __calculate_file_hash(file_path: str, algorithm: str = "sha256") -> str | Exception:
-        """计算文件哈希"""
-        try:
-            hash_func = getattr(hashlib, algorithm)()
-            with open(file_path, "rb") as f:
-                for chunk in iter(lambda: f.read(4096), b""):
-                    hash_func.update(chunk)
-
-            return hash_func.hexdigest()
-        except Exception as e:
-            return e

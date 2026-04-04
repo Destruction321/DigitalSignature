@@ -1,6 +1,7 @@
 # package/_gui/tabs/signing_tabs/_text_signing_tab.py
 """文本签名标签页，实现核心接口和内容编辑接口"""
 import tkinter as tk
+from hashlib import sha256
 from pathlib import Path
 from tkinter import messagebox
 from tkinter.filedialog import asksaveasfilename
@@ -23,6 +24,22 @@ class TextSigningTab(BaseSigningTab):
         super().__init__(parent, "text")
         self.__text_editor: tk.Text | None = None
         self._setup_ui()
+
+
+    @property
+    def _content_label(self) -> tuple[str, str]:
+        return "内容", "文本"
+
+    @property
+    def _editor_row_weight(self) -> int:
+        return 1
+
+    @property
+    def _get_extra_buttons(self) -> list[dict]:
+        return [
+            {"text": "清空文本", "command": self.__clear_content},
+            {"text": "保存文本", "command": self.__save_content},
+        ]
 
 
     def _create_editor(self) -> None:
@@ -56,7 +73,7 @@ class TextSigningTab(BaseSigningTab):
         try:
             temp_file = Path(self.__create_temp_file(content, "text"))
             signature_file = signature.sign_file(km, temp_file)
-            text_hash = self._get_file_hash(str(temp_file))
+            text_hash = sha256(Path(temp_file).read_bytes()).hexdigest()
 
             self._handle_sign_success(signature_file.data, "当前编辑文本", text_hash)
             temp_file.unlink()
@@ -76,7 +93,7 @@ class TextSigningTab(BaseSigningTab):
         try:
             temp_file = self.__create_temp_file(content, "verify")
             is_valid = signature.verify_signature(km, temp_file, Path(signature_path))
-            text_hash = self._get_file_hash(temp_file)
+            text_hash = sha256(Path(temp_file).read_bytes()).hexdigest()
 
             self._handle_verify_success(is_valid.is_success(), signature_path, "当前编辑文本", text_hash)
             Path(temp_file).unlink()
@@ -84,12 +101,14 @@ class TextSigningTab(BaseSigningTab):
         except Exception as e:
             self._handle_operation_error("验证", e)
 
-    def _clear_content(self) -> None:
+    
+    """private methods"""
+    def __clear_content(self) -> None:
         if self.__text_editor:
             self.__text_editor.delete("1.0", tk.END)
             self._ui_state_mgr.update_status("文本已清空")
 
-    def _save_content(self) -> None:
+    def __save_content(self) -> None:
         content = self._get_content()
         valid, message = (False, "文本内容为空") if not content or not content.strip() else (True, "")
         if not valid:
@@ -104,8 +123,6 @@ class TextSigningTab(BaseSigningTab):
             callback=self.__on_save_success
         )
 
-
-    """private methods"""
     def __on_save_success(self, file_path: str) -> None:
         """保存文本成功回调"""
         self._ui_state_mgr.update_status(f"文本已保存: {file_path}")
