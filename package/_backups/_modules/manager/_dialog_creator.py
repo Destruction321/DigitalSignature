@@ -83,6 +83,60 @@ class Initializer:
         return self.__integrity_label
 
 
+    """DialogProtocol协议实现"""
+    def set_info_text(self, text: str) -> None:
+        if self.__info_label:
+            self.__info_label.config(text=text)
+
+    def set_integrity_status(self, text: str, color: str) -> None:
+        if self.__integrity_label:
+            self.__integrity_label.config(
+                text=f"完整性状态：{text}",
+                foreground=color
+            )
+
+    def populate_list(self, items: list[dict]) -> None:
+        if self.__listbox is None:
+            return
+
+        self.__listbox.delete(0, tk.END)
+
+        if not items:
+            self.__listbox.insert(tk.END, "没有找到备份文件")
+            return
+
+        for backup in items:
+            time_str = backup["created_time"].strftime("%Y-%m-%d %H:%M")
+            size_str = format_size(backup["size"])
+            display_name = backup.get("display_name", backup["name"])
+            display_text = f"{display_name:40} | {time_str} | {size_str:>12}"
+
+            self.__listbox.insert(tk.END, display_text)
+
+            index = self.__listbox.size() - 1
+            color = "green" if backup.get("integrity_valid", False) else "orange"
+            self.__listbox.itemconfig(index, {"fg": color})
+
+    def get_selected_index(self) -> int | None:
+        if self.__listbox is None:
+            return None
+        selection = self.__listbox.curselection()
+        return int(selection[0]) if selection else None
+
+    def show_details(self, text: str) -> None:
+        if self.__details_text is None:
+            return
+        self.__details_text.config(state=tk.NORMAL)
+        self.__details_text.delete("1.0", tk.END)
+        self.__details_text.insert("1.0", text)
+        self.__details_text.config(state=tk.DISABLED)
+
+    def select_tab(self, index: int) -> None:
+        if self.__notebook:
+            self.__notebook.select(index)
+
+
+    """public methods"""
     def create_header(self, parent: ttk.Frame, backups: list[dict]) -> None:
         """
         创建头部信息
@@ -114,7 +168,6 @@ class Initializer:
             self.__create_integrity_label(header_frame, integrity_ratio, len(valid_backups), len(backups))
 
 
-    """public methods"""
     def create_notebook(self, parent: ttk.Frame) -> None:
         """
         创建笔记本控件
