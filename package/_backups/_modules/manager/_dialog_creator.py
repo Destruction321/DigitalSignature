@@ -56,31 +56,6 @@ class Initializer:
         
         # 创建控制器
         self.__controller: Controller = Controller(self, parent)
-        
-
-    @property
-    def listbox(self) -> tk.Listbox | None:
-        return self.__listbox
-
-    @listbox.setter
-    def listbox(self, listbox: tk.Listbox) -> None:
-        self.__listbox = listbox
-
-    @property
-    def info_label(self) -> ttk.Label | None:
-        return self.__info_label
-    
-    @property
-    def details_text(self) -> ScrolledText | None:
-        return self.__details_text
-    
-    @property
-    def notebook(self) -> ttk.Notebook | None:
-        return self.__notebook
-    
-    @property
-    def integrity_label(self) -> ttk.Label | None:
-        return self.__integrity_label
 
 
     """DialogProtocol协议实现"""
@@ -120,12 +95,14 @@ class Initializer:
     def get_selected_index(self) -> int | None:
         if self.__listbox is None:
             return None
+        
         selection = self.__listbox.curselection()
         return int(selection[0]) if selection else None
 
     def show_details(self, text: str) -> None:
         if self.__details_text is None:
             return
+        
         self.__details_text.config(state=tk.NORMAL)
         self.__details_text.delete("1.0", tk.END)
         self.__details_text.insert("1.0", text)

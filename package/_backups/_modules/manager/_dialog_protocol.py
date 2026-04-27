@@ -1,8 +1,10 @@
+# package/_backups/_modules/manager/_dialog_protocol.py
+"""备份对话框协议"""
 from typing import Protocol
 
 
 class DialogProtocol(Protocol):
-    """备份对话框视图协议"""
+    """备份对话框协议"""
     def set_info_text(self, text: str) -> None:
         """
         更新顶部统计信息文字
