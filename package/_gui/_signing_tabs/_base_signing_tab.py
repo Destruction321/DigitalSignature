@@ -39,35 +39,35 @@ class BaseSigningTab(ABC):
         self.__km = km
 
 
-    """核心接口"""
+    """Interfaces for subclasses to implement"""
     @property
     @abstractmethod
     def _content_label(self) -> tuple[str, str]:
         """内容类型的显示名称"""
-        pass
+        ...
 
     @property
     @abstractmethod
     def _editor_row_weight(self) -> int:
         """编辑区行权重，文件=0，文本=1"""
-        pass
+        ...
 
     @property
     @abstractmethod
     def _get_extra_buttons(self) -> list[dict]:
         """子类注入自己的特有按钮"""
-        pass
+        ...
     
     
     @abstractmethod
     def _create_editor(self) -> None:
         """创建核心编辑区域"""
-        pass
+        ...
     
     @abstractmethod
     def _get_content(self) -> str:
         """获取文本内容"""
-        pass
+        ...
 
     @abstractmethod
     def _sign_content(self, km: SingleKeyManager, content: str) -> None:
@@ -78,7 +78,7 @@ class BaseSigningTab(ABC):
             km (SingleKeyManager): 密钥管理器
             content (str): 待签名内容或文件路径
         """
-        pass
+        ...
 
     @abstractmethod
     def _verify_content(self, km: SingleKeyManager, content: str) -> None:
@@ -89,7 +89,7 @@ class BaseSigningTab(ABC):
             km (SingleKeyManager): 密钥管理器
             content (str): 待验证内容或文件路径
         """
-        pass
+        ...
 
 
     """protected methods -- used by subclasses"""
