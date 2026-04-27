@@ -1,8 +1,10 @@
+# package/_gui/_key_management_tab/_km_protocol.py
+"""密钥管理标签页协议"""
 from typing import Protocol
 
 
 class KeyManagerProtocol(Protocol):
-    """密钥管理视图协议"""
+    """密钥管理标签页协议"""
     def populate_key_list(self, items: list[tuple[str, str]]) -> None:
         """
         填充密钥列表
