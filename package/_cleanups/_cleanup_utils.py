@@ -1,7 +1,7 @@
 # package/_cleanups/_cleanup_utils.py
 """文件清理组件，统一管理所有清理操作"""
-import json
 from datetime import datetime
+from json import load, dump
 from pathlib import Path
 from tkinter import messagebox
 from typing import Callable
@@ -144,7 +144,7 @@ def cleanup_orphaned_keys(valid_key_ids: list[str] | None = None) -> Result:
     if config_path.exists():
         try:
             with open(config_path, "r", encoding="utf-8") as f:
-                config_data = json.load(f)
+                config_data = load(f)
         except Exception as e:
             return Result(status=Status.CONFIG_CORRUPT, msg=f"加载配置文件失败: {e}")
             
@@ -283,7 +283,7 @@ def _update_config(orphaned_key_ids: set[str], config_path: Path, config_data: d
             
         try:
             with open(config_path, "w", encoding="utf-8") as f:
-                json.dump(config_data, f, ensure_ascii=False, indent=2)
+                dump(config_data, f, ensure_ascii=False, indent=2)
                 
         except Exception as e:
             return Result(status=Status.CONFIG_SAVE_FAILED, msg=f"更新配置文件失败: {e}")

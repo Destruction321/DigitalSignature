@@ -1,8 +1,9 @@
 # package/_backups/_modules/backup_utils.py
 """统一备份服务"""
-import json, shutil
+import shutil
 from datetime import datetime
 from hashlib import sha256
+from json import load, dump
 from logging import warning
 from os.path import relpath
 from pathlib import Path
@@ -123,7 +124,7 @@ def verify_backup_integrity(backup_dir: Path) -> Result:
     try:
         # 读取校验和信息
         with open(checksum_file, "r", encoding="utf-8") as f:
-            checksum_data = json.load(f)
+            checksum_data = load(f)
 
         # 验证备份类型
         backup_type = checksum_data.get("backup_type", "unknown")
@@ -234,7 +235,6 @@ def restore_backup(backup_dir: Path, overwrite: bool = False, backup_type: DirTy
         return Result(status=Status.PERMISSION_DENIED, msg=f"恢复失败：权限不足: {e}")
         
     except Exception as e:
-        # 系统错误直接抛出，UI层捕获
         raise Exception(f"恢复系统错误: {str(e)}") from e
 
 def delete_backup(backup_name: str) -> Result:
@@ -360,7 +360,7 @@ def _create_backup_checksum(backup_dir: Path, backup_type: str) -> None:
 
     checksum_file = backup_dir / _CHECKSUM_FILE
     with open(checksum_file, "w", encoding="utf-8") as f:
-        json.dump(checksum_data, f, ensure_ascii=False, indent=2)
+        dump(checksum_data, f, ensure_ascii=False, indent=2)
 
 def _calculate_backup_checksum(backup_dir: Path) -> tuple[str, int, int]:
     """计算备份目录的校验和、文件数量和总大小"""
@@ -440,6 +440,7 @@ def _inferred_type(backup_dir: Path) -> DirType:
     return DirType.UNKNOWN
 
 def _get_file_type():
+    """导出文件类型"""
     return (
         _utils.FileType.KEY.value,
         _utils.FileType.TEXT.value,

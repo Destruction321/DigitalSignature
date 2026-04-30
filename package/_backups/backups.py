@@ -1,7 +1,7 @@
 # package/_backups/backups.py
 """数字签名窗口备份方法模块"""
-import tkinter as tk
-from tkinter import messagebox, ttk
+from tkinter import messagebox, Widget
+from tkinter.ttk import Button, Label
 from typing import cast, Callable, TYPE_CHECKING
 
 from . import _backup_utils
@@ -12,6 +12,7 @@ from .._utils.ui_state_manager import get_ui_state_manager
 from ..app import app_utils
 
 if TYPE_CHECKING:
+    from tkinter import Menu, Tk
     from .._core.keys.loader import KeyLoader
     from .._core.keys.managers import MultiKeyManager
     from .._utils.ui_state_manager import UIStateManager
@@ -19,15 +20,15 @@ if TYPE_CHECKING:
 
 class BackUps:
     """数字签名窗口备份方法模块"""
-    def __init__(self, root: tk.Tk,
-                 backup_buttons: dict[str, ttk.Button],
-                 dir_labels: dict[DirType, ttk.Label],
+    def __init__(self, root: Tk,
+                 backup_buttons: dict[str, Button],
+                 dir_labels: dict[DirType, Label],
                  refresh_callback: Callable[[], None],
                  multi_km: MultiKeyManager,
                  key_loader: KeyLoader) -> None:
-        self.__root: tk.Tk = root
-        self.__backup_buttons: dict[str, ttk.Button] = backup_buttons
-        self.__dir_labels: dict[DirType, ttk.Label] = dir_labels
+        self.__root: Tk = root
+        self.__backup_buttons: dict[str, Button] = backup_buttons
+        self.__dir_labels: dict[DirType, Label] = dir_labels
         self.__refresh_callback: Callable[[], None] = refresh_callback
         self.__multi_km: MultiKeyManager = multi_km
         self.__key_loader: KeyLoader = key_loader
@@ -37,7 +38,7 @@ class BackUps:
     """public methods -- bind to buttons"""
     def show_backup_options(self) -> None:
         """显示备份选项菜单"""
-        menu: tk.Menu = tk.Menu(self.__root, tearoff=0)
+        menu = Menu(self.__root, tearoff=0)
         menu.add_command(label="完整备份", command=self.__backup_all_data)
         menu.add_command(label="仅备份密钥", command=self.__backup_keys_only)
         menu.add_command(label="仅备份文本", command=self.__backup_texts_only)
@@ -69,7 +70,7 @@ class BackUps:
 
     def backup_manager_dialog(self) -> None:
         """统一备份管理对话框"""
-        parent_window = cast(tk.Widget, self.__root.winfo_toplevel())
+        parent_window = cast(Widget, self.__root.winfo_toplevel())
         manager.show(parent_window, self.__ui_state_mgr.update_status)
 
 

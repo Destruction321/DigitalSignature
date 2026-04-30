@@ -209,7 +209,8 @@ class BaseSigningTab(ABC):
         self._ui_state_mgr.update_status(f"{operation_name}失败")
 
     @staticmethod
-    def _browse_file(title: str = "选择文件", initial_dir: str | None = None, 
+    def _browse_file(title: str = "选择文件",
+                     initial_dir: str | None = None, 
                      file_types: list[tuple[str, str]] | None = None, 
                      callback: Callable[[str], None] | None = None) -> str:
         """

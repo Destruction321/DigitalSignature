@@ -1,18 +1,18 @@
 # package/_gui/_key_management_tab/__init__.py
 """密钥管理标签页"""
-import tkinter as tk
 from typing import TYPE_CHECKING
 
 from ._ui_creator import UICreator
 
 if TYPE_CHECKING:
+    from tkinter import Widget
     from ..._core.keys.loader import KeyLoader
     from ..._core.keys.managers import MultiKeyManager
 
 
 class KeyManagementTab:
     """密钥管理标签页"""
-    def __init__(self, parent: tk.Widget, multi_key_manager: MultiKeyManager, key_loader: KeyLoader) -> None:
+    def __init__(self, parent: Widget, multi_key_manager: MultiKeyManager, key_loader: KeyLoader) -> None:
         # 创建UI控制器
         self.__ui: UICreator = UICreator(parent, multi_key_manager, key_loader)
         

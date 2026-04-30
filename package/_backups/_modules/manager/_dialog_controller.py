@@ -1,6 +1,5 @@
 # package/_backups/_modules/manager/_dialog_controller.py
 """备份管理对话框控制器"""
-import tkinter as tk
 from pathlib import Path
 from tkinter import messagebox
 from typing import Any, Callable, TYPE_CHECKING
@@ -10,12 +9,13 @@ from ... import _backup_utils
 from ...._utils import format_size
 
 if TYPE_CHECKING:
+    from tkinter import Widget
     from ._dialog_protocol import DialogProtocol
 
 
 class Controller:
     """备份管理对话框控制器。"""
-    def __init__(self, dialog_protocol: DialogProtocol, parent: tk.Widget) -> None:
+    def __init__(self, dialog_protocol: DialogProtocol, parent: Widget) -> None:
         self.__dialog_protocol: DialogProtocol = dialog_protocol
         self.__verifier: Verifier = Verifier(parent)
         self.__backup_items: list[dict] = []

@@ -10,7 +10,8 @@ from .. import _backup_utils
 
 class Restore:
     """备份恢复器"""
-    def __init__(self, parent: tk.Tk,
+    def __init__(self,
+                 parent: tk.Tk,
                  update_status_callback: Callable[[str], None],
                  update_dir_callback: Callable[[], None],
                  refresh_key_callback: Callable[[], None],

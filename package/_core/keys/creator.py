@@ -1,6 +1,6 @@
 # package/_core/keys/creator.py
 """密钥创建模块"""
-import tkinter as tk
+from tkinter import END
 from dataclasses import dataclass
 from datetime import datetime
 from tkinter import messagebox
@@ -13,6 +13,7 @@ from .managers import SingleKeyManager
 from ..._utils import ENCRYPTED, Status, Result
 
 if TYPE_CHECKING:
+    from tkinter import Entry, BooleanVar
     from tkinter.ttk import Combobox
     from .managers import MultiKeyManager
 
@@ -20,10 +21,10 @@ if TYPE_CHECKING:
 @dataclass
 class KeySetter:
     """密钥设置组件"""
-    key_id_entry: tk.Entry
+    key_id_entry: Entry
     key_size_combo: Combobox
-    encryption_var: tk.BooleanVar
-    password_entry: tk.Entry
+    encryption_var: BooleanVar
+    password_entry: Entry
 
 @dataclass
 class CallBacks:
@@ -131,7 +132,7 @@ def _create_key_pair(multi_km: MultiKeyManager, key_id: str, key_size: int, pass
     except Exception as e:
         return Result(status=Status.KEY_FILE_CORRUPT, msg=f"创建密钥对失败: {str(e)}")
 
-def _get_and_validate_password(encryption_var: tk.BooleanVar, password_entry: tk.Entry) -> str | bool | None:
+def _get_and_validate_password(encryption_var: BooleanVar, password_entry: Entry) -> str | bool | None:
     """获取并验证密码"""
     if not encryption_var.get():
         return None
@@ -154,8 +155,8 @@ def _handle_key_creation_success(key_id: str, message: str,
     messagebox.showinfo("成功", message)
     
     # 重置表单
-    key_setter.key_id_entry.delete(0, tk.END)
-    key_setter.password_entry.delete(0, tk.END)
+    key_setter.key_id_entry.delete(0, END)
+    key_setter.password_entry.delete(0, END)
     key_setter.encryption_var.set(False)
     callbacks.toggle_password_callback()
     

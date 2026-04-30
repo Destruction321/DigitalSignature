@@ -1,6 +1,6 @@
 # package/_core/keys/_encryption.py
 """私钥加密组件"""
-import base64
+from base64 import b64encode, b64decode
 from secrets import token_bytes
 from typing import cast
 
@@ -46,7 +46,7 @@ def encrypt_private_key(private_key: RSAPrivateKey, password: str) -> str:
 
     combined_data = salt + iv + encrypted_data
 
-    return base64.b64encode(combined_data).decode("utf-8")
+    return b64encode(combined_data).decode("utf-8")
 
 
 def decrypt_private_key(encrypted_private_key: str, password: str) -> RSAPrivateKey:
@@ -64,7 +64,7 @@ def decrypt_private_key(encrypted_private_key: str, password: str) -> RSAPrivate
         decrypted_private_key (RSAPrivateKey): 解密后的RSAPrivateKey对象
     """
     try:
-        combined_data = base64.b64decode(encrypted_private_key)
+        combined_data = b64decode(encrypted_private_key)
         
         salt = combined_data[:16]
         iv = combined_data[16:32]

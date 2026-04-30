@@ -1,6 +1,6 @@
 # package/_cleanups/cleanups.py
 """数字签名窗口清理模块"""
-import tkinter as tk
+from tkinter import Toplevel, IntVar, LEFT
 from tkinter import messagebox, ttk
 from typing import TYPE_CHECKING
 
@@ -10,14 +10,15 @@ from .._utils import DirType
 from .._utils.ui_state_manager import get_ui_state_manager
 
 if TYPE_CHECKING:
+    from tkinter import Tk
     from .._utils.ui_state_manager import UIStateManager
 
 
 class CleanUps:
     """数字签名窗口清理模块"""
-    def __init__(self, root: tk.Tk, dir_labels: dict[DirType, ttk.Label]) -> None:
+    def __init__(self, root: Tk, dir_labels: dict[DirType, ttk.Label]) -> None:
         self.__cleanup_days_threshold: int = 30
-        self.__root: tk.Tk = root
+        self.__root: Tk = root
         self.__dir_labels: dict[DirType, ttk.Label] = dir_labels
         self.__ui_state_mgr: UIStateManager = get_ui_state_manager()
     
@@ -78,7 +79,7 @@ class CleanUps:
         days_options = [1, 3, 7, 15, 30, 60]
 
         # 创建自定义对话框
-        dialog = tk.Toplevel(self.__root)
+        dialog = Toplevel(self.__root)
         dialog.title("选择清理阈值")
         dialog.geometry("350x150")
         dialog.resizable(False, False)
@@ -96,7 +97,7 @@ class CleanUps:
         label.pack(pady=15)
 
         # 创建变量来存储选择的天数，默认为当前阈值
-        selected_days = tk.IntVar(value=self.__cleanup_days_threshold)
+        selected_days = IntVar(value=self.__cleanup_days_threshold)
 
         # 创建选项框架
         options_frame = ttk.Frame(dialog)
@@ -117,13 +118,13 @@ class CleanUps:
             button_frame,
             text="确定",
             command=lambda: self.__on_dialog_confirm(dialog, selected_days, result)
-        ).pack(side=tk.LEFT, padx=10)
+        ).pack(side=LEFT, padx=10)
 
         ttk.Button(
             button_frame,
             text="取消",
             command=lambda: self.__on_dialog_cancel(dialog, result)
-        ).pack(side=tk.LEFT, padx=10)
+        ).pack(side=LEFT, padx=10)
 
         # 等待对话框关闭
         self.__root.wait_window(dialog)
@@ -132,14 +133,14 @@ class CleanUps:
         return result.get("days") if result.get("confirmed") else None
 
     @staticmethod
-    def __on_dialog_confirm(dialog: tk.Toplevel, selected_days: tk.IntVar, result: dict[str, bool | int]) -> None:
+    def __on_dialog_confirm(dialog: Toplevel, selected_days: IntVar, result: dict[str, bool | int]) -> None:
         """处理对话框确认"""
         result["confirmed"] = True
         result["days"] = selected_days.get()
         dialog.destroy()
 
     @staticmethod
-    def __on_dialog_cancel(dialog: tk.Toplevel, result: dict[str, bool | int]) -> None:
+    def __on_dialog_cancel(dialog: Toplevel, result: dict[str, bool | int]) -> None:
         """处理对话框取消"""
         result["confirmed"] = False
         dialog.destroy()

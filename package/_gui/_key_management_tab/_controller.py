@@ -1,6 +1,5 @@
 # package/_gui/_key_management_tab/controller.py
 """密钥管理标签页控制器"""
-import tkinter as tk
 from tkinter import messagebox
 from typing import cast, TYPE_CHECKING
 
@@ -10,6 +9,7 @@ from ..._utils import ENCRYPTED, PassWord, Status
 from ..._utils.ui_state_manager import get_ui_state_manager
 
 if TYPE_CHECKING:
+    from tkinter import Widget
     from ._km_protocol import KeyManagerProtocol
     from ..._core.keys.loader import KeyLoader
     from ..._core.keys.managers import MultiKeyManager
@@ -22,7 +22,7 @@ class Controller:
                  km_protocol: KeyManagerProtocol,
                  multi_km: MultiKeyManager,
                  key_loader: KeyLoader,
-                 parent: tk.Widget) -> None:
+                 parent: Widget) -> None:
         self.__km_protocol: KeyManagerProtocol = km_protocol
         self.__multi_km: MultiKeyManager = multi_km
         self.__key_loader: KeyLoader = key_loader

@@ -141,7 +141,8 @@ class TextSigningTab(BaseSigningTab):
         return file_path
 
     @staticmethod
-    def __save_text_file(content: str, file_name: str = "document.txt",
+    def __save_text_file(content: str,
+                         file_name: str = "document.txt",
                          callback: Callable[[str], None] | None = None) -> str | None:
         """保存文本文件"""
         if not content:

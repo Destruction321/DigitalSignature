@@ -1,6 +1,5 @@
 # package/app/_modules/initializer.py
 """数字签名窗口初始化器"""
-import tkinter as tk
 from collections import Counter
 from glob import glob
 from logging import warning
@@ -18,12 +17,13 @@ from .._utils import DirType, Status
 from .._utils.ui_state_manager import get_ui_state_manager
 
 if TYPE_CHECKING:
+    from tkinter import Tk
     from .._utils.ui_state_manager import UIStateManager
 
 
 class Initializer:
     """数字签名窗口初始化器"""
-    def __init__(self, root: tk.Tk) -> None:
+    def __init__(self, root: Tk) -> None:
         self.__ui_state_mgr: UIStateManager = get_ui_state_manager()
         self.__multi_km: MultiKeyManager = MultiKeyManager()
         self.__key_loader: KeyLoader = KeyLoader(

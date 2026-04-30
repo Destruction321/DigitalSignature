@@ -34,7 +34,8 @@ class Verifier:
 
 
     """public methods in module 'backup'"""
-    def verify_single_backup(self, backup: dict[str, Any],
+    def verify_single_backup(self,
+                             backup: dict[str, Any],
                              callback: Callable[[dict[str, Any]], None]) -> None:
         """
         验证单个备份
@@ -57,7 +58,8 @@ class Verifier:
         )
         thread.start()
 
-    def verify_all_backups(self, backup_items: list[dict[str, Any]],
+    def verify_all_backups(self,
+                           backup_items: list[dict[str, Any]],
                            callback: Callable[[list[dict[str, Any]]], None]) -> None:
         """
         验证所有备份
@@ -82,7 +84,9 @@ class Verifier:
         
     
     """private methods"""
-    def __single_verification_thread(self, backup_path: Path, backup: dict[str, Any],
+    def __single_verification_thread(self,
+                                     backup_path: Path,
+                                     backup: dict[str, Any],
                                      callback: Callable[[dict[str, Any]], None]) -> None:
         """单个备份验证线程函数"""
         try:
@@ -114,11 +118,11 @@ class Verifier:
                 invalid_count += 1
 
         # 完成验证
-        cast(tk.Toplevel, self.__progress_dialog).after(
-            0, lambda: self.__finish_batch_verification(
-                valid_count, invalid_count, total_count, callback, backup_items
-            )
-        )
+        verification_result = [total_count, valid_count, invalid_count]
+        cast(
+            tk.Toplevel,
+            self.__progress_dialog
+        ).after(0, lambda: self.__finish_batch_verification(verification_result, callback, backup_items))
 
     def __process_single_backup_in_batch(self, index: int, backup: dict[str, Any], total_count: int) -> None:
         """在批量验证中处理单个备份"""
@@ -197,8 +201,10 @@ class Verifier:
         )
         self.__close_button.pack()
 
-    def __update_single_result(self, verify_result: Result,
-                               backup: dict[str, Any], callback: Callable[[dict[str, Any]], None]) -> None:
+    def __update_single_result(self,
+                               verify_result: Result,
+                               backup: dict[str, Any],
+                               callback: Callable[[dict[str, Any]], None]) -> None:
         """更新单个验证结果"""
         if self.__verify_dialog is None:
             return
@@ -291,13 +297,18 @@ class Verifier:
             self.__result_text.see(tk.END)
             self.__result_text.config(state=tk.DISABLED)
 
-    def __finish_batch_verification(self, valid: int, invalid: int, total: int,
+    def __finish_batch_verification(self,
+                                    verification_result: list[int],
                                     callback: Callable[[list[dict[str, Any]]], None],
                                     backup_items: list[dict[str, Any]]) -> None:
         """完成批量验证"""
         if self.__progress_dialog is None:
             return
 
+        total = verification_result[0]
+        valid = verification_result[1]
+        invalid = verification_result[2]
+        
         cast(tk.IntVar, self.__progress_var).set(total)
         cast(tk.Label, self.__status_label).config(text="验证完成")
 

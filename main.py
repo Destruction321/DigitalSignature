@@ -19,7 +19,7 @@ def _initialize_loggers() -> None:
     logger.setLevel(logging.DEBUG)  # 设为最低级别，让所有日志都经过处理器，由处理器和过滤器控制
 
     # 定义统一的日志格式
-    formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
+    formatter = logging.Formatter("%(asctime)s - %(levelname)s - %(message)s")
 
     # ----- 处理器1：记录 INFO 及以下到 info.log -----
     info_handler = logging.FileHandler(log_dir / "info.log", encoding="utf-8")

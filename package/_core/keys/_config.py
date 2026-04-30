@@ -1,13 +1,15 @@
 # package/_core/keys/_config.py
 """配置管理模块"""
-import hmac, json
+import json
 from hashlib import sha256
+from hmac import compare_digest, new as hmac_new
 from os import environ
 from pathlib import Path
 from shutil import move
 from typing import Any
 
 from ..._utils import Status, Result
+
 
 """public methods"""
 def load_config(config_file: str, verify_integrity: bool = True) -> Result:
@@ -202,7 +204,7 @@ def _verify_config(config_data: dict, secret_key: bytes) -> bool:
     calculated_hash = _calculate_config_hash(secret_key, config_to_verify)
 
     # 使用恒定时间比较来防止时序攻击
-    return hmac.compare_digest(stored_signature, calculated_hash)
+    return compare_digest(stored_signature, calculated_hash)
 
 def _calculate_config_hash(secret_key: bytes, config_data: dict) -> str:
     """计算配置数据的哈希值"""
@@ -216,5 +218,5 @@ def _calculate_config_hash(secret_key: bytes, config_data: dict) -> str:
     config_json = json.dumps(normalized_config, sort_keys=True, separators=(",", ":"))
 
     # 使用HMAC计算哈希
-    hmac_obj = hmac.new(secret_key, config_json.encode("utf-8"), sha256)
+    hmac_obj = hmac_new(secret_key, config_json.encode("utf-8"), sha256)
     return hmac_obj.hexdigest()
