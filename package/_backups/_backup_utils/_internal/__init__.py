@@ -13,8 +13,11 @@ from ...._utils.enums import DirType
 from ...._utils.result import Status, Result
 from ...._utils.tools import get_path
 
+
+"""常量导出"""
 CHECKSUM_FILE = _internal.CHECKSUM_FILE
 BACKUP = _internal.BACKUP
+
 
 """public methods in module 'backup_utils'"""
 def backup_data(data_type: DirType, backup_dir: str | None = None) -> Result:
