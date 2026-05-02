@@ -8,12 +8,13 @@ from tkinter import messagebox
 from typing import cast, TYPE_CHECKING
 from shutil import move
 
-from . import app_utils
-from .. import _utils
 from .._core.keys.loader import KeyLoader
 from .._core.keys.managers import SingleKeyManager, MultiKeyManager
 from .._gui.ui_creator import UICreator
-from .._utils import DirType, Status
+from .._utils.constants import BASE_DIR, KEYS_CONFIG_FILE
+from .._utils.enums import DirType, KeyType, FileType
+from .._utils.result import Status
+from .._utils.tools import get_path, update_directory_info
 from .._utils.ui_state_manager import get_ui_state_manager
 
 if TYPE_CHECKING:
@@ -66,7 +67,7 @@ class Initializer:
             if success and isinstance(result, SingleKeyManager):
                 # 设置密钥管理器
                 self.__set_current_key_manager(result)
-                app_utils.update_directory_info(self.__ui.dir_labels)
+                update_directory_info(self.__ui.dir_labels)
                 self.__ui.key_tab.loaded_key_id = self.__multi_km.current_key_id
                 self.__ui_state_mgr.update_status(f"自动加载密钥成功: {self.__multi_km.current_key_id}")
             elif not success and loading_result.status == Status.NEED_PASSWORD:
@@ -113,7 +114,7 @@ class Initializer:
             self.__update_all_tabs_key_manager()
 
             self.__ui_state_mgr.update_status(f"密钥对 '{key_id}' 已加载并准备就绪")
-            app_utils.update_directory_info(self.__ui.dir_labels)
+            update_directory_info(self.__ui.dir_labels)
 
         except Exception as e:
             self.__ui_state_mgr.update_status(f"创建数字签名实例失败: {e}")
@@ -140,7 +141,7 @@ class Initializer:
             # 更新状态
             key_id = getattr(key_manager, "key_id", "未知")
             self.__ui_state_mgr.update_status(f"密钥对 '{key_id}' 已加载并准备就绪")
-            app_utils.update_directory_info(self.__ui.dir_labels)
+            update_directory_info(self.__ui.dir_labels)
 
         except Exception as e:
             messagebox.showerror("数字签名实例设置失败", f"{e}")
@@ -163,53 +164,56 @@ def migrate_existing_files() -> None:
         DirType.KEYS: [
             f"{PRIVATE_}key_*{_PEM}",
             f"{PUBLIC_}key_*{_PEM}",
-            _utils.KEYS_CONFIG_FILE
+            KEYS_CONFIG_FILE
         ],
-        DirType.TEXTS: [_TXT],
+        DirType.TEXTS:      [_TXT],
         DirType.SIGNATURES: [_SIG]
     }
 
-    exclude_files = [f"requirements{_TXT}", f"README{_TXT}"]
-    migrated_files: list[tuple[DirType, str, str]] = []
+    exclude_files = {f"requirements{_TXT}", f"README{_TXT}"}
+    migrated_categories: list[DirType] = []
 
     for category, patterns in migration_map.items():
         for pattern in patterns:
             for old_file in glob(pattern):
-                old_file_path = Path(old_file)
-                if old_file_path.name in exclude_files:
+                old_path = Path(old_file)
+
+                invalid = (
+                    old_path.name in exclude_files
+                    or not old_path.is_file()
+                    or old_file.startswith(BASE_DIR)
+                )
+                
+                if invalid:
                     continue
 
-                if not old_file_path.is_file() or old_file.startswith(_utils.BASE_DIR):
-                    continue
-
-                new_path = _utils.get_path(category, old_file_path.name)
-
-                if Path(new_path).exists():
+                new_path = Path(get_path(category, old_path.name))
+                if new_path.exists():
                     continue
 
                 try:
                     move(old_file, new_path)
-                    migrated_files.append((category, old_file, new_path))
+                    migrated_categories.append(category)
                 except Exception as e:
                     warning(f"迁移文件失败 {old_file}: {e}")
 
-    if not migrated_files:
+    if not migrated_categories:
         return
 
-    category_counts = Counter(category for category, _, _ in migrated_files)
-
-    migration_info = "已自动迁移文件到data目录:\n\n"
-    for category, count in category_counts.items():
-        migration_info += f"{category}: {count} 个文件\n"
-
+    category_counts = Counter(migrated_categories)
+    migration_info = "已自动迁移文件到data目录:\n\n" + "".join(
+        f"{category}: {count} 个文件\n"
+        for category, count in category_counts.items()
+    )
+    
     messagebox.showinfo("文件迁移", migration_info)
 
 def _get_constants() -> tuple[str, str, str, str, str]:
     """字符串导出"""
     return (
-        f"{_utils.KeyType.PRIVATE.value}_",
-        f"{_utils.KeyType.PUBLIC.value}_",
-        _utils.FileType.KEY.value,
-        _utils.FileType.TEXT.value,
-        _utils.FileType.SIGNATURE.value
+        f"{KeyType.PRIVATE.value}_",
+        f"{KeyType.PUBLIC.value}_",
+        FileType.KEY.value,
+        FileType.TEXT.value,
+        FileType.SIGNATURE.value
     )

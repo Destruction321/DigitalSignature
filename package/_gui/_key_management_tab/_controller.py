@@ -1,11 +1,13 @@
-# package/_gui/_key_management_tab/controller.py
+# package/_gui/_key_management_tab/_controller.py
 """密钥管理标签页控制器"""
 from tkinter import messagebox
 from typing import cast, TYPE_CHECKING
 
 from ._password_validator import PasswordValidator
 from ..._core.keys.managers import SingleKeyManager
-from ..._utils import ENCRYPTED, PassWord, Status
+from ..._utils.constants import ENCRYPTED
+from ..._utils.enums import PassWord
+from ..._utils.result import Status
 from ..._utils.ui_state_manager import get_ui_state_manager
 
 if TYPE_CHECKING:

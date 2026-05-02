@@ -7,13 +7,16 @@ from tkinter import messagebox
 from typing import Callable, cast, TYPE_CHECKING
 
 from cryptography.hazmat.backends import default_backend
-from cryptography.hazmat.primitives.asymmetric import rsa
+from cryptography.hazmat.primitives.asymmetric.rsa import (
+    generate_private_key, RSAPrivateKey
+)
 
 from .managers import SingleKeyManager
-from ..._utils import ENCRYPTED, Status, Result
+from ..._utils.constants import ENCRYPTED
+from ..._utils.result import Status, Result
 
 if TYPE_CHECKING:
-    from tkinter import Entry, BooleanVar
+    from tkinter import BooleanVar, Entry
     from tkinter.ttk import Combobox
     from .managers import MultiKeyManager
 
@@ -96,12 +99,12 @@ def _create_key_pair(multi_km: MultiKeyManager, key_id: str, key_size: int, pass
     try:
         # 生成RSA密钥对
         new_keys = SingleKeyManager(key_size, key_id)
-        new_keys.private_key = rsa.generate_private_key(
+        new_keys.private_key = generate_private_key(
             public_exponent=65537,
             key_size=new_keys.key_size,
             backend=default_backend()
         )
-        new_keys.public_key = cast(rsa.RSAPrivateKey, new_keys.private_key).public_key()
+        new_keys.public_key = cast(RSAPrivateKey, new_keys.private_key).public_key()
         
         # 获取保存路径
         private_key_path, public_key_path = multi_km.get_key_paths(key_id, key_size, password is not None)

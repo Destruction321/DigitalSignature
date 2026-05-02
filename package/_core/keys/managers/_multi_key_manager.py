@@ -1,4 +1,4 @@
-# package/_core/keys/managers/multi_key_manager.py
+# package/_core/keys/managers/_multi_key_manager.py
 """多密钥对管理模块"""
 from pathlib import Path
 from typing import Callable, cast, TYPE_CHECKING, TypedDict
@@ -7,11 +7,13 @@ from ._single_key_manager import SingleKeyManager
 from .._config import save_config
 from .._encryption import DecryptError
 from .._recovery import KeyRecoveryManager
-from .... import _utils
-from ...._utils import Status, Result
+from ...._utils.constants import ENCRYPTED, KEYS_CONFIG_FILE
+from ...._utils.enums import DirType, KeyType, FileType
+from ...._utils.result import Status, Result
+from ...._utils.tools import get_path
 
 if TYPE_CHECKING:
-    from ...._utils import PassWord
+    from ...._utils.enums import PassWord
 
 
 class _KeyPairInfo(TypedDict):
@@ -95,7 +97,7 @@ class MultiKeyManager:
         if config_file is not None:
             return config_file
         else:
-            return _utils.get_path(_utils.DirType.KEYS, _utils.KEYS_CONFIG_FILE)
+            return get_path(DirType.KEYS, KEYS_CONFIG_FILE)
 
 
     """public methods"""
@@ -282,7 +284,7 @@ class MultiKeyManager:
                         message = "移除加密失败：私钥文件仍为加密格式"
                         return Result(status=Status.KEY_FILE_CORRUPT, msg=message)
                         
-            status_desc = _utils.ENCRYPTED if new_password else "移除加密"
+            status_desc = ENCRYPTED if new_password else "移除加密"
             message = f"密钥 '{key_id}' 密码更改成功（{status_desc}）"
             return Result(status=Status.SUCCESS, msg=message)
             
@@ -310,7 +312,7 @@ class MultiKeyManager:
             return no_key_id
         
         is_encrypted = self.__key_pairs[key_id].get("is_encrypted", False)
-        status_desc = _utils.ENCRYPTED if is_encrypted else "未加密"
+        status_desc = ENCRYPTED if is_encrypted else "未加密"
         
         return Result(status=Status.SUCCESS, data=is_encrypted, msg=status_desc)
 
@@ -331,7 +333,7 @@ class MultiKeyManager:
         private_key_file = f"{PRIVATE_}{key_id}_{key_size}{_ENCRYPTED}{_PEM}"
         public_key_file = f"{PUBLIC_}{key_id}_{key_size}{_PEM}"
 
-        keys_dir = _utils.get_path(_utils.DirType.KEYS)
+        keys_dir = get_path(DirType.KEYS)
         return (
             str(Path(keys_dir, private_key_file)),
             str(Path(keys_dir, public_key_file))
@@ -350,8 +352,8 @@ class MultiKeyManager:
 def _get_consts(is_encrypted: bool = False) -> tuple[str, str, str, str]:
     """字符串导出"""
     return (
-        f"{_utils.KeyType.PRIVATE.value}_",
-        f"{_utils.KeyType.PUBLIC.value}_",
-        f"_{_utils.KeyType.ENCRYPTED.value}" if is_encrypted else "",
-        _utils.FileType.KEY.value
+        f"{KeyType.PRIVATE.value}_",
+        f"{KeyType.PUBLIC.value}_",
+        f"_{KeyType.ENCRYPTED.value}" if is_encrypted else "",
+        FileType.KEY.value
     )

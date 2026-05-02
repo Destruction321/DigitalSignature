@@ -1,16 +1,16 @@
-# package/_backups/_modules/backup_utils.py
+# package/_backups/_modules/_backup_utils.py
 """统一备份服务"""
 import shutil
 from datetime import datetime
 from hashlib import sha256
 from json import load, dump
 from logging import warning
-from os.path import relpath
 from pathlib import Path
 from typing import Any, Callable, Final
 
-from .. import _utils
-from .._utils import DirType, Status, Result
+from .._utils.enums import DirType, FileType
+from .._utils.result import Status, Result
+from .._utils.tools import format_size, get_path
 
 _BACKUP_: Final[str] = DirType.BACKUP.value
 
@@ -149,7 +149,7 @@ def verify_backup_integrity(backup_dir: Path) -> Result:
             message += f"\n文件大小不匹配（应有{total_size}字节，实有{current_total_size}字节）"
             return Result(status=Status.BACKUP_VERIFY_FAILED, data=checksum_data, msg=message)
 
-        message = f"备份完整性验证通过（{backup_type}，{file_count}个文件，{_utils.format_size(total_size)}）"
+        message = f"备份完整性验证通过（{backup_type}，{file_count}个文件，{format_size(total_size)}）"
         return Result(status=Status.BACKUP_VERIFY_SUCCESS, data=checksum_data, msg=message)
     
     except Exception as e:
@@ -226,7 +226,7 @@ def restore_backup(backup_dir: Path, overwrite: bool = False, backup_type: DirTy
         
     try:
         if backup_type == DirType.FULL:
-            restore_result = operation(backup_dir, Path(_utils.get_path(DirType.FULL)), overwrite)
+            restore_result = operation(backup_dir, Path(get_path(DirType.FULL)), overwrite)
         else:
             restore_result = operation(backup_dir, backup_type, overwrite)
         return restore_result
@@ -275,7 +275,7 @@ def _backup_data(data_type: DirType, backup_dir: str | None = None) -> Result:
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         backup_dir = f"{_DATA if data_type == DirType.FULL else data_type.value}{_BACKUP_}{timestamp}"
         
-    data_dir = _utils.get_path(DirType.FULL) if data_type == DirType.FULL else _utils.get_path(data_type)
+    data_dir = get_path(DirType.FULL) if data_type == DirType.FULL else get_path(data_type)
     if not Path(data_dir).exists():
         return Result(status=Status.DIR_NOT_FOUND, msg=f"数据目录不存在: {data_dir}")
     
@@ -309,18 +309,13 @@ def _restore_full_backup(backup_dir: Path, data_dir: Path, overwrite: bool) -> R
 
 def _restore_partial_backup(backup_dir: Path, data_type: DirType, overwrite: bool) -> Result:
     """恢复部分备份（密钥、文本、签名）"""
-    dir = Path(_utils.get_path(data_type))
+    dir = Path(get_path(data_type))
     dir.mkdir(parents=True, exist_ok=True)
     
     if overwrite:
-        for file_name in dir.iterdir():
-            try:
-                if file_name.is_file():
-                    file_name.unlink()
-                    
-            except Exception as e:
-                message = f"清理{_DATA_TYPE[data_type]}目录失败: {e}"
-                return Result(status=Status.CLEANUP_FAILED, msg=message)
+        result = _rm_dir(dir, data_type)
+        if result is not None and not result.is_success:
+            return result
                 
     # 复制文件
     copied_files = []
@@ -345,6 +340,17 @@ def _restore_partial_backup(backup_dir: Path, data_type: DirType, overwrite: boo
         
     message = f"{_DATA_TYPE[data_type]}恢复完成: 复制了 {len(copied_files)} 个文件到 {dir}"
     return Result(status=Status.RESTORE_SUCCESS, data=len(copied_files), msg=message)
+
+def _rm_dir(dir: Path, data_type: DirType) -> Result | None:
+    """删除目录下的所有内容"""
+    for file_name in dir.iterdir():
+        try:
+            if file_name.is_file():
+                file_name.unlink()
+                
+        except Exception as e:
+            message = f"清理{_DATA_TYPE[data_type]}目录失败: {e}"
+            return Result(status=Status.CLEANUP_FAILED, msg=message)
 
 def _create_backup_checksum(backup_dir: Path, backup_type: str) -> None:
     """为备份目录创建校验和文件"""
@@ -371,35 +377,31 @@ def _calculate_backup_checksum(backup_dir: Path) -> tuple[str, int, int]:
     # 排除校验文件本身
     excluded_files = [_CHECKSUM_FILE]
 
-    # 遍历备份目录中的所有文件
-    for root, _, files in backup_dir.walk():
-        # 对文件进行排序，确保顺序一致
-        for file_name in sorted(files):
-            if file_name in excluded_files:
-                continue
+    # 递归获取所有文件，全局排序
+    for file_path in sorted(backup_dir.rglob("*")):
+        if not file_path.is_file():
+            continue
+        
+        if file_path.name in excluded_files:
+            continue
 
-            file_path = root / file_name
-            relative_path = relpath(file_path, backup_dir)
+        relative_path = file_path.relative_to(backup_dir).as_posix()  # 统一用 /
+        
+        try:
+            file_size = file_path.stat().st_size
+            file_count += 1
+            total_size += file_size
 
-            # 更新文件计数和大小
-            try:
-                file_size = file_path.stat().st_size
-                file_count += 1
-                total_size += file_size
+            hash_sha256.update(relative_path.encode('utf-8'))
+            hash_sha256.update(str(file_size).encode('utf-8'))
 
-                # 将相对路径和文件大小加入哈希计算
-                hash_sha256.update(relative_path.encode("utf-8"))
-                hash_sha256.update(str(file_size).encode("utf-8"))
-
-                # 逐块读取文件内容加入哈希计算
-                with open(file_path, "rb") as f:
-                    for chunk in iter(lambda: f.read(4096), b""):
-                        hash_sha256.update(chunk)
-                        
-            except Exception as e:
-                # 如果某个文件无法读取，继续处理其他文件
-                warning(f"警告：无法读取文件 {file_path}: {e}")
-                continue
+            with open(file_path, 'rb') as f:
+                for chunk in iter(lambda: f.read(4096), b''):
+                    hash_sha256.update(chunk)
+                    
+        except Exception as e:
+            warning(f"警告：无法读取文件 {file_path}: {e}")
+            continue
 
     return hash_sha256.hexdigest(), file_count, total_size
 
@@ -442,9 +444,9 @@ def _inferred_type(backup_dir: Path) -> DirType:
 def _get_file_type():
     """导出文件类型"""
     return (
-        _utils.FileType.KEY.value,
-        _utils.FileType.TEXT.value,
-        _utils.FileType.SIGNATURE.value
+        FileType.KEY.value,
+        FileType.TEXT.value,
+        FileType.SIGNATURE.value
     )
 
 def _extension_exists(backup_dir: Path, extension: str) -> bool:

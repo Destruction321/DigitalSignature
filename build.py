@@ -1,9 +1,9 @@
 # build.py
 """构建脚本"""
 import sys
-from subprocess import run, CalledProcessError
 from pathlib import Path
 from shutil import which
+from subprocess import run, CalledProcessError
 
 def get_pyinstaller_exe() -> Path | None:
     """

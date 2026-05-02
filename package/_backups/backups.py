@@ -6,10 +6,10 @@ from typing import cast, Callable, TYPE_CHECKING
 
 from . import _backup_utils
 
-from ._modules import Restore, manager
-from .._utils import DirType
+from ._modules import manager, Restore
+from .._utils.enums import DirType
+from .._utils.tools import reload_current_key, update_directory_info
 from .._utils.ui_state_manager import get_ui_state_manager
-from ..app import app_utils
 
 if TYPE_CHECKING:
     from tkinter import Menu, Tk
@@ -62,9 +62,9 @@ class BackUps:
         dialog = Restore(
             parent=self.__root,
             update_status_callback=self.__ui_state_mgr.update_status,
-            update_dir_callback=lambda: app_utils.update_directory_info(self.__dir_labels),
+            update_dir_callback=lambda: update_directory_info(self.__dir_labels),
             refresh_key_callback=self.__refresh_callback,
-            reload_key_callback=lambda: app_utils.reload_current_key(self.__multi_km, self.__key_loader)
+            reload_key_callback=lambda: reload_current_key(self.__multi_km, self.__key_loader)
         )
         dialog.show()
 

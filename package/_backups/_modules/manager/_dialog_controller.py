@@ -6,7 +6,7 @@ from typing import Any, Callable, TYPE_CHECKING
 
 from .._verifier import Verifier
 from ... import _backup_utils
-from ...._utils import format_size
+from ...._utils.tools import format_size
 
 if TYPE_CHECKING:
     from tkinter import Widget

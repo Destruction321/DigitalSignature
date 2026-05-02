@@ -1,12 +1,14 @@
-# package/_gui/_key_management_tab/ui_creator.py
+# package/_gui/_key_management_tab/_ui_creator.py
 """密钥管理标签页UI创建器"""
 import tkinter as tk
+from pathlib import Path
 from tkinter import ttk, messagebox
 from typing import cast, TYPE_CHECKING
 
 from ._controller import Controller
 from ..._core.keys import creator
-from ..._utils import DirType, get_path
+from ..._utils.enums import DirType
+from ..._utils.tools import get_path
 from ..._utils.ui_state_manager import get_ui_state_manager
 
 if TYPE_CHECKING:
@@ -95,7 +97,7 @@ class UICreator:
         dir_frame = ttk.Frame(self.__parent)
         dir_frame.grid(row=0, column=0, sticky=tk.EW, pady=(0, 5))
 
-        keys_dir = get_path(DirType.KEYS)
+        keys_dir = Path(get_path(DirType.KEYS)).as_posix()
         ttk.Label(
             dir_frame,
             text=f"密钥存储目录: {keys_dir}",

@@ -2,8 +2,8 @@
 """数字签名系统主模块"""
 from typing import TYPE_CHECKING
 
-from .app_utils import update_directory_info
 from ._initializer import Initializer, migrate_existing_files
+from .._utils.tools import update_directory_info
 
 if TYPE_CHECKING:
     from tkinter import Tk

@@ -8,7 +8,7 @@ from pathlib import Path
 from shutil import move
 from typing import Any
 
-from ..._utils import Status, Result
+from ..._utils.result import Status, Result
 
 
 """public methods"""

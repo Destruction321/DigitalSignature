@@ -6,13 +6,15 @@ from pathlib import Path
 from tkinter import messagebox
 from typing import Callable
 
-from .. import _utils
-from .._utils import DirType, Status, Result
+from .._utils.constants import KEYS_CONFIG_FILE
+from .._utils.enums import DirType, FileType, KeyType
+from .._utils.result import Status, Result
+from .._utils.tools import get_path
 
-_PEM = _utils.FileType.KEY.value
-_ENCRYPTED = f"_{_utils.KeyType.ENCRYPTED.value}"
-_PRIVATE = _utils.KeyType.PRIVATE.value
-_PUBLIC = _utils.KeyType.PUBLIC.value
+_PEM = FileType.KEY.value
+_ENCRYPTED = f"_{KeyType.ENCRYPTED.value}"
+_PRIVATE = KeyType.PRIVATE.value
+_PUBLIC = KeyType.PUBLIC.value
 
 
 """public methods"""
@@ -75,7 +77,7 @@ def cleanup_temp_files() -> Result:
         cleanup_result (Result): 清理结果，成功时包含清理数量
     """
     try:
-        temp_dir = Path(_utils.get_path(DirType.TEMP))
+        temp_dir = Path(get_path(DirType.TEMP))
         deleted_count = _cleanup_directory_files(temp_dir)
         if deleted_count == 0:
             return Result(status=Status.CLEANUP_SUCCESS, data=0, msg="无临时文件需要清理")
@@ -105,7 +107,7 @@ def cleanup_old_files(days_old: int = 30, categories: list[DirType] | None = Non
     
     try:
         for category in categories:
-            dir_path = Path(_utils.get_path(category))
+            dir_path = Path(get_path(category))
             deleted_count = _cleanup_directory_files(
                 dir_path, lambda file_path: Path(file_path).stat().st_birthtime < cutoff_time
             )
@@ -134,12 +136,12 @@ def cleanup_orphaned_keys(valid_key_ids: list[str] | None = None) -> Result:
     if valid_key_ids is None:
         valid_key_ids = []
         
-    keys_dir = Path(_utils.get_path(DirType.KEYS))
+    keys_dir = Path(get_path(DirType.KEYS))
     if not keys_dir.exists():
         return Result(status=Status.DIR_NOT_FOUND, msg="密钥目录不存在，无需清理")
         
     # 加载配置
-    config_path = Path(keys_dir, _utils.KEYS_CONFIG_FILE)
+    config_path = Path(keys_dir, KEYS_CONFIG_FILE)
     config_data = {}
     if config_path.exists():
         try:

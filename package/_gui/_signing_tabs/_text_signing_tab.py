@@ -1,4 +1,4 @@
-# package/_gui/tabs/signing_tabs/_text_signing_tab.py
+# package/_gui/_signing_tabs/_text_signing_tab.py
 """文本签名标签页，实现核心接口和内容编辑接口"""
 import tkinter as tk
 from hashlib import sha256
@@ -12,7 +12,8 @@ from typing import Callable, TYPE_CHECKING
 
 from ._base_signing_tab import BaseSigningTab
 from ..._core import signature
-from ..._utils import DirType, FileType, get_path
+from ..._utils.enums import DirType, FileType
+from ..._utils.tools import get_path
 
 if TYPE_CHECKING:
     from ..._core.keys.managers import SingleKeyManager

@@ -8,7 +8,8 @@ from tkinter.scrolledtext import ScrolledText
 from typing import Any, Callable, cast
 
 from .._backup_utils import verify_backup_integrity
-from ..._utils import Status, Result, format_size
+from ..._utils.result import Status, Result
+from ..._utils.tools import format_size
 
 
 class Verifier:
@@ -100,7 +101,8 @@ class Verifier:
             self.__verify_dialog
         ).after(0, lambda: self.__update_single_result(verify_result, backup, callback))
 
-    def __batch_verification_thread(self, backup_items: list[dict[str, Any]],
+    def __batch_verification_thread(self,
+                                    backup_items: list[dict[str, Any]],
                                     callback: Callable[[list[dict[str, Any]]], None]) -> None:
         """批量验证线程函数"""
         valid_count = 0

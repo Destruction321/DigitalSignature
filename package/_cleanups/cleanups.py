@@ -5,8 +5,8 @@ from tkinter import messagebox, ttk
 from typing import TYPE_CHECKING
 
 from . import _cleanup_utils
-from ..app.app_utils import update_directory_info
-from .._utils import DirType
+from .._utils.enums import DirType
+from .._utils.tools import update_directory_info
 from .._utils.ui_state_manager import get_ui_state_manager
 
 if TYPE_CHECKING:

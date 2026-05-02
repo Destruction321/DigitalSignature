@@ -1,8 +1,8 @@
-# package/_backups/_modules/restore.py
+# package/_backups/_modules/_restore.py
 """备份恢复器"""
 import tkinter as tk
 from pathlib import Path
-from tkinter import ttk, messagebox
+from tkinter import messagebox, ttk
 from typing import Any, Callable, cast
 
 from .. import _backup_utils

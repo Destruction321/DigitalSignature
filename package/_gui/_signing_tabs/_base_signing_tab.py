@@ -1,4 +1,4 @@
-# package/_gui/tabs/signing_tabs/_base_signing_tab.py
+# package/_gui/_signing_tabs/_base_signing_tab.py
 """签名标签页基类"""
 import tkinter as tk
 from abc import ABC, abstractmethod
@@ -7,8 +7,8 @@ from tkinter.filedialog import askopenfilename
 from tkinter.scrolledtext import ScrolledText
 from typing import Callable, TYPE_CHECKING
 
+from ..._utils.constants import BASE_DIR
 from ..._utils.ui_state_manager import get_ui_state_manager
-from ..._utils import BASE_DIR
 
 if TYPE_CHECKING:
     from ..._core.keys.managers import SingleKeyManager

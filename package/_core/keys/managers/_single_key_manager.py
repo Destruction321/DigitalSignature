@@ -1,4 +1,4 @@
-# package/_core/keys/managers/single_key_manager.py
+# package/_core/keys/managers/_single_key_manager.py
 """单个密钥对管理器"""
 from typing import cast
 
@@ -7,7 +7,7 @@ from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric.rsa import RSAPrivateKey, RSAPublicKey
 
 from .. import _encryption
-from ...._utils import Status, Result
+from ...._utils.result import Status, Result
 
 
 class SingleKeyManager:

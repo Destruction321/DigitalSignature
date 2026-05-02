@@ -7,12 +7,12 @@ from typing import cast, Callable, TYPE_CHECKING
 
 from ._key_management_tab import KeyManagementTab
 from ._signing_tabs import FileSigningTab, TextSigningTab
-from .. import _utils
 from .._backups import BackUps
 from .._cleanups import CleanUps
-from .._utils import DirType
+from .._utils.constants import BASE_DIR
+from .._utils.enums import DirType
+from .._utils.tools import reload_current_key, update_directory_info
 from .._utils.ui_state_manager import get_ui_state_manager
-from ..app import app_utils
 
 if TYPE_CHECKING:
     from .._core.keys.loader import KeyLoader
@@ -91,7 +91,7 @@ class UICreator:
         dir_grid: ttk.Frame = ttk.Frame(dir_info_frame)
         dir_grid.pack(fill=tk.X)
 
-        base_info: str = f"数据目录: {Path(_utils.BASE_DIR).resolve()}"
+        base_info: str = f"数据目录: {Path(BASE_DIR).resolve().as_posix()}"
         base_label: ttk.Label = ttk.Label(dir_grid, text=base_info, font=("微软雅黑", 9, "bold"))
         base_label.grid(row=0, column=0, columnspan=6, sticky=tk.W, pady=(0, 5))
 
@@ -145,12 +145,12 @@ class UICreator:
 
         buttons_row1: list[tuple[str, Callable[[], None]]] = [(
             "重新加载密钥",
-            lambda: app_utils.reload_current_key(
+            lambda: reload_current_key(
                 multi_km=self.__multi_km,
                 key_loader=self.__key_loader,
                 click_reload_btn=True
             )),
-            ("刷新目录信息", lambda: app_utils.update_directory_info(self.__dir_labels))
+            ("刷新目录信息", lambda: update_directory_info(self.__dir_labels))
         ]
 
         for text, command in buttons_row1:
