@@ -110,7 +110,7 @@ def migrate_config(old_path: str, new_path: str) -> Result:
         
         # 保存新配置
         save_result = save_config(old_config_result.data, new_path, sign=True)
-        if not save_result.is_success():
+        if not save_result.is_success:
             return save_result
         
         # 备份旧文件

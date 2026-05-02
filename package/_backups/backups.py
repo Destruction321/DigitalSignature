@@ -78,22 +78,22 @@ class BackUps:
     def __backup_all_data(self) -> None:
         """备份所有数据"""
         backup_result = _backup_utils.create_backup(DirType.FULL)
-        self.__handle_backup_result(backup_result.is_success(), backup_result.msg, "数据备份")
+        self.__handle_backup_result(backup_result.is_success, backup_result.msg, "数据备份")
 
     def __backup_keys_only(self) -> None:
         """仅备份密钥"""
         backup_result = _backup_utils.create_backup(DirType.KEYS)
-        self.__handle_backup_result(backup_result.is_success(), backup_result.msg, "密钥备份")
+        self.__handle_backup_result(backup_result.is_success, backup_result.msg, "密钥备份")
 
     def __backup_texts_only(self) -> None:
         """仅备份文本"""
         backup_result = _backup_utils.create_backup(DirType.TEXTS)
-        self.__handle_backup_result(backup_result.is_success(), backup_result.msg, "文本备份")
+        self.__handle_backup_result(backup_result.is_success, backup_result.msg, "文本备份")
 
     def __backup_signatures_only(self) -> None:
         """仅备份签名"""
         backup_result = _backup_utils.create_backup(DirType.SIGNATURES)
-        self.__handle_backup_result(backup_result.is_success(), backup_result.msg, "签名备份")
+        self.__handle_backup_result(backup_result.is_success, backup_result.msg, "签名备份")
 
     def __handle_backup_result(self, success: bool, result: str, operation: str) -> None:
         """处理备份结果"""

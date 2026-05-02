@@ -55,12 +55,12 @@ class KeyRecoveryManager:
         """
         # 第一层：从签名JSON加载
         direct_load_result = self.__try_secure_direct_load()
-        if direct_load_result.is_success():
+        if direct_load_result.is_success:
             return True
         
         # 第二层：从文件重建
         rebuild_result = self.__try_rebuild_from_files()
-        if rebuild_result.is_success():
+        if rebuild_result.is_success:
             return True
         
         # 恢复失败：重置配置
@@ -80,13 +80,13 @@ class KeyRecoveryManager:
             if not config_file_path.exists():
                 # 尝试迁移旧配置
                 migrated = _config.migrate_config(_utils.KEYS_CONFIG_FILE, self.__multi_km.config_file)
-                if not migrated.is_success() or not config_file_path.exists():
+                if not migrated.is_success or not config_file_path.exists():
                     self.__update_security_status(False)
                     return Result(status=Status.FILE_NOT_FOUND, msg="配置文件不存在，迁移旧配置失败")
                     
             # 安全加载配置
             load_config_result = _config.load_config(self.__multi_km.config_file, verify_integrity=True)
-            if not load_config_result.is_success():
+            if not load_config_result.is_success:
                 self.__update_security_status(False)
                 return load_config_result
             
@@ -94,7 +94,7 @@ class KeyRecoveryManager:
             
             # 验证配置结构
             validate_result = _config.validate_config_structure(config_data)
-            if not validate_result.is_success():
+            if not validate_result.is_success:
                 self.__update_security_status(False)
                 return validate_result
             
@@ -105,7 +105,7 @@ class KeyRecoveryManager:
             
             # 验证配置完整性（文件存在性）
             config_integrity_result = self.__validate_config_integrity()
-            self.__update_security_status(config_integrity_result.is_success())
+            self.__update_security_status(config_integrity_result.is_success)
             return config_integrity_result
         
         except Exception as e:
@@ -157,7 +157,7 @@ class KeyRecoveryManager:
             self.__multi_km.key_pairs = rebuilt_config
             self.__multi_km.current_key_id = next(iter(rebuilt_config.keys()))  # 默认选中第一个
             save_result = self.__multi_km.save_keys_config()
-            if not save_result.is_success():
+            if not save_result.is_success:
                 self.__update_security_status(False)
                 return save_result
             

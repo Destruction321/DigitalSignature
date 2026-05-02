@@ -60,7 +60,7 @@ def create_key_pair(key_setter: KeySetter, multi_km: MultiKeyManager, callbacks:
     
     # 创建密钥对
     create_result = _create_key_pair(multi_km, key_id, key_size, password)
-    if create_result.is_success():
+    if create_result.is_success:
         # 4. 处理成功
         _handle_key_creation_success(key_id, create_result.msg, key_setter, callbacks, multi_km)
     else:
@@ -108,7 +108,7 @@ def _create_key_pair(multi_km: MultiKeyManager, key_id: str, key_size: int, pass
         
         # 保存密钥文件
         save_result = new_keys.save_keys(private_key_path, public_key_path, password)
-        if not save_result.is_success():
+        if not save_result.is_success:
             return save_result
         
         # 记录密钥信息到配置
@@ -122,7 +122,7 @@ def _create_key_pair(multi_km: MultiKeyManager, key_id: str, key_size: int, pass
         
         # 保存配置
         config_result = multi_km.save_keys_config()
-        if not config_result.is_success():
+        if not config_result.is_success:
             return config_result
         
         encryption_status = ENCRYPTED if password else "未加密"

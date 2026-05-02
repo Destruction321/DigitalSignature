@@ -53,7 +53,7 @@ class PasswordValidator:
             
         # 获取密钥加密状态
         status_result = self.__multi_km.get_key_encryption_status(key_id)
-        if not status_result.is_success():
+        if not status_result.is_success:
             return status_result
         
         # 判断是否需要验证旧密码
@@ -64,7 +64,7 @@ class PasswordValidator:
         old_password: str | None = None
         if require_old_password:
             verify_result = self.__verify_old_password(key_id, mode)
-            if not verify_result.is_success():
+            if not verify_result.is_success:
                 return verify_result  # 传递旧密码验证失败状态
             
             old_password = cast(str, verify_result.data)  # 验证成功则data为旧密码
@@ -105,7 +105,7 @@ class PasswordValidator:
             
             # 尝试验证密码
             load_result = self.__multi_km.load_key_pair(key_id, old_password)
-            if load_result.is_success():
+            if load_result.is_success:
                 # 验证成功（data为旧密码）
                 return Result(status=Status.SUCCESS, data=old_password)
             
@@ -162,7 +162,7 @@ class PasswordValidator:
         
         # 执行密码更改
         change_result = self.__multi_km.change_key_password(key_id, old_password, new_password)
-        if not change_result.is_success():
+        if not change_result.is_success:
             return change_result  # 传递更改失败状态
         
         # 成功回调

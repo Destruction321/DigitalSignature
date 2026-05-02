@@ -139,7 +139,7 @@ class Verifier:
             if backup_path and backup_path.exists():
                 verify_result = verify_backup_integrity(backup_path)
                 
-                is_valid = verify_result.is_success()
+                is_valid = verify_result.is_success
                 message = verify_result.msg
 
                 # 更新备份信息
@@ -210,7 +210,7 @@ class Verifier:
             return
         
         cast(tk.Label, self.__progress_label).config(text="验证完成")
-        if verify_result.is_success():
+        if verify_result.is_success:
             cast(tk.Label, self.__result_label).config(text=f"✓ {verify_result.msg}", foreground="green")
         else:
             cast(tk.Label, self.__result_label).config(text=f"⚠ {verify_result.msg}", foreground="red")
@@ -226,10 +226,10 @@ class Verifier:
             result_label.config(text=result_label.cget("text") + f"\n\n{details}")
             
         cast(tk.Button, self.__close_button).config(state=tk.NORMAL)
-        backup["integrity_valid"] = verify_result.is_success()
+        backup["integrity_valid"] = verify_result.is_success
         backup["integrity_message"] = verify_result.msg
         backup["checksum_data"] = verify_result.data
-        backup["display_name"] = f"✓ {backup["name"]}" if verify_result.is_success() else f"⚠ {backup["name"]}"
+        backup["display_name"] = f"✓ {backup["name"]}" if verify_result.is_success else f"⚠ {backup["name"]}"
         
         if callback:
             callback(backup)

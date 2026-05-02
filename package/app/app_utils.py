@@ -63,7 +63,7 @@ def reload_current_key(multi_km: MultiKeyManager, key_loader: KeyLoader, click_r
     # 使用统一的KeyLoader加载密钥
     reload_result = key_loader.load_key(multi_km.current_key_id)
     
-    if reload_result.is_success():
+    if reload_result.is_success:
         return
     
     if reload_result.status == Status.CANCEL_INPUT:

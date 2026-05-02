@@ -76,7 +76,7 @@ class Controller:
             key_info = self.__multi_km.key_pairs.get(key_id, {})
             key_size = key_info.get("key_size", "未知")
 
-            if status_result.is_success():
+            if status_result.is_success:
                 display_text = f"{key_id}[{status_result.msg}，{key_size}位]"
             else:
                 display_text = f"{key_id}[状态未知，{key_size}位]"
@@ -98,7 +98,7 @@ class Controller:
             return
 
         status_result = self.__multi_km.get_key_encryption_status(current_key_id)
-        if not status_result.is_success():
+        if not status_result.is_success:
             self.__km_protocol.set_key_status("未找到密钥对", "red")
             return
 
@@ -129,7 +129,7 @@ class Controller:
 
         try:
             load_result = self.__key_loader.load_key(key_id)
-            if load_result.is_success():
+            if load_result.is_success:
                 self.update_key_status()
                 return cast(SingleKeyManager, load_result.data)
             else:
@@ -150,7 +150,7 @@ class Controller:
             return
 
         delete_result = self.__multi_km.delete_key_pair(key_id)
-        if not delete_result.is_success():
+        if not delete_result.is_success:
             messagebox.showerror("删除失败", delete_result.msg)
             return
 
@@ -171,7 +171,7 @@ class Controller:
             return
 
         status_result = self.__multi_km.get_key_encryption_status(key_id)
-        if status_result.is_success():
+        if status_result.is_success:
             messagebox.showinfo("加密状态", f"密钥 '{key_id}' 的状态:\n\n{status_result.msg}")
         else:
             messagebox.showerror("错误", status_result.msg)
@@ -197,7 +197,7 @@ class Controller:
             return
 
         result = self.__multi_km.recovery_mgr.try_rebuild_from_files()
-        if result.is_success():
+        if result.is_success:
             messagebox.showinfo("成功", "配置恢复成功")
             self.refresh_key_list()
             self.update_key_status()
@@ -249,7 +249,7 @@ class Controller:
         change_result = self.__password_validator.validate_and_reset_password(
             key_id=key_id, mode=mode
         )
-        if change_result.is_success():
+        if change_result.is_success:
             messagebox.showinfo("成功", f"密钥 '{key_id}' 密码修改成功：{change_result.msg}")
         elif change_result.status == Status.CANCEL_INPUT:
             messagebox.showinfo("取消", f"密钥 '{key_id}' 已{change_result.msg}")

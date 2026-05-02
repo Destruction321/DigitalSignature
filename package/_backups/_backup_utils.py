@@ -59,7 +59,7 @@ def create_backup(backup_type: DirType = DirType.FULL, backup_dir: str | None = 
         
     # 执行备份
     backup_result = operation(backup_dir)
-    if not backup_result.is_success():
+    if not backup_result.is_success:
         return backup_result
     
     # 生成校验和
@@ -84,19 +84,19 @@ def list_backups_with_integrity() -> Result:
         result (Result): 备份列表结果，成功时添加完整性验证结果
     """
     backups = list_backups()
-    if not backups.is_success():
+    if not backups.is_success:
         return Result(status=backups.status, data=[], msg=backups.msg)
 
     for backup in backups.data:
         # 验证备份完整性
         verify_result = verify_backup_integrity(backup["path"])
 
-        backup["integrity_valid"] = verify_result.is_success()
+        backup["integrity_valid"] = verify_result.is_success
         backup["integrity_message"] = verify_result.msg
         backup["checksum_data"] = verify_result.data
 
         # 在备份名称中添加完整性标记
-        if verify_result.is_success():
+        if verify_result.is_success:
             backup["display_name"] = f"✓ {backup["name"]}"
         else:
             backup["display_name"] = f"⚠ {backup["name"]}"

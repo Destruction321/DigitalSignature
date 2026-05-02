@@ -19,7 +19,7 @@ def show(parent: Widget, update_status_callback: Callable[[str], None]) -> None:
         update_status_callback (Callable[[str], None]): 状态更新回调函数
     """
     backups = list_backups_with_integrity()
-    if not backups.is_success():
+    if not backups.is_success:
         showerror("备份管理", backups.msg)
         return
 

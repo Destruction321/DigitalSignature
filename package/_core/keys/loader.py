@@ -47,7 +47,7 @@ class KeyLoader:
         
         # 获取加密状态
         status_result = self.__multi_km.get_key_encryption_status(key_id)
-        if not status_result.is_success():
+        if not status_result.is_success:
             return status_result
         
         # 静默加载处理
@@ -57,7 +57,7 @@ class KeyLoader:
             
             # 尝试静默加载
             load_result = self.__multi_km.load_key_pair(key_id, None)
-            if load_result.is_success():
+            if load_result.is_success:
                 if self.__key_loaded_callback:
                     self.__key_loaded_callback(cast(SingleKeyManager, load_result.data))
                     
@@ -112,7 +112,7 @@ class KeyLoader:
             load_result = self.__multi_km.load_key_pair(key_id, cast(str | None, password))
             
             # 成功：回调并返回结果
-            if load_result.is_success():
+            if load_result.is_success:
                 self.__handle_key_loading_success(key_id, cast(SingleKeyManager, load_result.data))
                 return load_result
             

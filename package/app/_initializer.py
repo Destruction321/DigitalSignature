@@ -60,7 +60,7 @@ class Initializer:
         try:
             # 使用KeyLoader静默加载
             loading_result = self.__key_loader.load_key(self.__multi_km.current_key_id, silent=True)
-            success = loading_result.is_success()
+            success = loading_result.is_success
             result = loading_result.data
             
             if success and isinstance(result, SingleKeyManager):
@@ -102,7 +102,7 @@ class Initializer:
             if key_id:
                 self.__multi_km.current_key_id = key_id
                 save_result = self.__multi_km.save_keys_config()
-                if not save_result.is_success():
+                if not save_result.is_success:
                     messagebox.showerror("密钥配置保存失败", f"密钥加载成功但配置保存失败：{save_result.msg}")
                     
                 # 通知KeyManagementTab密钥已真正加载

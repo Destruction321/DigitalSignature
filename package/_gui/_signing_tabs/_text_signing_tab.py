@@ -95,7 +95,7 @@ class TextSigningTab(BaseSigningTab):
             is_valid = signature.verify_signature(km, temp_file, Path(signature_path))
             text_hash = sha256(Path(temp_file).read_bytes()).hexdigest()
 
-            self._handle_verify_success(is_valid.is_success(), signature_path, "当前编辑文本", text_hash)
+            self._handle_verify_success(is_valid.is_success, signature_path, "当前编辑文本", text_hash)
             Path(temp_file).unlink()
 
         except Exception as e:

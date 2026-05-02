@@ -38,7 +38,7 @@ def cleanup_all_files(update_status_callback: Callable[[str], None],
         total_deleted = 0
         message_parts = ["完整清理结果："]
         
-        while temp_result.is_success() and old_result.is_success() and orphaned_result.is_success():
+        while temp_result.is_success and old_result.is_success and orphaned_result.is_success:
             total_deleted += temp_result.data
             message_parts.append(f"- 临时文件：清理 {temp_result.data} 个")
             

@@ -69,7 +69,7 @@ class CleanUps:
         """处理清理结果"""
         message = cleanup_result.msg
         self.__ui_state_mgr.update_status(message)
-        if cleanup_result.is_success():
+        if cleanup_result.is_success:
             messagebox.showinfo("清理完成", message)
         else:
             messagebox.showerror("清理失败", message)

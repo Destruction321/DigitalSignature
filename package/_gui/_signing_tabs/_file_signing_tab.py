@@ -101,7 +101,7 @@ class FileSigningTab(BaseSigningTab):
         try:
             is_valid = signature.verify_signature(km, content, Path(signature_path))
             file_hash = sha256(Path(content).read_bytes()).hexdigest()
-            self._handle_verify_success(is_valid.is_success(), signature_path, content, file_hash)
+            self._handle_verify_success(is_valid.is_success, signature_path, content, file_hash)
 
         except Exception as e:
             self._handle_operation_error("验证", e)

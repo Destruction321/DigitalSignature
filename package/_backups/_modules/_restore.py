@@ -148,7 +148,7 @@ class Restore:
             return
             
         verify_result = _backup_utils.verify_backup_integrity(backup_path)
-        if verify_result.is_success():
+        if verify_result.is_success:
             self.__restore(selected_backup)
             return
             
@@ -179,7 +179,7 @@ class Restore:
                 Path(selected_backup["path"]), overwrite=self.__overwrite_var.get()
             )
             
-            if restore_result.is_success():
+            if restore_result.is_success:
                 self.__update_status(f"备份恢复完成: {selected_backup["name"]}")
                 messagebox.showinfo("恢复成功", f"备份恢复成功！\n\n{restore_result.msg}")
                 cast(tk.Toplevel, self.__dialog).destroy()

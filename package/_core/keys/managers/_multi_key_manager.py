@@ -147,17 +147,17 @@ class MultiKeyManager:
                 return Result(status=Status.NEED_PASSWORD)
             
             load_private_result = l_km.load_private_key(key_info["private_key_path"], is_encrypted, password)
-            if not load_private_result.is_success():
+            if not load_private_result.is_success:
                 return load_private_result
             
             load_public_result = l_km.load_public_key(key_info["public_key_path"])
-            if not load_public_result.is_success():
+            if not load_public_result.is_success:
                 return load_public_result
             
             if self.__current_key_id != key_id:
                 self.__current_key_id = key_id
                 config_result = self.save_keys_config()
-                if not config_result.is_success():
+                if not config_result.is_success:
                     return config_result
                 
             return Result(status=Status.SUCCESS, data=l_km, msg=f"密钥对 '{key_id}' 加载成功")
@@ -202,7 +202,7 @@ class MultiKeyManager:
             del self.__key_pairs[key_id]
             
             config_result = self.save_keys_config()
-            if not config_result.is_success():
+            if not config_result.is_success:
                 return config_result
             
             return Result(status=Status.SUCCESS, msg=f"密钥对 '{key_id}' 已删除")
@@ -229,7 +229,7 @@ class MultiKeyManager:
         try:
             # 加载原有密钥（验证旧密码）
             load_result = self.load_key_pair(key_id, old_password)
-            if not load_result.is_success():
+            if not load_result.is_success:
                 # 旧密码错误单独处理
                 if load_result.status == Status.PASSWORD_ERROR:
                     return Result(status=Status.OLD_PASSWORD_ERROR)
@@ -249,7 +249,7 @@ class MultiKeyManager:
             
             # 重新保存密钥
             save_result = key_manager.save_keys(new_private_path, new_public_path, new_password)
-            if not save_result.is_success():
+            if not save_result.is_success:
                 return save_result
             
             # 删除旧文件
@@ -266,12 +266,12 @@ class MultiKeyManager:
             # 重新加载当前密钥
             if self.__current_key_id == key_id:
                 loading_result = self.load_key_pair(key_id, new_password)
-                if not loading_result.is_success():
+                if not loading_result.is_success:
                     return loading_result
                 
             # 保存配置
             config_result = self.save_keys_config()
-            if not config_result.is_success():
+            if not config_result.is_success:
                 return config_result
             
             # 验证加密状态
