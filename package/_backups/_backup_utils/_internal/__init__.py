@@ -1,0 +1,255 @@
+# package/_backups/_backup_utils/_internal/__init__.py
+"""备份服务核心功能"""
+from datetime import datetime
+from hashlib import sha256
+from json import dump
+from logging import warning
+from pathlib import Path
+from shutil import copyfile, copytree, rmtree
+from typing import Any
+
+from . import _internal
+from ...._utils.enums import DirType
+from ...._utils.result import Status, Result
+from ...._utils.tools import get_path
+
+CHECKSUM_FILE = _internal.CHECKSUM_FILE
+BACKUP = _internal.BACKUP
+
+"""public methods in module 'backup_utils'"""
+def backup_data(data_type: DirType, backup_dir: str | None = None) -> Result:
+    """
+    通用备份方法
+    
+    Args:
+        data_type (DirType): 备份类型（full=完整备份，keys=密钥备份，texts=文本备份，signatures=签名备份）
+        backup_dir (str | None): 备份目录路径（None=自动生成目录）
+    
+    Returns:
+        result (Result): 备份结果，成功时包含备份路径和结果消息
+    """
+    if backup_dir is None:
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        backup_dir = (
+            f"{_internal.DATA if data_type == DirType.FULL else data_type.value}{BACKUP}{timestamp}"
+        )
+        
+    data_dir = get_path(DirType.FULL) if data_type == DirType.FULL else get_path(data_type)
+    if not Path(data_dir).exists():
+        return Result(status=Status.DIR_NOT_FOUND, msg=f"数据目录不存在: {data_dir}")
+    
+    try:
+        copytree(data_dir, backup_dir)
+        return Result(
+            status=Status.SUCCESS,
+            data=backup_dir,
+            msg=f"{_internal.DATA_TYPE[data_type]}备份完成: {Path(backup_dir).resolve()}"
+        )
+        
+    except PermissionError as e:
+        return Result(status=Status.PERMISSION_DENIED, msg=f"备份失败：权限不足: {e}")
+        
+    except Exception as e:
+        return Result(status=Status.BACKUP_FAILED, msg=f"备份失败: {e}")
+
+def restore_full_backup(backup_dir: Path, data_dir: Path, overwrite: bool) -> Result:
+    """
+    恢复完整备份
+    
+    Args:
+        backup_dir (Path): 备份目录路径
+        data_dir (Path): 数据目录路径
+        overwrite (bool): 是否覆盖现有文件
+    
+    Returns:
+        result (Result): 恢复结果，成功时包含结果消息
+    """
+    # 删除所有现有文件（如果覆盖）
+    if overwrite and data_dir.exists():
+        rmtree(data_dir)
+   
+    try:
+        _internal.copy_tree_excluding_checksum(backup_dir, data_dir)
+        message = f"完整数据恢复完成: {backup_dir} -> {data_dir}"
+        return Result(status=Status.RESTORE_SUCCESS, msg=message)
+        
+    except Exception as e:
+        return Result(status=Status.RESTORE_FAILED, msg=f"完整恢复失败: {e}")
+
+def restore_partial_backup(backup_dir: Path, data_type: DirType, overwrite: bool) -> Result:
+    """
+    恢复部分备份（密钥、文本、签名）
+    
+    Args:
+        backup_dir (Path): 备份目录路径
+        data_type (DirType): 数据类型
+        overwrite (bool): 是否覆盖现有文件
+    
+    Returns:
+        result (Result): 恢复结果，成功时包含结果消息
+    """
+    dir = Path(get_path(data_type))
+    dir.mkdir(parents=True, exist_ok=True)
+    
+    if overwrite:
+        result = _internal.rm_dir(dir, data_type)
+        if result is not None and not result.is_success:
+            return result
+                
+    # 复制文件
+    copied_files = []
+    for file_name in backup_dir.iterdir():
+        file_name = file_name.name
+        if file_name == CHECKSUM_FILE:
+            continue
+        
+        src_path = backup_dir / file_name
+        dst_path = dir / file_name
+        
+        if not src_path.is_file():
+            continue
+        
+        try:
+            copyfile(src_path, dst_path)
+            copied_files.append(file_name)
+            
+        except Exception as e:
+            message = f"复制文件 {file_name} 失败: {e}"
+            return Result(status=Status.RESTORE_FAILED, msg=message)
+        
+    message = f"{_internal.DATA_TYPE[data_type]}恢复完成: 复制了 {len(copied_files)} 个文件到 {dir}"
+    return Result(status=Status.RESTORE_SUCCESS, data=len(copied_files), msg=message)
+
+def create_backup_checksum(backup_dir: Path, backup_type: str) -> None:
+    """
+    为备份目录创建校验和文件
+    
+    Args:
+        backup_dir (Path): 备份路径
+        backup_type (str): 备份类型
+    """
+    checksum, file_count, total_size = calculate_backup_checksum(backup_dir)
+    checksum_data = {
+        "backup_type": backup_type,
+        "checksum": checksum,
+        "file_count": file_count,
+        "total_size": total_size,
+        "created_time": datetime.now().isoformat(),
+        "backup_version": "1.0"
+    }
+
+    checksum_file = backup_dir / CHECKSUM_FILE
+    with open(checksum_file, "w", encoding="utf-8") as f:
+        dump(checksum_data, f, ensure_ascii=False, indent=2)
+
+def calculate_backup_checksum(backup_dir: Path) -> tuple[str, int, int]:
+    """
+    计算备份目录的校验和、文件数量和总大小
+    
+    Args:
+        backup_dir (Path): 备份路径
+        
+    Returns:
+        result (tuple[str, int, int]): 校验结果，包括哈希值、文件数量、目录大小
+    """
+    hash_sha256 = sha256()
+    file_count = 0
+    total_size = 0
+
+    # 排除校验文件本身
+    excluded_files = [CHECKSUM_FILE]
+
+    # 递归获取所有文件并计算校验和
+    for file_path in sorted(backup_dir.rglob("*")):
+        if not file_path.is_file():
+            continue
+        
+        if file_path.name in excluded_files:
+            continue
+
+        relative_path = file_path.relative_to(backup_dir).as_posix()  # 统一用 /
+        
+        try:
+            file_size = file_path.stat().st_size
+            file_count += 1
+            total_size += file_size
+
+            hash_sha256.update(relative_path.encode('utf-8'))
+            hash_sha256.update(str(file_size).encode('utf-8'))
+
+            with open(file_path, 'rb') as f:
+                for chunk in iter(lambda: f.read(4096), b''):
+                    hash_sha256.update(chunk)
+                    
+        except Exception as e:
+            warning(f"警告：无法读取文件 {file_path}: {e}")
+            continue
+
+    return hash_sha256.hexdigest(), file_count, total_size
+
+def get_backups(backups: list[dict[str, Any]], current_dir: Path) -> None:
+    """
+    获取备份列表
+    
+    Args:
+        backups (list[dict[str, Any]]): 用于存储备份信息的列表，函数会将备份信息添加到该列表中
+        current_dir (Path): 当前目录路径，函数会在该目录下查找备份目录
+    """
+    for item in current_dir.iterdir():
+        if not item.is_dir() or not any(pattern in item.name for pattern in [BACKUP]):
+            continue
+
+        try:
+            backup_info = {
+                "name": item.name,
+                "path": item,
+                "created_time": datetime.fromtimestamp(item.stat().st_birthtime),
+                "size": _internal.get_directory_size(item)
+            }
+            backups.append(backup_info)
+        except Exception as e:
+            warning(f"无法访问备份目录 {item}: {e}")
+            continue
+
+def detect_backup_type(backup_dir: Path) -> DirType:
+    """
+    检测备份类型
+    
+    Args:
+        backup_dir (Path): 备份目录路径
+        
+    Returns:
+        dir_type (DirType): 备份类型
+    """
+    backup_name = backup_dir.name
+    KEYS, TEXTS, SIGNATURES = _internal.get_dir_type()
+    if backup_name.startswith(f"{_internal.DATA}{BACKUP}"):
+        return DirType.FULL
+    elif backup_name.startswith(f"{KEYS}{BACKUP}"):
+        return DirType.KEYS
+    elif backup_name.startswith(f"{TEXTS}{BACKUP}"):
+        return DirType.TEXTS
+    elif backup_name.startswith(f"{SIGNATURES}{BACKUP}"):
+        return DirType.SIGNATURES
+    else:
+        return _internal.inferred_type(backup_dir)
+
+def extract_backup_path(result: str, backup_dir: str | None = None) -> str:
+    """
+    从结果消息中提取备份路径
+    
+    Args:
+        result: (str): 包含备份路径的结果消息
+        backup_dir: (str | None): 备份路径，如果已知则直接返回
+    
+    Returns:
+        str: 备份路径
+    """
+    if backup_dir:
+        return backup_dir
+
+    # 尝试从结果消息中提取路径
+    if "备份完成:" in result:
+        return result.split("备份完成:")[-1].strip()
+
+    return result.strip()

@@ -7,9 +7,9 @@ from tkinter import ttk, messagebox
 from tkinter.scrolledtext import ScrolledText
 from typing import Any, Callable, cast
 
-from .._backup_utils import verify_backup_integrity
-from ..._utils.result import Status, Result
-from ..._utils.tools import format_size
+from ._backup_utils import verify_backup_integrity
+from .._utils.result import Status, Result
+from .._utils.tools import format_size
 
 
 class Verifier:

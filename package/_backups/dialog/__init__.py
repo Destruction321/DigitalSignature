@@ -1,10 +1,11 @@
 # package/_backups/_modules/manager/__init__.py
+"""备份管理对话框"""
 from tkinter import TclError, Toplevel
 from tkinter.messagebox import showerror
 from typing import Callable, TYPE_CHECKING
 
 from . import _dialog_creator
-from ..._backup_utils import list_backups_with_integrity
+from .._backup_utils import list_backups_with_integrity
 
 if TYPE_CHECKING:
     from tkinter import Widget
@@ -12,7 +13,7 @@ if TYPE_CHECKING:
 
 def show(parent: Widget, update_status_callback: Callable[[str], None]) -> None:
     """
-    显示统一备份管理对话框
+    显示备份管理对话框
     
     Args:
         parent (tk.Widget): 父窗口

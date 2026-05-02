@@ -6,7 +6,7 @@ from tkinter.scrolledtext import ScrolledText
 from typing import Any, cast, Callable
 
 from ._dialog_controller import Controller
-from ...._utils.tools import format_size
+from ..._utils.tools import format_size
 
 
 def center_dialog(parent: tk.Widget, dialog: tk.Toplevel) -> None:
