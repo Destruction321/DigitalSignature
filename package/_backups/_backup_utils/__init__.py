@@ -11,6 +11,7 @@ from ..._utils.result import Status, Result
 from ..._utils.tools import format_size, get_path
 
 
+"""操作映射"""
 _BACKUP_OPERATIONS: Final[dict[DirType, Callable[[str | None], Result]]] = {
     DirType.FULL: lambda backup_dir=None: _internal.backup_data(DirType.FULL, backup_dir),
     DirType.KEYS: lambda backup_dir=None: _internal.backup_data(DirType.KEYS, backup_dir),
@@ -26,6 +27,7 @@ _RESTORE_OPERATIONS: Final[dict[DirType, Callable[[Path, Any, bool], Result]]] =
 }
 
 
+"""methods"""
 def create_backup(backup_type: DirType = DirType.FULL, backup_dir: str | None = None) -> Result:
     """
     创建备份
