@@ -1,6 +1,6 @@
 # package/_backups/_backup_utils/__init__.py
 """统一备份服务"""
-import shutil
+from shutil import rmtree
 from json import load
 from pathlib import Path
 from typing import Any, Callable, Final
@@ -228,7 +228,7 @@ def delete_backup(backup_name: str) -> Result:
         if not backup_path.is_dir() or not any(pattern in backup_name for pattern in [_internal.BACKUP]):
             return Result(status=Status.PARAM_EMPTY, msg=f"'{backup_name}' 不是有效的备份目录")
             
-        shutil.rmtree(backup_path)
+        rmtree(backup_path)
         return Result(status=Status.SUCCESS, msg=f"备份 '{backup_name}' 已成功删除")
         
     except PermissionError as e:
