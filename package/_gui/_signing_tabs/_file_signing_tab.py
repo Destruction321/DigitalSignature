@@ -8,7 +8,7 @@ from typing import cast, TYPE_CHECKING
 
 from ._base_signing_tab import BaseSigningTab
 from ..._core import signature
-from ..._utils import DirType, get_path
+from ..._utils import DirType, FileType, get_path
 
 if TYPE_CHECKING:
     from ..._core.keys.managers import SingleKeyManager
@@ -52,7 +52,7 @@ class FileSigningTab(BaseSigningTab):
             text="浏览文件",
             command=lambda: self._browse_file(
                 title="选择文件",
-                file_types=[("所有文件", "*.*"), ("文本文件", "*.txt"), ("文档", "*.docx *.pdf")],
+                file_types=[("所有文件", "*.*"), ("文本文件", f"*{FileType.TEXT.value}"), ("文档", "*.docx *.pdf")],
                 callback=self.__on_file_selected
             )
         ).grid(row=0, column=2, padx=5, pady=5)
@@ -66,7 +66,7 @@ class FileSigningTab(BaseSigningTab):
             command=lambda: self._browse_file(
                 title="选择签名文件",
                 initial_dir=get_path(DirType.SIGNATURES),
-                file_types=[("签名文件", "*.sig"), ("所有文件", "*.*")],
+                file_types=[("签名文件", f"*{FileType.SIGNATURE.value}"), ("所有文件", "*.*")],
                 callback=self.__on_signature_selected
             )
         ).grid(row=1, column=2, padx=5, pady=5)

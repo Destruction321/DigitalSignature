@@ -12,7 +12,7 @@ from typing import Callable, TYPE_CHECKING
 
 from ._base_signing_tab import BaseSigningTab
 from ..._core import signature
-from ..._utils import DirType, get_path
+from ..._utils import DirType, FileType, get_path
 
 if TYPE_CHECKING:
     from ..._core.keys.managers import SingleKeyManager
@@ -85,7 +85,7 @@ class TextSigningTab(BaseSigningTab):
         signature_path = self._browse_file(
             title="选择签名文件",
             initial_dir=get_path(DirType.SIGNATURES),
-            file_types=[("签名文件", "*.sig"), ("所有文件", "*.*")],
+            file_types=[("签名文件", f"*{FileType.SIGNATURE.value}"), ("所有文件", "*.*")],
         )
         if signature_path is None:
             return
