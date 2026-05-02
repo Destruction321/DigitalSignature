@@ -54,9 +54,9 @@ class Controller:
         selected_backup: dict = self.__backup_items[index]
         confirm_msg = (
             f"确定要删除备份吗？\n\n"
-            f"备份名称: {selected_backup['name']}\n"
-            f"创建时间: {selected_backup['created_time'].strftime('%Y-%m-%d %H:%M:%S')}\n"
-            f"备份大小: {format_size(selected_backup['size'])}\n\n"
+            f"备份名称: {selected_backup["name"]}\n"
+            f"创建时间: {selected_backup["created_time"].strftime("%Y-%m-%d %H:%M:%S")}\n"
+            f"备份大小: {format_size(selected_backup["size"])}\n\n"
             f"此操作不可逆，删除后无法恢复！"
         )
         if not messagebox.askyesno("确认删除", confirm_msg):
@@ -65,7 +65,7 @@ class Controller:
         try:
             delete_result = _backup_utils.delete_backup(selected_backup["name"])
             if delete_result.is_success:
-                update_status_callback(f"备份删除成功: {selected_backup['name']}")
+                update_status_callback(f"备份删除成功: {selected_backup["name"]}")
                 messagebox.showinfo("删除成功", f"备份删除成功！\n\n{delete_result.msg}")
                 self.refresh_list()
             else:
@@ -151,11 +151,11 @@ class Controller:
         """构建备份详情的纯文本内容"""
         back_up_path = Path(backup["path"])
         details = (
-            f"备份名称: {backup['name']}\n"
-            f"完整路径: {backup['path']}\n"
-            f"创建时间: {backup['created_time'].strftime('%Y-%m-%d %H:%M:%S')}\n"
-            f"备份大小: {format_size(backup['size'])}\n"
-            f"目录存在: {'是' if back_up_path.exists() else '否'}\n"
+            f"备份名称: {backup["name"]}\n"
+            f"完整路径: {backup["path"]}\n"
+            f"创建时间: {backup["created_time"].strftime("%Y-%m-%d %H:%M:%S")}\n"
+            f"备份大小: {format_size(backup["size"])}\n"
+            f"目录存在: {"是" if back_up_path.exists() else "否"}\n"
         )
 
         if "integrity_valid" in backup:
@@ -164,17 +164,17 @@ class Controller:
             else:
                 details += "完整性状态: ⚠ 验证失败\n"
             if "integrity_message" in backup:
-                details += f"验证消息: {backup['integrity_message']}\n"
+                details += f"验证消息: {backup["integrity_message"]}\n"
 
         if backup.get("checksum_data"):
             checksum = backup["checksum_data"]
             details += (
                 f"\n校验和信息:\n"
-                f"  备份类型: {checksum.get('backup_type', '未知')}\n"
-                f"  文件数量: {checksum.get('file_count', 0)}\n"
-                f"  总大小: {format_size(checksum.get('total_size', 0))}\n"
-                f"  创建时间: {checksum.get('created_time', '未知')}\n"
-                f"  校验和: {checksum.get('checksum', '无')[:16]}...\n"
+                f"  备份类型: {checksum.get("backup_type", "未知")}\n"
+                f"  文件数量: {checksum.get("file_count", 0)}\n"
+                f"  总大小: {format_size(checksum.get("total_size", 0))}\n"
+                f"  创建时间: {checksum.get("created_time", "未知")}\n"
+                f"  校验和: {checksum.get("checksum", "无")[:16]}...\n"
             )
 
         details += "\n目录结构:\n--------\n"

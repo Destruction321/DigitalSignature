@@ -20,7 +20,7 @@ def get_pyinstaller_exe() -> Path | None:
         return exe_path
     
     # 方法2：从虚拟环境目录查找
-    if hasattr(sys, 'base_prefix'):
+    if hasattr(sys, "base_prefix"):
         venv_dir = Path(sys.prefix)
         exe_path = venv_dir / "Scripts" / "pyinstaller.exe"
         if exe_path.exists():
@@ -88,7 +88,7 @@ def build_dist(cmd: list[str], project_root: Path) -> None:
             return
         
         total_size = 0
-        for file_path in exe_path.rglob('*'):  # rglob 递归遍历
+        for file_path in exe_path.rglob("*"):  # rglob 递归遍历
             if not file_path.is_file():
                 continue
 

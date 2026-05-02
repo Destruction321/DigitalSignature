@@ -148,7 +148,7 @@ class BaseSigningTab(ABC):
         """
         if self.__km is None:
             self._show_warning(
-                '请先加载密钥对！\n\n请在"密钥管理"标签页中选择并加载一个密钥对，然后再进行操作。'
+                "请先加载密钥对！\n\n请在\"密钥管理\"标签页中选择并加载一个密钥对，然后再进行操作。"
             )
             return None
 
