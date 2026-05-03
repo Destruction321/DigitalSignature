@@ -1,4 +1,4 @@
-# package/app/_modules/initializer.py
+# package/_app/_initializer.py
 """数字签名窗口初始化器"""
 from collections import Counter
 from glob import glob
@@ -10,7 +10,7 @@ from shutil import move
 
 from .._core.keys.loader import KeyLoader
 from .._core.keys.managers import SingleKeyManager, MultiKeyManager
-from .._gui import UICreator
+from .._gui import MainWindow
 from .._utils.constants import BASE_DIR, KEYS_CONFIG_FILE
 from .._utils.enums import DirType, KeyType, FileType
 from .._utils.result import Status
@@ -35,7 +35,7 @@ class Initializer:
         )
         
         self.__current_km: SingleKeyManager | None = None  # 当前密钥管理器
-        self.__ui: UICreator = UICreator(root, self.__multi_km, self.__key_loader)
+        self.__ui: MainWindow = MainWindow(root, self.__multi_km, self.__key_loader)
         
         
     @property
@@ -43,7 +43,7 @@ class Initializer:
         return self.__current_km
     
     @property
-    def ui(self) -> UICreator:
+    def ui(self) -> MainWindow:
         return self.__ui
     
     

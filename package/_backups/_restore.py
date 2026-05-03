@@ -5,7 +5,7 @@ from pathlib import Path
 from tkinter import messagebox, ttk
 from typing import Any, Callable, cast
 
-from . import _backup_utils
+from ._backup_ops import ops
 
 
 class Restore:
@@ -32,7 +32,7 @@ class Restore:
     """public methods"""
     def show(self) -> None:
         """显示对话框"""
-        backups = _backup_utils.list_backups()
+        backups = ops.list_backups()
 
         if not backups.data:
             messagebox.showinfo("恢复备份", backups.msg)
@@ -143,11 +143,11 @@ class Restore:
             self.__restore(selected_backup)
             return
             
-        if not hasattr(_backup_utils, "verify_backup_integrity"):
+        if not hasattr(ops, "verify_backup_integrity"):
             self.__restore(selected_backup)
             return
             
-        verify_result = _backup_utils.verify_backup_integrity(backup_path)
+        verify_result = ops.verify_backup_integrity(backup_path)
         if verify_result.is_success:
             self.__restore(selected_backup)
             return
@@ -175,7 +175,7 @@ class Restore:
             return
         
         try:
-            restore_result = _backup_utils.restore_backup(
+            restore_result = ops.restore_backup(
                 Path(selected_backup["path"]), overwrite=self.__overwrite_var.get()
             )
             

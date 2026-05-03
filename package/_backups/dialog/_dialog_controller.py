@@ -4,8 +4,8 @@ from pathlib import Path
 from tkinter import messagebox
 from typing import Any, Callable, TYPE_CHECKING
 
+from .._backup_ops.ops import list_backups_with_integrity, delete_backup
 from .._verifier import Verifier
-from .. import _backup_utils
 from ..._utils.tools import format_size
 
 if TYPE_CHECKING:
@@ -24,7 +24,7 @@ class Controller:
     """public methods"""
     def refresh_list(self, click_btn: bool = False) -> None:
         """刷新备份列表并更新所有统计信息"""
-        result = _backup_utils.list_backups_with_integrity()
+        result = list_backups_with_integrity()
         if not result.is_success:
             messagebox.showerror("刷新备份", result.msg)
             return
@@ -63,7 +63,7 @@ class Controller:
             return
 
         try:
-            delete_result = _backup_utils.delete_backup(selected_backup["name"])
+            delete_result = delete_backup(selected_backup["name"])
             if delete_result.is_success:
                 update_status_callback(f"备份删除成功: {selected_backup["name"]}")
                 messagebox.showinfo("删除成功", f"备份删除成功！\n\n{delete_result.msg}")
