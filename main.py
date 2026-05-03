@@ -4,8 +4,7 @@ import logging
 from pathlib import Path
 from tkinter import Tk
 
-from package import DIRS
-from package.app import APP
+import package
 
 
 def _initialize_loggers() -> None:
@@ -51,7 +50,7 @@ def _initialize_loggers() -> None:
 if __name__ == "__main__":
     try:
         # 创建数据目录
-        for dir_path in DIRS.values():
+        for dir_path in package.DIRS.values():
             Path(dir_path).mkdir(parents=True, exist_ok=True)
             
         # 配置日志记录
@@ -59,7 +58,7 @@ if __name__ == "__main__":
         
         # 启动应用程序
         root = Tk()
-        _app = APP(root)
+        _app = package.APP(root)
         root.mainloop()
         
     except Exception as e:

@@ -17,7 +17,7 @@ _PRIVATE = KeyType.PRIVATE.value
 _PUBLIC = KeyType.PUBLIC.value
 
 
-"""public methods"""
+"""public methods for 'CleanUps' to call"""
 def cleanup_all_files(update_status_callback: Callable[[str], None],
                       update_dir_callback: Callable[[], None],
                       days_old: int = 30) -> Result:

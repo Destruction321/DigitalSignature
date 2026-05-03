@@ -88,3 +88,6 @@ class BackUps:
             messagebox.showinfo("备份成功", f"{operation}完成:\n\n{result}")
         else:
             messagebox.showerror("备份失败", f"{operation}失败:\n\n{result}")
+
+
+__all__ = ["BackUps"]

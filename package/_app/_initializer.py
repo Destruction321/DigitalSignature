@@ -10,7 +10,7 @@ from shutil import move
 
 from .._core.keys.loader import KeyLoader
 from .._core.keys.managers import SingleKeyManager, MultiKeyManager
-from .._gui.ui_creator import UICreator
+from .._gui import UICreator
 from .._utils.constants import BASE_DIR, KEYS_CONFIG_FILE
 from .._utils.enums import DirType, KeyType, FileType
 from .._utils.result import Status
