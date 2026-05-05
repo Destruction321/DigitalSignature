@@ -1,4 +1,4 @@
-# package/_backups/_modules/_verifier.py
+# package/_backups/_verifier.py
 """备份验证器，负责处理备份完整性验证"""
 import tkinter as tk
 from threading import Thread

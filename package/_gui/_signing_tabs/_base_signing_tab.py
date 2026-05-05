@@ -59,6 +59,7 @@ class BaseSigningTab(ABC):
         ...
     
     
+    """not property"""
     @abstractmethod
     def _create_editor(self) -> None:
         """创建核心编辑区域"""

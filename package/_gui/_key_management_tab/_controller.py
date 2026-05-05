@@ -44,6 +44,7 @@ class Controller:
             update_security=self.update_security_status,
         )
 
+
     @property
     def loaded_key_id(self) -> str | None:
         return self.__loaded_key_id

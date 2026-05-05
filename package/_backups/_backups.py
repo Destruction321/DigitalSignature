@@ -4,7 +4,7 @@ from tkinter import Menu, messagebox, Widget
 from tkinter.ttk import Button, Label
 from typing import cast, Callable, TYPE_CHECKING
 
-from .dialog import dialog_show
+from ._dialog import dialog_show
 from ._backup_ops.ops import create_backup, list_backups_with_integrity
 from ._restore import Restore
 from .._utils.enums import DirType

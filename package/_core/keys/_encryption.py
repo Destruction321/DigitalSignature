@@ -16,7 +16,8 @@ from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 
 class DecryptError(ValueError):
     """私钥解密失败 -- 密码错误或解密过程异常"""
-    pass
+    ...
+
 
 def encrypt_private_key(private_key: RSAPrivateKey, password: str) -> str:
     """

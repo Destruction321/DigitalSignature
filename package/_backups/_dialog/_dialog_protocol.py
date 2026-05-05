@@ -1,4 +1,4 @@
-# package/_backups/_modules/manager/_dialog_protocol.py
+# package/_backups/_dialog/_dialog_protocol.py
 """备份对话框协议"""
 from typing import Protocol
 

@@ -1,7 +1,6 @@
 # package/_cleanups/_cleanups.py
 """数字签名窗口清理模块"""
-from tkinter import Toplevel, IntVar, LEFT
-from tkinter import messagebox, ttk
+from tkinter import IntVar, LEFT, messagebox, Toplevel, ttk
 from typing import TYPE_CHECKING
 
 from . import _cleanup_ops

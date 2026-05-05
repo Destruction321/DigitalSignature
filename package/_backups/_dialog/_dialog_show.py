@@ -1,4 +1,4 @@
-# package/_backups/dialog/_dialog_show.py
+# package/_backups/_dialog/_dialog_show.py
 """显示备份管理对话框"""
 from tkinter import TclError, Toplevel
 from tkinter.messagebox import showerror

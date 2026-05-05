@@ -146,8 +146,8 @@ class UICreator:
         self.__password_entry.config(state=tk.DISABLED)
 
     def __create_key_generation_button(self, parent: tk.Widget) -> None:
-        if not all([self.__key_id_entry, self.__key_size_combo,
-                    self.__encryption_var, self.__password_entry]):
+        ui_components = [self.__key_id_entry, self.__key_size_combo, self.__encryption_var, self.__password_entry]
+        if not all(ui_components):
             messagebox.showerror("错误", "UI组件未正确初始化")
             return
 

@@ -66,7 +66,7 @@ class KeyLoader:
         # 交互式输入密码（如果需要）
         password: str | None = None
         if status_result.data:  # 已加密
-            password_result = self.__request_password_interactive(key_id, status_result.msg)
+            password_result = self.__validate_password(key_id) if ENCRYPTED in status_result.msg else None
             
             if password_result is False:  # 用户取消
                 return Result(status=Status.CANCEL_INPUT, msg="密码输入已取消")
@@ -78,26 +78,19 @@ class KeyLoader:
 
 
     """private methods"""
-    def __request_password_interactive(self, key_id: str, status_message: str) -> str | bool | None:
-        """交互式请求密码"""
-        if ENCRYPTED not in status_message:
-            return None  # 不需要密码
+    def __validate_password(self, key_id: str, attempt: int = 1, is_retry: bool = False) -> str | bool:
+        """验证密码"""
+        while True:
+            prompt: str = self.__build_password_prompt(key_id, attempt, is_retry)
+            password: str | None = askstring("密码输入", prompt, show="*", parent=self.__parent)
 
-        return self.__request_and_validate_password(key_id)
+            if password is None:
+                return False  # 用户取消
 
-    def __request_and_validate_password(self, key_id: str, attempt: int = 1, is_retry: bool = False) -> str | bool:
-        """请求并验证密码"""
-        prompt: str = self.__build_password_prompt(key_id, attempt, is_retry)
-        password: str | None = askstring("密码输入", prompt, show="*", parent=self.__parent)
-
-        if password is None:
-            return False  # 用户取消
-
-        if not password.strip():
-            messagebox.showerror("错误", "密码不能为空")
-            return self.__request_and_validate_password(key_id, attempt, is_retry)  # 重试
-
-        return password
+            if password.strip():
+                return password
+            
+            messagebox.showerror("错误", "密码不能为空")       
 
     def __build_password_prompt(self, key_id: str, attempt: int, is_retry: bool) -> str:
         """构建密码提示信息"""
@@ -116,21 +109,19 @@ class KeyLoader:
                 self.__handle_key_loading_success(key_id, cast(SingleKeyManager, load_result.data))
                 return load_result
             
-            # 密码错误：重试
-            if load_result.status == Status.PASSWORD_ERROR:
-                if attempt >= MAX_PASSWORD_ATTEMPTS:
-                    # 重试次数用尽
-                    break
-
-                password = self.__request_and_validate_password(key_id, attempt + 1, True)
-                if password is False:  # 用户取消
-                    return Result(status=Status.CANCEL_INPUT, msg="密码输入已取消")
-                
-                continue
-            
             # 其他业务错误：直接返回
-            return load_result
-        
+            if load_result.status != Status.PASSWORD_ERROR:
+                return load_result
+            
+            # 密码错误：重试
+            if attempt > MAX_PASSWORD_ATTEMPTS:
+                # 重试次数用尽
+                break
+
+            password = self.__validate_password(key_id, attempt + 1, True)
+            if password is False:  # 用户取消
+                return Result(status=Status.CANCEL_INPUT, msg="密码输入已取消")
+            
         if self.__update_status:
             self.__update_status(f"密码错误次数过多，加载失败")
             

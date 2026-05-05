@@ -88,7 +88,7 @@ def _validate_key_creation_inputs(key_setter: KeySetter) -> tuple[str, int, str 
         return None
     
     # 密码验证
-    password = _get_and_validate_password(key_setter.encryption_var, key_setter.password_entry)
+    password = _validate_password(key_setter.encryption_var, key_setter.password_entry)
     if password is False:
         return None
     
@@ -135,7 +135,7 @@ def _create_key_pair(multi_km: MultiKeyManager, key_id: str, key_size: int, pass
     except Exception as e:
         return Result(status=Status.KEY_FILE_CORRUPT, msg=f"创建密钥对失败: {str(e)}")
 
-def _get_and_validate_password(encryption_var: BooleanVar, password_entry: Entry) -> str | bool | None:
+def _validate_password(encryption_var: BooleanVar, password_entry: Entry) -> str | bool | None:
     """获取并验证密码"""
     if not encryption_var.get():
         return None
@@ -151,8 +151,10 @@ def _get_and_validate_password(encryption_var: BooleanVar, password_entry: Entry
     
     return password
 
-def _handle_key_creation_success(key_id: str, message: str,
-                                 key_setter: KeySetter, callbacks: CallBacks,
+def _handle_key_creation_success(key_id: str,
+                                 message: str,
+                                 key_setter: KeySetter,
+                                 callbacks: CallBacks,
                                  multi_km: MultiKeyManager) -> None:
     """处理密钥创建成功"""
     messagebox.showinfo("成功", message)

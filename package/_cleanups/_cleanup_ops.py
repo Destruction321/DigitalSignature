@@ -275,19 +275,21 @@ def _del_orphaned_keys(key_files: dict, valid_key_ids: list[str]) -> tuple[Resul
 
 def _update_config(orphaned_key_ids: set[str], config_path: Path, config_data: dict) -> Result | None:
     """更新配置"""
-    if orphaned_key_ids and "key_pairs" in config_data:
-        keys_to_remove = [k for k in orphaned_key_ids if k in config_data["key_pairs"]]
-        
-        for key_id in keys_to_remove:
-            if config_data.get("current_key_id") == key_id:
-                remaining_keys = [k for k in config_data["key_pairs"].keys() if k != key_id]
-                config_data["current_key_id"] = remaining_keys[0] if remaining_keys else None
-                
-            del config_data["key_pairs"][key_id]
+    if not orphaned_key_ids or "key_pairs" not in config_data:
+        return
+    
+    keys_to_remove = [k for k in orphaned_key_ids if k in config_data["key_pairs"]]
+    
+    for key_id in keys_to_remove:
+        if config_data.get("current_key_id") == key_id:
+            remaining_keys = [k for k in config_data["key_pairs"].keys() if k != key_id]
+            config_data["current_key_id"] = remaining_keys[0] if remaining_keys else None
             
-        try:
-            with open(config_path, "w", encoding="utf-8") as f:
-                dump(config_data, f, ensure_ascii=False, indent=2)
-                
-        except Exception as e:
-            return Result(status=Status.CONFIG_SAVE_FAILED, msg=f"更新配置文件失败: {e}")
+        del config_data["key_pairs"][key_id]
+        
+    try:
+        with open(config_path, "w", encoding="utf-8") as f:
+            dump(config_data, f, ensure_ascii=False, indent=2)
+            
+    except Exception as e:
+        return Result(status=Status.CONFIG_SAVE_FAILED, msg=f"更新配置文件失败: {e}")
