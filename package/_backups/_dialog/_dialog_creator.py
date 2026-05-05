@@ -3,7 +3,7 @@
 import tkinter as tk
 from tkinter import ttk
 from tkinter.scrolledtext import ScrolledText
-from typing import Any, cast, Callable
+from typing import Any, Callable
 
 from ._dialog_controller import Controller
 from ..._utils.tools import format_size
@@ -205,7 +205,7 @@ class Initializer:
         right_frame: ttk.Frame = ttk.Frame(button_frame)
         right_frame.pack(side=tk.RIGHT)
 
-        ttk.Button(right_frame, text="关闭", command=cast(tk.Toplevel, dialog).destroy).pack(side=tk.RIGHT, padx=5)
+        ttk.Button(right_frame, text="关闭", command=dialog.destroy).pack(side=tk.RIGHT, padx=5)
 
     
     """private methods"""
@@ -231,8 +231,10 @@ class Initializer:
 
     def __create_list_tab(self) -> None:
         """创建列表标签页"""
+        assert self.__notebook is not None
+        
         list_tab = ttk.Frame(self.__notebook, padding="10")
-        cast(ttk.Notebook, self.__notebook).add(list_tab, text="备份列表")
+        self.__notebook.add(list_tab, text="备份列表")
 
         list_frame: ttk.LabelFrame = ttk.LabelFrame(list_tab, text="备份文件列表", padding="10")
         list_frame.pack(fill=tk.BOTH, expand=True)
@@ -251,8 +253,10 @@ class Initializer:
 
     def __create_details_tab(self) -> None:
         """创建详细信息标签页"""
+        assert self.__notebook is not None
+        
         details_tab = ttk.Frame(self.__notebook, padding="10")
-        cast(ttk.Notebook, self.__notebook).add(details_tab, text="备份详情")
+        self.__notebook.add(details_tab, text="备份详情")
 
         details_frame: ttk.LabelFrame = ttk.LabelFrame(details_tab, text="备份详细信息", padding="10")
         details_frame.pack(fill=tk.BOTH, expand=True)
@@ -264,8 +268,10 @@ class Initializer:
 
     def __create_verify_tab(self) -> None:
         """创建验证标签页"""
+        assert self.__notebook is not None
+        
         verify_tab = ttk.Frame(self.__notebook, padding="10")
-        cast(ttk.Notebook, self.__notebook).add(verify_tab, text="完整性验证")
+        self.__notebook.add(verify_tab, text="完整性验证")
 
         verify_frame: ttk.LabelFrame = ttk.LabelFrame(verify_tab, text="备份完整性验证", padding="10")
         verify_frame.pack(fill=tk.BOTH, expand=True)

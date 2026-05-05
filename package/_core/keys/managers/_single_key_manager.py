@@ -1,7 +1,5 @@
 # package/_core/keys/managers/_single_key_manager.py
 """单个密钥对管理器"""
-from typing import cast
-
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric.rsa import RSAPrivateKey, RSAPublicKey
@@ -71,9 +69,6 @@ class SingleKeyManager:
             return Result(status=Status.KEY_FILE_CORRUPT, msg="密钥未初始化，无法保存")
             
         try:
-            self.__private_key = cast(RSAPrivateKey, self.__private_key)
-            self.__public_key = cast(RSAPublicKey, self.__public_key)
-            
             if password is not None:
                 encrypted_key_data = _encryption.encrypt_private_key(self.__private_key, password)
                 with open(private_key_path, "w") as f:
@@ -114,7 +109,11 @@ class SingleKeyManager:
                     private_key = serialization.load_pem_private_key(
                         key_file.read(), password=None, backend=default_backend()
                     )
-                self.__private_key = cast(RSAPrivateKey, private_key)
+                    
+                if not isinstance(private_key, RSAPrivateKey):
+                    return Result(status=Status.KEY_FILE_CORRUPT, msg="私钥文件不是RSA格式")
+                
+                self.__private_key = private_key
                 return Result(status=Status.SUCCESS)
                 
             if password is None:
@@ -126,11 +125,17 @@ class SingleKeyManager:
             self.__private_key = _encryption.decrypt_private_key(encrypted_data, password)
             return Result(status=Status.SUCCESS)
         
-        except _encryption.DecryptError as e:
+        except _encryption.PasswordError as e:
             return Result(status=Status.PASSWORD_ERROR)
+        
+        except _encryption.InvalidKeyError as e:
+            return Result(status=Status.KEY_FILE_CORRUPT, msg=str(e))
             
+        except _encryption.DecryptError as e:
+            return Result(status=Status.KEY_FILE_CORRUPT, msg=str(e))
+        
         except Exception as e:
-            return Result(status=Status.KEY_FILE_CORRUPT, msg=f"加载私钥失败: {str(e)}")
+            return Result(status=Status.SYSTEM_ERROR, msg=str(e))
 
     def load_public_key(self, key_path: str) -> Result:
         """
@@ -145,7 +150,11 @@ class SingleKeyManager:
         try:
             with open(key_path, "rb") as key_file:
                 public_key = serialization.load_pem_public_key(key_file.read(), backend=default_backend())
-            self.__public_key = cast(RSAPublicKey, public_key)
+                
+            if not isinstance(public_key, RSAPublicKey):
+                return Result(status=Status.KEY_FILE_CORRUPT, msg="公钥文件不是RSA格式")
+            
+            self.__public_key = public_key
             return Result(status=Status.SUCCESS)
         
         except Exception as e:

@@ -5,7 +5,7 @@ from threading import Thread
 from pathlib import Path
 from tkinter import ttk, messagebox
 from tkinter.scrolledtext import ScrolledText
-from typing import Any, Callable, cast
+from typing import Any, Callable
 
 from ._backup_ops.ops import verify_backup_integrity
 from .._utils.result import Status, Result
@@ -90,21 +90,22 @@ class Verifier:
                                      backup: dict[str, Any],
                                      callback: Callable[[dict[str, Any]], None]) -> None:
         """单个备份验证线程函数"""
+        assert self.__verify_dialog is not None
+        
         try:
             verify_result = verify_backup_integrity(backup_path)
             
         except Exception as e:
             verify_result = Result(status=Status.BACKUP_VERIFY_FAILED, msg=f"验证失败: {str(e)}")
             
-        cast(
-            tk.Toplevel,
-            self.__verify_dialog
-        ).after(0, lambda: self.__update_single_result(verify_result, backup, callback))
+        self.__verify_dialog.after(0, lambda: self.__update_single_result(verify_result, backup, callback))
 
     def __batch_verification_thread(self,
                                     backup_items: list[dict[str, Any]],
                                     callback: Callable[[list[dict[str, Any]]], None]) -> None:
         """批量验证线程函数"""
+        assert self.__progress_dialog is not None
+        
         valid_count = 0
         invalid_count = 0
         total_count = len(backup_items)
@@ -121,19 +122,18 @@ class Verifier:
 
         # 完成验证
         verification_result = [total_count, valid_count, invalid_count]
-        cast(
-            tk.Toplevel,
-            self.__progress_dialog
-        ).after(0, lambda: self.__finish_batch_verification(verification_result, callback, backup_items))
+        self.__progress_dialog.after(
+            0, lambda: self.__finish_batch_verification(verification_result, callback, backup_items)
+        )
 
     def __process_single_backup_in_batch(self, index: int, backup: dict[str, Any], total_count: int) -> None:
         """在批量验证中处理单个备份"""
-        backup_path = Path(backup.get("path", ""))
+        assert self.__progress_dialog is not None
 
         # 更新进度
-        cast(tk.Toplevel, self.__progress_dialog).after(
-            0,
-            lambda idx=index + 1,
+        backup_path = Path(backup.get("path", ""))
+        self.__progress_dialog.after(
+            0, lambda idx=index + 1,
             name=backup["name"]: self.__update_batch_progress(idx, total_count, f"正在验证: {name}")
         )
 
@@ -208,14 +208,18 @@ class Verifier:
                                backup: dict[str, Any],
                                callback: Callable[[dict[str, Any]], None]) -> None:
         """更新单个验证结果"""
+        assert self.__progress_label is not None
+        assert self.__result_label is not None
+        assert self.__close_button is not None
+        
         if self.__verify_dialog is None:
             return
         
-        cast(tk.Label, self.__progress_label).config(text="验证完成")
+        self.__progress_label.config(text="验证完成")
         if verify_result.is_success:
-            cast(tk.Label, self.__result_label).config(text=f"✓ {verify_result.msg}", foreground="green")
+            self.__result_label.config(text=f"✓ {verify_result.msg}", foreground="green")
         else:
-            cast(tk.Label, self.__result_label).config(text=f"⚠ {verify_result.msg}", foreground="red")
+            self.__result_label.config(text=f"⚠ {verify_result.msg}", foreground="red")
             
         if verify_result.data:
             details = (
@@ -224,10 +228,9 @@ class Verifier:
                 f"总大小: {format_size(verify_result.data.get("total_size", 0))}\n"
                 f"创建时间: {verify_result.data.get("created_time", "未知")}"
             )
-            result_label = cast(tk.Label, self.__result_label)
-            result_label.config(text=result_label.cget("text") + f"\n\n{details}")
+            self.__result_label.config(text=self.__result_label.cget("text") + f"\n\n{details}")
             
-        cast(tk.Button, self.__close_button).config(state=tk.NORMAL)
+        self.__close_button.config(state=tk.NORMAL)
         backup["integrity_valid"] = verify_result.is_success
         backup["integrity_message"] = verify_result.msg
         backup["checksum_data"] = verify_result.data
@@ -304,6 +307,10 @@ class Verifier:
                                     callback: Callable[[list[dict[str, Any]]], None],
                                     backup_items: list[dict[str, Any]]) -> None:
         """完成批量验证"""
+        assert self.__progress_var is not None
+        assert self.__status_label is not None
+        assert self.__batch_close_button is not None
+        
         if self.__progress_dialog is None:
             return
 
@@ -311,8 +318,8 @@ class Verifier:
         valid = verification_result[1]
         invalid = verification_result[2]
         
-        cast(tk.IntVar, self.__progress_var).set(total)
-        cast(tk.Label, self.__status_label).config(text="验证完成")
+        self.__progress_var.set(total)
+        self.__status_label.config(text="验证完成")
 
         summary = f"\n{"=" * 50}\n验证完成！\n"
         summary += f"总计: {total} 个备份\n"
@@ -320,7 +327,7 @@ class Verifier:
         summary += f"无效: {invalid} 个\n"
 
         self.__add_batch_result(summary)
-        cast(tk.Button, self.__batch_close_button).config(state=tk.NORMAL)
+        self.__batch_close_button.config(state=tk.NORMAL)
 
         # 调用回调函数
         if callback:

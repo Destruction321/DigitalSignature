@@ -1,11 +1,10 @@
 # package/_core/signature.py
 """数字签名核心算法"""
 from pathlib import Path
-from typing import cast, TYPE_CHECKING
+from typing import TYPE_CHECKING
 
 from cryptography.exceptions import InvalidSignature
 from cryptography.hazmat.primitives.asymmetric import padding
-from cryptography.hazmat.primitives.asymmetric.rsa import RSAPrivateKey, RSAPublicKey
 from cryptography.hazmat.primitives.hashes import SHA256
 
 from .._utils.enums import DirType
@@ -47,8 +46,7 @@ def sign_file(key_manager: SingleKeyManager, file_path: Path, signature_path: st
         with open(file_path, "rb") as f:
             s_data = f.read()
             
-        private_key = cast(RSAPrivateKey, key_manager.private_key)
-        signature = private_key.sign(
+        signature = key_manager.private_key.sign(
             s_data,
             padding.PSS(mgf=padding.MGF1(SHA256()), salt_length=padding.PSS.MAX_LENGTH),
             SHA256()
@@ -105,8 +103,7 @@ def verify_signature(key_manager: SingleKeyManager, file_path: str, signature_pa
             signature = f.read()
             
         # 验证签名
-        public_key = cast(RSAPublicKey, key_manager.public_key)
-        public_key.verify(
+        key_manager.public_key.verify(
             signature,
             v_data,
             padding.PSS(mgf=padding.MGF1(SHA256()), salt_length=padding.PSS.MAX_LENGTH),

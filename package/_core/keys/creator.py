@@ -4,21 +4,21 @@ from tkinter import END
 from dataclasses import dataclass
 from datetime import datetime
 from tkinter import messagebox
-from typing import Callable, cast, TYPE_CHECKING
+from typing import Callable, TYPE_CHECKING
 
 from cryptography.hazmat.backends import default_backend
-from cryptography.hazmat.primitives.asymmetric.rsa import (
-    generate_private_key, RSAPrivateKey
-)
+from cryptography.hazmat.primitives.asymmetric.rsa import generate_private_key
 
 from .managers import SingleKeyManager
-from ..._utils.constants import ENCRYPTED
+from ..._utils.constants import ENCRYPTED, UNENCRYPTED
 from ..._utils.result import Status, Result
+from ..._utils.tools import update_directory_info
 
 if TYPE_CHECKING:
     from tkinter import BooleanVar, Entry
-    from tkinter.ttk import Combobox
+    from tkinter.ttk import Combobox, Label
     from .managers import MultiKeyManager
+    from ..._utils.enums import DirType
 
 
 @dataclass
@@ -39,7 +39,10 @@ class CallBacks:
 
 
 """public methods"""
-def create_key_pair(key_setter: KeySetter, multi_km: MultiKeyManager, callbacks: CallBacks) -> None:
+def create_key_pair(key_setter: KeySetter,
+                    multi_km: MultiKeyManager,
+                    callbacks: CallBacks,
+                    dir_labels: dict[DirType, Label]) -> None:
     """
     创建新的密钥对
     
@@ -47,6 +50,7 @@ def create_key_pair(key_setter: KeySetter, multi_km: MultiKeyManager, callbacks:
         key_setter (KeySetter): 密钥设置组件
         multi_km (MultiKeyManager): 密钥对管理器实例
         callbacks (CallBacks): 回调列表
+        dir_labels (dict[DirType, Label]): 目录标签字典
     """
     # 验证输入
     validate_result = _validate_key_creation_inputs(key_setter)
@@ -64,11 +68,12 @@ def create_key_pair(key_setter: KeySetter, multi_km: MultiKeyManager, callbacks:
     # 创建密钥对
     create_result = _create_key_pair(multi_km, key_id, key_size, password)
     if create_result.is_success:
-        # 4. 处理成功
         _handle_key_creation_success(key_id, create_result.msg, key_setter, callbacks, multi_km)
-    else:
-        messagebox.showerror("创建密钥对失败", create_result.msg)
-        callbacks.update_status_callback(f"创建密钥对失败: {create_result.msg}")
+        update_directory_info(dir_labels)
+        return
+
+    messagebox.showerror("创建密钥对失败", create_result.msg)
+    callbacks.update_status_callback(f"创建密钥对失败: {create_result.msg}")
 
 
 """private methods"""
@@ -89,22 +94,23 @@ def _validate_key_creation_inputs(key_setter: KeySetter) -> tuple[str, int, str 
     
     # 密码验证
     password = _validate_password(key_setter.encryption_var, key_setter.password_entry)
-    if password is False:
+    if not password.is_success:
         return None
     
-    return key_id, key_size, cast(str | None, password)
+    return key_id, key_size, password.data
 
 def _create_key_pair(multi_km: MultiKeyManager, key_id: str, key_size: int, password: str | None) -> Result:
     """创建新的密钥对 -- 主逻辑"""
     try:
         # 生成RSA密钥对
         new_keys = SingleKeyManager(key_size, key_id)
-        new_keys.private_key = generate_private_key(
+        private_key = generate_private_key(
             public_exponent=65537,
             key_size=new_keys.key_size,
             backend=default_backend()
         )
-        new_keys.public_key = cast(RSAPrivateKey, new_keys.private_key).public_key()
+        new_keys.private_key = private_key
+        new_keys.public_key = private_key.public_key()
         
         # 获取保存路径
         private_key_path, public_key_path = multi_km.get_key_paths(key_id, key_size, password is not None)
@@ -128,28 +134,28 @@ def _create_key_pair(multi_km: MultiKeyManager, key_id: str, key_size: int, pass
         if not config_result.is_success:
             return config_result
         
-        encryption_status = ENCRYPTED if password else "未加密"
+        encryption_status = ENCRYPTED if password else UNENCRYPTED
         message = f"密钥对 '{key_id}' 创建成功（{encryption_status}）"
         return Result(status=Status.SUCCESS, msg=message)
         
     except Exception as e:
         return Result(status=Status.KEY_FILE_CORRUPT, msg=f"创建密钥对失败: {str(e)}")
 
-def _validate_password(encryption_var: BooleanVar, password_entry: Entry) -> str | bool | None:
-    """获取并验证密码"""
+def _validate_password(encryption_var: BooleanVar, password_entry: Entry) -> Result:
+    """获取密码"""
     if not encryption_var.get():
-        return None
+        return Result(status=Status.SUCCESS, data=None)  # 不加密，密码为None
     
     password = password_entry.get().strip()
     if not password:
         messagebox.showerror("创建密钥对失败", Status.NO_PASSWORD.desc)
-        return False
+        return Result(status=Status.NO_PASSWORD)
     
     if len(password) < 6:
         messagebox.showerror("创建密钥对失败", Status.PASSWORD_TOO_SHORT.desc)
-        return False
+        return Result(status=Status.PASSWORD_TOO_SHORT)
     
-    return password
+    return Result(status=Status.SUCCESS, data=password)
 
 def _handle_key_creation_success(key_id: str,
                                  message: str,

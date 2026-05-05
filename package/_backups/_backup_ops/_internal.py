@@ -279,7 +279,7 @@ def _rm_dir(dir: Path, data_type: DirType) -> Result | None:
             message = f"清理{DATA_TYPE[data_type]}目录失败: {e}"
             return Result(status=Status.CLEANUP_FAILED, msg=message)
 
-def _get_dir_type():
+def _get_dir_type() -> tuple[str, str, str]:
     """导出目录类型"""
     return (
         DirType.KEYS.value,
@@ -330,7 +330,7 @@ def _get_directory_size(directory: Path) -> int:
 
     return total_size
 
-def _get_file_type():
+def _get_file_type() -> tuple[str, str, str]:
     """导出文件类型"""
     return (
         FileType.KEY.value,

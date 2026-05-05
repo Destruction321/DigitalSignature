@@ -3,7 +3,7 @@
 import tkinter as tk
 from pathlib import Path
 from tkinter import ttk
-from typing import cast, Callable, TYPE_CHECKING
+from typing import Callable, TYPE_CHECKING
 
 from ._key_management_tab import KeyManagementTab
 from ._signing_tabs import FileSigningTab, TextSigningTab
@@ -100,8 +100,8 @@ class MainWindow:
 
         for i, (category, label) in enumerate(zip(categories, labels)):
             ttk.Label(dir_grid, text=label, font=("微软雅黑", 9)).grid(row=1, column=i * 2, sticky=tk.W, padx=(10, 2))
-            self.dir_labels[category] = ttk.Label(dir_grid, text="加载中...", font=("微软雅黑", 9))
-            self.dir_labels[category].grid(row=1, column=i * 2 + 1, sticky=tk.W, padx=(0, 15))
+            self.__dir_labels[category] = ttk.Label(dir_grid, text="加载中...", font=("微软雅黑", 9))
+            self.__dir_labels[category].grid(row=1, column=i * 2 + 1, sticky=tk.W, padx=(0, 15))
 
     def __create_tabs(self, parent: tk.Widget) -> None:
         """创建标签页"""
@@ -117,7 +117,7 @@ class MainWindow:
         notebook.add(file_tab, text="文件签名")
 
         # 创建标签页实例
-        self.__key_tab = KeyManagementTab(key_tab, self.__multi_km, self.__key_loader)
+        self.__key_tab = KeyManagementTab(key_tab, self.__multi_km, self.__key_loader, self.__dir_labels)
         self.__text_tab = TextSigningTab(text_tab)
         self.__file_tab = FileSigningTab(file_tab)
         
@@ -133,6 +133,8 @@ class MainWindow:
 
     def __create_tools_area(self, parent: tk.Widget) -> None:
         """创建系统工具区域"""
+        assert self.__cleanups is not None
+        
         tools_frame: ttk.LabelFrame = ttk.LabelFrame(parent, text="系统工具", padding="5")
         tools_frame.grid(row=2, column=0, sticky=tk.EW, pady=5)
         tools_frame.columnconfigure(0, weight=1)
@@ -159,7 +161,6 @@ class MainWindow:
         button_row2: ttk.Frame = ttk.Frame(tools_container)
         button_row2.pack(fill=tk.X, expand=True, pady=2)
 
-        self.__cleanups = cast(CleanUps, self.__cleanups)
         buttons_row2: list[tuple[str, Callable[[], None]]] = [
             ("完整清理", self.__cleanups.cleanup_all_files),
             ("清理孤立密钥", self.__cleanups.cleanup_orphaned_keys),
@@ -172,6 +173,8 @@ class MainWindow:
 
     def __create_backup_area(self, parent: tk.Widget) -> None:
         """创建备份工具区域"""
+        assert self.__backups is not None
+        
         backup_frame: ttk.LabelFrame = ttk.LabelFrame(parent, text="备份工具", padding="5")
         backup_frame.grid(row=3, column=0, sticky=tk.EW, pady=5)
         backup_frame.columnconfigure(0, weight=1)
@@ -179,7 +182,6 @@ class MainWindow:
         backup_button_row: ttk.Frame = ttk.Frame(backup_frame)
         backup_button_row.pack(fill=tk.X, expand=True)
 
-        self.__backups = cast(BackUps, self.__backups)
         backup_buttons: list[tuple[str, Callable[[], None]]] = [
             ("创建备份", self.__backups.show_backup_options),
             ("恢复备份", self.__backups.restore_backup_dialog),
@@ -207,9 +209,14 @@ class MainWindow:
 
     def __handle_result_show(self, text: str, tab_type: str) -> None:
         """处理结果显示"""
+        assert self.__file_tab is not None
+        assert self.__text_tab is not None
+        assert self.__file_tab.result_text is not None
+        assert self.__text_tab.result_text is not None
+        
         if tab_type == "file" and hasattr(self.__file_tab, "result_text"):
-            cast(tk.Text, cast(FileSigningTab, self.__file_tab).result_text).delete("1.0", tk.END)
-            cast(tk.Text, cast(FileSigningTab, self.__file_tab).result_text).insert("1.0", text)
+            self.__file_tab.result_text.delete("1.0", tk.END)
+            self.__file_tab.result_text.insert("1.0", text)
         elif tab_type == "text" and hasattr(self.__text_tab, "result_text"):
-            cast(tk.Text, cast(TextSigningTab, self.__text_tab).result_text).delete("1.0", tk.END)
-            cast(tk.Text, cast(TextSigningTab, self.__text_tab).result_text).insert("1.0", text)
+            self.__text_tab.result_text.delete("1.0", tk.END)
+            self.__text_tab.result_text.insert("1.0", text)

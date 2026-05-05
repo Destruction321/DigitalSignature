@@ -3,7 +3,7 @@
 import tkinter as tk
 from pathlib import Path
 from tkinter import messagebox, ttk
-from typing import Any, Callable, cast
+from typing import Any, Callable
 
 from ._backup_ops import ops
 
@@ -33,7 +33,6 @@ class Restore:
     def show(self) -> None:
         """显示对话框"""
         backups = ops.list_backups()
-
         if not backups.data:
             messagebox.showinfo("恢复备份", backups.msg)
             return
@@ -50,12 +49,15 @@ class Restore:
         self.__dialog.geometry(f"+{x}+{y}")
 
         self.__create_ui(backups.data)
-        cast(tk.Listbox, self.__listbox).bind("<Double-Button-1>", lambda _event: self.__on_restore())
+        assert self.__listbox is not None
+        self.__listbox.bind("<Double-Button-1>", lambda _event: self.__on_restore())
 
 
     """private methods"""
     def __create_ui(self, backups: list[dict[str, Any]]) -> None:
         """创建UI"""
+        assert self.__dialog is not None
+        
         main_frame = ttk.Frame(self.__dialog, padding="20")
         main_frame.pack(fill=tk.BOTH, expand=True)
 
@@ -117,21 +119,26 @@ class Restore:
         button_frame.pack(fill=tk.X, pady=10)
 
         ttk.Button(button_frame, text="恢复选中备份", command=self.__on_restore).pack(side=tk.LEFT, padx=5)
-        ttk.Button(button_frame, text="取消", command=cast(tk.Toplevel, self.__dialog).destroy).pack(side=tk.LEFT, padx=5)
+        ttk.Button(button_frame, text="取消", command=self.__dialog.destroy).pack(side=tk.LEFT, padx=5)
 
     def __populate_list(self, backups: list[dict[str, Any]]) -> None:
         """填充备份列表"""
+        assert self.__listbox is not None
+        
         self.__backup_items = []
         for backup in backups:
             time_str = backup["created_time"].strftime("%Y-%m-%d %H:%M:%S")
             size_str = f"{backup["size"]:,} 字节"
             display_text = f"{str(backup["name"]):30} | {time_str} | {size_str:>12}"
-            cast(tk.Listbox, self.__listbox).insert(tk.END, display_text)
+            self.__listbox.insert(tk.END, display_text)
             self.__backup_items.append(backup)
 
     def __on_restore(self) -> None:
         """执行恢复（强制验证完整性）"""
-        selection = cast(tk.Listbox, self.__listbox).curselection()
+        assert self.__listbox is not None
+        assert self.__skip_verify_var is not None
+        
+        selection = self.__listbox.curselection()
         if not selection:
             messagebox.showwarning("选择备份", "请先选择一个备份")
             return
@@ -139,7 +146,7 @@ class Restore:
         selected_backup = self.__backup_items[int(selection[0])]
         backup_path = Path(selected_backup["path"])
         
-        if cast(tk.BooleanVar, self.__skip_verify_var).get():
+        if self.__skip_verify_var.get():
             self.__restore(selected_backup)
             return
             
@@ -162,7 +169,9 @@ class Restore:
         self.__restore(selected_backup)
 
     def __restore(self, selected_backup: dict[str, Any]) -> None:
-        self.__overwrite_var = cast(tk.BooleanVar, self.__overwrite_var)
+        assert self.__overwrite_var is not None
+        assert self.__dialog is not None
+        
         operation = "覆盖" if self.__overwrite_var.get() else "合并"
         confirm_msg = (
             f"确定要{operation}恢复备份吗？\n\n"
@@ -178,11 +187,10 @@ class Restore:
             restore_result = ops.restore_backup(
                 Path(selected_backup["path"]), overwrite=self.__overwrite_var.get()
             )
-            
             if restore_result.is_success:
                 self.__update_status(f"备份恢复完成: {selected_backup["name"]}")
                 messagebox.showinfo("恢复成功", f"备份恢复成功！\n\n{restore_result.msg}")
-                cast(tk.Toplevel, self.__dialog).destroy()
+                self.__dialog.destroy()
                 self.__update_dir()
                 self.__refresh_key()
                 self.__reload_key()

@@ -1,10 +1,10 @@
 # package/_gui/_signing_tabs/_file_signing_tab.py
-"""文件签名标签页，实现核心接口和哈希显示接口"""
+"""文件签名标签页"""
 import tkinter as tk
 from hashlib import sha256
 from pathlib import Path
 from tkinter import ttk
-from typing import cast, TYPE_CHECKING
+from typing import TYPE_CHECKING
 
 from ._base_signing_tab import BaseSigningTab
 from ..._core import signature
@@ -16,7 +16,7 @@ if TYPE_CHECKING:
 
 
 class FileSigningTab(BaseSigningTab):
-    """文件签名标签页，实现核心接口和哈希显示接口"""
+    """文件签名标签页"""
     def __init__(self, parent: tk.Widget) -> None:
         super().__init__(parent, "file")
         
@@ -92,10 +92,12 @@ class FileSigningTab(BaseSigningTab):
             self._handle_operation_error("签名", e)
 
     def _verify_content(self, km: SingleKeyManager, content: str) -> None:
+        assert self.__signature_path_entry is not None
+        
         if not self.__validate_file_exists(content):
             return
         
-        signature_path = cast(tk.Entry, self.__signature_path_entry).get().strip()
+        signature_path = self.__signature_path_entry.get().strip()
         if not self.__validate_file_exists(signature_path, "签名"):
             return
 
@@ -143,15 +145,17 @@ class FileSigningTab(BaseSigningTab):
 
     def __on_file_selected(self, file_path: str) -> None:
         """选择文件"""
-        file_path_entry = cast(tk.Entry, self.__file_path_entry)
-        file_path_entry.delete(0, tk.END)
-        file_path_entry.insert(0, file_path)
+        assert self.__file_path_entry is not None
+
+        self.__file_path_entry.delete(0, tk.END)
+        self.__file_path_entry.insert(0, file_path)
 
     def __on_signature_selected(self, file_path: str) -> None:
         """选择签名文件"""
-        signature_path_entry = cast(tk.Entry, self.__signature_path_entry)
-        signature_path_entry.delete(0, tk.END)
-        signature_path_entry.insert(0, file_path)
+        assert self.__signature_path_entry is not None
+        
+        self.__signature_path_entry.delete(0, tk.END)
+        self.__signature_path_entry.insert(0, file_path)
 
     def __validate_file_exists(self, file_path: str, file_type = "") -> bool:
         """验证文件是否存在"""

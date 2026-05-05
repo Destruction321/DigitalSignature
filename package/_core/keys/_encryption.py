@@ -2,7 +2,6 @@
 """私钥加密组件"""
 from base64 import b64encode, b64decode
 from secrets import token_bytes
-from typing import cast
 
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import serialization
@@ -14,8 +13,16 @@ from cryptography.hazmat.primitives.hashes import SHA256
 from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 
 
-class DecryptError(ValueError):
-    """私钥解密失败 -- 密码错误或解密过程异常"""
+class DecryptError(Exception):
+    """解密失败基类"""
+    ...
+
+class PasswordError(DecryptError):
+    """密码错误"""
+    ...
+
+class InvalidKeyError(DecryptError):
+    """解密后数据不是有效的RSA私钥"""
     ...
 
 
@@ -83,10 +90,16 @@ def decrypt_private_key(encrypted_private_key: str, password: str) -> RSAPrivate
             backend=default_backend()
         )
 
-        return cast(RSAPrivateKey, private_key)
+    except ValueError as e:
+        raise PasswordError("密码错误或数据损坏") from e
 
     except Exception as e:
-        raise DecryptError from e
+        raise DecryptError("解密过程发生未知错误：" + str(e)) from e
+
+    if not isinstance(private_key, RSAPrivateKey):
+        raise InvalidKeyError("解密后的数据不是有效的RSA私钥")
+
+    return private_key
 
 
 def _derive_key(password: str, salt: bytes) -> bytes:

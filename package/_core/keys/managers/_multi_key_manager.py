@@ -1,18 +1,23 @@
 # package/_core/keys/managers/_multi_key_manager.py
 """多密钥对管理模块"""
+from email import message
+from math import sin
 from pathlib import Path
+from tkinter.messagebox import showerror
+from tkinter.simpledialog import askstring
 from typing import Callable, cast, TYPE_CHECKING, TypedDict
 
 from ._single_key_manager import SingleKeyManager
 from .._config import save_config
-from .._encryption import DecryptError
+from .. import _encryption
 from .._recovery import KeyRecoveryManager
-from ...._utils.constants import ENCRYPTED, KEYS_CONFIG_FILE
+from ...._utils.constants import ENCRYPTED, KEYS_CONFIG_FILE, UNENCRYPTED
 from ...._utils.enums import DirType, KeyType, FileType
 from ...._utils.result import Status, Result
 from ...._utils.tools import get_path
 
 if TYPE_CHECKING:
+    from tkinter import Tk
     from ...._utils.enums import PassWord
 
 
@@ -35,7 +40,7 @@ class MultiKeyManager:
         self.__config_file: str = self.__get_config_file(config_file)
 
         # 初始化恢复管理器
-        self.__recovery_mgr: KeyRecoveryManager = KeyRecoveryManager(cast(MultiKeyManager, self))
+        self.__recovery_mgr: KeyRecoveryManager = KeyRecoveryManager(self)
 
         # 使用恢复策略加载配置
         self.__config_secure = self.__recovery_mgr.load_keys_with_recovery()
@@ -164,21 +169,25 @@ class MultiKeyManager:
                 
             return Result(status=Status.SUCCESS, data=l_km, msg=f"密钥对 '{key_id}' 加载成功")
 
-        except DecryptError:
+        except _encryption.PasswordError:
             return Result(status=Status.PASSWORD_ERROR)
 
-        except ValueError as e:
-            return Result(status=Status.KEY_FILE_CORRUPT, msg=f"加载密钥失败: {str(e)}")
+        except _encryption.InvalidKeyError as e:
+            return Result(status=Status.KEY_FILE_CORRUPT, msg=str(e))
+
+        except _encryption.DecryptError as e:
+            return Result(status=Status.KEY_FILE_CORRUPT, msg=str(e))
 
         except Exception as e:
             return Result(status=Status.SYSTEM_ERROR, msg=f"加载密钥系统错误: {str(e)}")
 
-    def delete_key_pair(self, key_id: str) -> Result:
+    def delete_key_pair(self, key_id: str, parent: Tk) -> Result:
         """
         删除指定的密钥对
         
         Args:
             key_id (str): 密钥ID
+            parent (Tk): 父级窗口对象
             
         Returns:
             delete_result (Result): 删除结果
@@ -195,6 +204,17 @@ class MultiKeyManager:
             key_info = self.__key_pairs[key_id]
             private_key_path = Path(key_info["private_key_path"])
             public_key_path = Path(key_info["public_key_path"])
+            
+            if key_info["is_encrypted"]:
+                validate_result = self.__validate_password(key_id, parent)
+                if not validate_result.is_success:
+                    return validate_result
+                
+                single_km = SingleKeyManager(key_info["key_size"], key_id)
+                password = cast(str, validate_result.data)
+                validate_result = single_km.load_private_key(str(private_key_path), True, password)
+                if not validate_result.is_success:
+                    return Result(status=Status.PASSWORD_ERROR, msg="密码错误，无法删除密钥")
             
             if private_key_path.exists():
                 private_key_path.unlink()
@@ -312,9 +332,9 @@ class MultiKeyManager:
             return no_key_id
         
         is_encrypted = self.__key_pairs[key_id].get("is_encrypted", False)
-        status_desc = ENCRYPTED if is_encrypted else "未加密"
+        message = ENCRYPTED if is_encrypted else UNENCRYPTED
         
-        return Result(status=Status.SUCCESS, data=is_encrypted, msg=status_desc)
+        return Result(status=Status.SUCCESS, data=is_encrypted, msg=message)
 
     def get_key_paths(self, key_id: str, key_size: int, is_encrypted: bool = False) -> tuple[str, str]:
         """
@@ -347,6 +367,17 @@ class MultiKeyManager:
             return Result(status=Status.PARAM_EMPTY)
         if key_id not in self.__key_pairs:
             return Result(status=Status.KEY_NOT_FOUND)
+        
+    @staticmethod
+    def __validate_password(key_id: str, parent: Tk) -> Result:
+        """验证密码"""
+        prompt: str = f"密钥 '{key_id}' 已加密，删除前需验证\n请输入密码:"
+        password: str | None = askstring("密码输入", prompt, show="*", parent=parent)
+
+        if password is None or not password.strip():
+            return Result(status=Status.CANCEL_INPUT)
+        else:
+            return Result(status=Status.SUCCESS, data=password)
         
 
 def _get_consts(is_encrypted: bool = False) -> tuple[str, str, str, str]:

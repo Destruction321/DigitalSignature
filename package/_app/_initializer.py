@@ -5,7 +5,7 @@ from glob import glob
 from logging import warning
 from pathlib import Path
 from tkinter import messagebox
-from typing import cast, TYPE_CHECKING
+from typing import TYPE_CHECKING
 from shutil import move
 
 from .._core.keys.loader import KeyLoader
@@ -111,7 +111,7 @@ class Initializer:
                     self.__ui.key_tab.loaded_key_id = key_id
 
             self.__current_km = key_manager
-            self.__update_all_tabs_key_manager()
+            self.__update_key_managers()
 
             self.__ui_state_mgr.update_status(f"密钥对 '{key_id}' 已加载并准备就绪")
             update_directory_info(self.__ui.dir_labels)
@@ -136,7 +136,7 @@ class Initializer:
             self.__current_km = key_manager
 
             # 更新所有标签页
-            self.__update_all_tabs_key_manager()
+            self.__update_key_managers()
 
             # 更新状态
             key_id = getattr(key_manager, "key_id", "未知")
@@ -147,9 +147,10 @@ class Initializer:
             messagebox.showerror("数字签名实例设置失败", f"{e}")
             self.__current_km = None
 
-    def __update_all_tabs_key_manager(self) -> None:
+    def __update_key_managers(self) -> None:
         """更新所有标签页的密钥管理器"""
-        self.__current_km = cast(SingleKeyManager, self.__current_km)
+        assert self.__current_km is not None
+        
         if self.__ui.text_tab:
             self.__ui.text_tab.km = self.__current_km
 

@@ -34,7 +34,7 @@ class KeyRecoveryManager:
 
 
     """public methods"""
-    def try_rebuild_from_files(self) -> Result:
+    def try_rebuild_from_files(self, click_btn: bool = False) -> Result:
         """
         公共备份恢复接口
         
@@ -42,7 +42,7 @@ class KeyRecoveryManager:
             rebuild_result (Result): 恢复结果
         """
         try:
-            return self.__try_rebuild_from_files()
+            return self.__try_rebuild_from_files(click_btn=click_btn)
         
         except Exception as e:
             # 兜底捕获：防止未预料的异常崩溃
@@ -114,7 +114,7 @@ class KeyRecoveryManager:
             self.__update_security_status(False)
             return Result(status=Status.SYSTEM_ERROR, msg=f"配置加载系统错误: {str(e)}")
 
-    def __try_rebuild_from_files(self) -> Result:
+    def __try_rebuild_from_files(self, click_btn: bool = False) -> Result:
         """第二层：从本地密钥文件重建配置"""
         try:
             keys_dir = Path(get_path(DirType.KEYS))
@@ -127,7 +127,7 @@ class KeyRecoveryManager:
             rebuilt_config = {}
             recovered_encrypted_keys = []
             for file_name in keys_dir.iterdir():
-                key_info = self.__parse_key_from_file_name(file_name.name, keys_dir)
+                key_info = self.__parse_key_information(file_name.name, keys_dir)
                 if key_info is None:
                     continue
                 
@@ -164,7 +164,7 @@ class KeyRecoveryManager:
                 return save_result
             
             # 通知UI加密密钥已恢复
-            if recovered_encrypted_keys and self.__recovery_callback:
+            if click_btn and recovered_encrypted_keys and self.__recovery_callback:
                 for key_id in recovered_encrypted_keys:
                     self.__recovery_callback(key_id, PassWord.RECOVERY)
                     
@@ -207,7 +207,7 @@ class KeyRecoveryManager:
         if self.__security_status_callback:
             self.__security_status_callback(is_secure)
 
-    def __parse_key_from_file_name(self, file_name: str, keys_dir: Path) -> tuple[str, int, bool, str, str] | None:
+    def __parse_key_information(self, file_name: str, keys_dir: Path) -> tuple[str, int, bool, str, str] | None:
         """从文件名解析密钥信息"""
         try:
             PRIVATE_, PUBLIC_, ENCRYPTED, _PEM = _get_constants()

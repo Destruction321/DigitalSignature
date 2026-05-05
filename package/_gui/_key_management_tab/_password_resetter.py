@@ -1,9 +1,9 @@
-# package/_gui/_key_management_tab/_password_validator.py
-"""密码验证和重置器"""
+# package/_gui/_key_management_tab/_password_resetter.py
+"""密码重置器"""
 from tkinter import messagebox, simpledialog
 from typing import Callable, cast, TYPE_CHECKING, TypedDict
 
-from ..._utils.constants import ENCRYPTED, MAX_PASSWORD_ATTEMPTS
+from ..._utils.constants import MAX_PASSWORD_ATTEMPTS
 from ..._utils.enums import PassWord
 from ..._utils.result import Status, Result
 
@@ -19,8 +19,8 @@ class _SetNewPassword(TypedDict):
     mode: PassWord
     is_encrypted: bool
 
-class PasswordValidator:
-    """密码验证和重置器"""
+class PasswordResetter:
+    """密码重置器"""
     def __init__(self,
                  multi_key_manager: MultiKeyManager,
                  parent_window: Widget,
@@ -35,7 +35,7 @@ class PasswordValidator:
 
 
     """public methods"""
-    def validate_and_reset_password(self, key_id: str, mode: PassWord = PassWord.CHANGE) -> Result:
+    def reset_password(self, key_id: str, mode: PassWord = PassWord.CHANGE) -> Result:
         """
         验证旧密码并重置为新密码
         
@@ -57,13 +57,9 @@ class PasswordValidator:
         if not status_result.is_success:
             return status_result
         
-        # 判断是否需要验证旧密码
-        is_encrypted = ENCRYPTED in status_result.msg
-        require_old_password = is_encrypted
-        
         # 验证旧密码
         old_password: str | None = None
-        if require_old_password:
+        if status_result.data:
             verify_result = self.__verify_old_password(key_id, mode)
             if not verify_result.is_success:
                 return verify_result  # 传递旧密码验证失败状态
@@ -75,7 +71,7 @@ class PasswordValidator:
             "key_id": key_id,
             "old_password": old_password,
             "mode": mode,
-            "is_encrypted": is_encrypted
+            "is_encrypted": status_result.data
         })
 
 

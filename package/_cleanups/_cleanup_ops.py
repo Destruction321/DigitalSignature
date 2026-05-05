@@ -20,9 +20,7 @@ _PUBLIC = KeyType.PUBLIC.value
 
 
 """public methods for 'CleanUps' to call"""
-def cleanup_all_files(update_status_callback: Callable[[str], None],
-                      update_dir_callback: Callable[[], None],
-                      days_old: int = 30) -> Result:
+def cleanup_all_files(update_status_callback: Callable[[str], None], days_old: int = 30) -> Result:
     """
     执行完整清理
         
@@ -54,12 +52,10 @@ def cleanup_all_files(update_status_callback: Callable[[str], None],
             
             break
         else:
-            update_dir_callback()
             message = f"完整清理失败: \n{temp_result.msg}\n{old_result.msg}\n{orphaned_result.msg}"
             return Result(status=Status.CLEANUP_FAILED, msg=message)
         
         update_status_callback(f"完整清理完成，共清理 {total_deleted} 个文件")
-        update_dir_callback()
         
         if total_deleted == 0:
             message = "无文件需要清理"
@@ -111,7 +107,7 @@ def cleanup_old_files(days_old: int = 30, categories: list[DirType] | None = Non
         for category in categories:
             dir_path = Path(get_path(category))
             deleted_count = _cleanup_directory_files(
-                dir_path, lambda file_path: Path(file_path).stat().st_birthtime < cutoff_time
+                dir_path, lambda file_path: Path(file_path).stat().st_mtime < cutoff_time
             )
             total_deleted += deleted_count
             
@@ -194,10 +190,10 @@ def _cleanup_directory_files(dir_path: Path, condition_func: Callable[[str], boo
 
     return deleted_count
 
-def _parse_key_id_from_file_name(file_name: str) -> tuple[str | None, bool]:
+def _parse_key_id(file_name: str) -> tuple[str | None, bool]:
     """从文件名解析 key_id 以及是否为私钥"""
     is_private = file_name.startswith(f"{_PRIVATE}_")
-    is_public = file_name.startswith(f"{_PRIVATE}_")
+    is_public = file_name.startswith(f"{_PUBLIC}_")
 
     if not is_private and not is_public:
         return None, is_private
@@ -228,7 +224,7 @@ def _get_orphaned_keys(keys_dir: Path) -> dict:
         if file_path.suffix != _PEM:
             continue
         
-        key_id, is_private = _parse_key_id_from_file_name(file_path.name)
+        key_id, is_private = _parse_key_id(file_path.name)
         if key_id is None:
             continue
         

@@ -6,18 +6,24 @@ from ._ui_creator import UICreator
 
 if TYPE_CHECKING:
     from tkinter import Widget
+    from tkinter.ttk import Label
     from ..._core.keys.loader import KeyLoader
     from ..._core.keys.managers import MultiKeyManager
+    from ..._utils.enums import DirType
 
 
 class KeyManagementTab:
     """密钥管理标签页"""
-    def __init__(self, parent: Widget, multi_key_manager: MultiKeyManager, key_loader: KeyLoader) -> None:
+    def __init__(self,
+                 parent: Widget,
+                 multi_key_manager: MultiKeyManager,
+                 key_loader: KeyLoader,
+                 dir_labels: dict[DirType, Label]) -> None:
         # 创建UI控制器
         self.__ui: UICreator = UICreator(parent, multi_key_manager, key_loader)
         
         # 创建标签页UI
-        self.__ui.setup_ui()
+        self.__ui.setup_ui(key_loader.parent, dir_labels)
         
         self.__ui.controller.update_security_status(self.__ui.multi_km.config_secure)
         

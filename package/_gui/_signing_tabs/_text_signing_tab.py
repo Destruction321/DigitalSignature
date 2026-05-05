@@ -1,5 +1,5 @@
 # package/_gui/_signing_tabs/_text_signing_tab.py
-"""文本签名标签页，实现核心接口和内容编辑接口"""
+"""文本签名标签页"""
 import tkinter as tk
 from hashlib import sha256
 from pathlib import Path
@@ -20,7 +20,7 @@ if TYPE_CHECKING:
 
 
 class TextSigningTab(BaseSigningTab):
-    """文本签名标签页，实现核心接口和内容编辑接口"""
+    """文本签名标签页"""
     def __init__(self, parent: tk.Widget) -> None:
         super().__init__(parent, "text")
         self.__text_editor: tk.Text | None = None

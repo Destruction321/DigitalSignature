@@ -5,7 +5,7 @@ from tkinter.simpledialog import askstring
 from typing import Any, Callable, cast, TYPE_CHECKING
 
 from .managers import SingleKeyManager
-from ..._utils.constants import ENCRYPTED, MAX_PASSWORD_ATTEMPTS
+from ..._utils.constants import MAX_PASSWORD_ATTEMPTS
 from ..._utils.result import Status, Result
 
 if TYPE_CHECKING:
@@ -19,11 +19,16 @@ class KeyLoader:
                  multi_key_manager: MultiKeyManager, 
                  parent: Tk,
                  key_loaded_callback: Callable[[Any], None] | None = None,
-                 update_status_callback: Callable[[str], None] | None = None,) -> None:
+                 update_status_callback: Callable[[str], None] | None = None) -> None:
         self.__multi_km: MultiKeyManager = multi_key_manager
         self.__parent: Tk = parent
         self.__key_loaded_callback: Callable[[Any], None] | None = key_loaded_callback
         self.__update_status: Callable[[str], None] | None = update_status_callback
+    
+    
+    @property
+    def parent(self) -> Tk:
+        return self.__parent
     
 
     """public methods"""
@@ -64,45 +69,44 @@ class KeyLoader:
             return load_result
 
         # 交互式输入密码（如果需要）
-        password: str | None = None
+        password: Result | None = None
         if status_result.data:  # 已加密
-            password_result = self.__validate_password(key_id) if ENCRYPTED in status_result.msg else None
+            password = self.__validate_password(key_id)
             
-            if password_result is False:  # 用户取消
-                return Result(status=Status.CANCEL_INPUT, msg="密码输入已取消")
-                
-            password = cast(str | None, password_result)
+            if not password.is_success:  # 用户取消
+                return password
             
         # 尝试加载
         return self.__attempt_key_loading(key_id, password)
 
-
+    
     """private methods"""
-    def __validate_password(self, key_id: str, attempt: int = 1, is_retry: bool = False) -> str | bool:
+    def __validate_password(self, key_id: str, attempt: int = 1, is_retry: bool = False) -> Result:
         """验证密码"""
         while True:
             prompt: str = self.__build_password_prompt(key_id, attempt, is_retry)
             password: str | None = askstring("密码输入", prompt, show="*", parent=self.__parent)
 
             if password is None:
-                return False  # 用户取消
+                return Result(status=Status.CANCEL_INPUT)
 
             if password.strip():
-                return password
+                return Result(status=Status.SUCCESS, data=password)
             
             messagebox.showerror("错误", "密码不能为空")       
 
-    def __build_password_prompt(self, key_id: str, attempt: int, is_retry: bool) -> str:
+    @staticmethod
+    def __build_password_prompt(key_id: str, attempt: int, is_retry: bool) -> str:
         """构建密码提示信息"""
         if is_retry:
             return f"密码错误，请重新输入密码 ({attempt}/{MAX_PASSWORD_ATTEMPTS}):"
         else:
             return f"密钥 '{key_id}' 已加密\n请输入密码:"
-
-    def __attempt_key_loading(self, key_id: str, password: str | bool | None) -> Result:
+        
+    def __attempt_key_loading(self, key_id: str, password: Result | None) -> Result:
         """尝试加载密钥（带重试机制）"""
         for attempt in range(1, MAX_PASSWORD_ATTEMPTS + 1):
-            load_result = self.__multi_km.load_key_pair(key_id, cast(str | None, password))
+            load_result = self.__multi_km.load_key_pair(key_id, password.data if password else None)
             
             # 成功：回调并返回结果
             if load_result.is_success:
@@ -119,8 +123,8 @@ class KeyLoader:
                 break
 
             password = self.__validate_password(key_id, attempt + 1, True)
-            if password is False:  # 用户取消
-                return Result(status=Status.CANCEL_INPUT, msg="密码输入已取消")
+            if not password.is_success:  # 用户取消
+                return password
             
         if self.__update_status:
             self.__update_status(f"密码错误次数过多，加载失败")

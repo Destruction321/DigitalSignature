@@ -3,18 +3,21 @@
 from tkinter import messagebox
 from typing import cast, TYPE_CHECKING
 
-from ._password_validator import PasswordValidator
+from ._password_resetter import PasswordResetter
 from ..._core.keys.managers import SingleKeyManager
-from ..._utils.constants import ENCRYPTED
+from ..._utils.constants import ENCRYPTED, UNENCRYPTED
 from ..._utils.enums import PassWord
 from ..._utils.result import Status
+from ..._utils.tools import update_directory_info
 from ..._utils.ui_state_manager import get_ui_state_manager
 
 if TYPE_CHECKING:
-    from tkinter import Widget
+    from tkinter import Tk, Widget
+    from tkinter.ttk import Label
     from ._km_protocol import KeyManagerProtocol
     from ..._core.keys.loader import KeyLoader
     from ..._core.keys.managers import MultiKeyManager
+    from ..._utils.enums import DirType
     from ..._utils.ui_state_manager import UIStateManager
     
 
@@ -36,7 +39,7 @@ class Controller:
         self.__multi_km.recovery_callback = self.__handle_key_recovery
 
         # 密码验证服务
-        self.__password_validator = PasswordValidator(
+        self.__password_validator = PasswordResetter(
             self.__multi_km,
             parent,
             update_status=self.__ui_state_mgr.update_status,
@@ -63,15 +66,12 @@ class Controller:
         Args:
             click_refresh_btn (bool): 是否由点击刷新按钮触发，默认为 False（非按钮触发）
         """
+        self.__multi_km.recovery_mgr.try_rebuild_from_files(click_refresh_btn)
         keys = list(self.__multi_km.key_pairs.keys())
-
         if not keys:
-            self.__multi_km.recovery_mgr.try_rebuild_from_files()
-            keys = list(self.__multi_km.key_pairs.keys())
-            if not keys:
-                if click_refresh_btn:
-                    messagebox.showerror("警告", "没有可用的密钥对")
-                return
+            if click_refresh_btn:
+                messagebox.showerror("警告", "没有可用的密钥对")
+            return
 
         items: list[tuple[str, str]] = []
         for key_id in keys:
@@ -143,7 +143,7 @@ class Controller:
             messagebox.showerror("系统错误", f"加载密钥时发生系统错误: {str(e)}")
             return None
 
-    def delete_selected_key(self) -> None:
+    def delete_selected_key(self, parent: Tk, dir_labels: dict[DirType, Label]) -> None:
         """删除选中的密钥"""
         key_id = self.__get_selected_key_id()
         if key_id is None:
@@ -152,13 +152,14 @@ class Controller:
         if not messagebox.askyesno("确认", f"确定要删除密钥对 '{key_id}' 吗？"):
             return
 
-        delete_result = self.__multi_km.delete_key_pair(key_id)
+        delete_result = self.__multi_km.delete_key_pair(key_id, parent)
         if not delete_result.is_success:
             messagebox.showerror("删除失败", delete_result.msg)
             return
 
         self.refresh_key_list()
         self.update_key_status()
+        update_directory_info(dir_labels)
         self.__ui_state_mgr.update_status(f"删除密钥对: {key_id}")
 
         if key_id == self.__loaded_key_id:
@@ -175,7 +176,8 @@ class Controller:
 
         status_result = self.__multi_km.get_key_encryption_status(key_id)
         if status_result.is_success:
-            messagebox.showinfo("加密状态", f"密钥 '{key_id}' 的状态:\n\n{status_result.msg}")
+            status = ENCRYPTED if status_result.data else UNENCRYPTED
+            messagebox.showinfo("加密状态", f"密钥 '{key_id}' 的状态:\n\n{status}")
         else:
             messagebox.showerror("错误", status_result.msg)
 
@@ -199,7 +201,7 @@ class Controller:
         ):
             return
 
-        result = self.__multi_km.recovery_mgr.try_rebuild_from_files()
+        result = self.__multi_km.recovery_mgr.try_rebuild_from_files(click_btn=True)
         if result.is_success:
             messagebox.showinfo("成功", "配置恢复成功")
             self.refresh_key_list()
@@ -249,9 +251,7 @@ class Controller:
 
     def __handle_change_result(self, key_id: str, mode: PassWord) -> None:
         """处理密码修改结果"""
-        change_result = self.__password_validator.validate_and_reset_password(
-            key_id=key_id, mode=mode
-        )
+        change_result = self.__password_validator.reset_password(key_id=key_id, mode=mode)
         if change_result.is_success:
             messagebox.showinfo("成功", f"密钥 '{key_id}' 密码修改成功：{change_result.msg}")
         elif change_result.status == Status.CANCEL_INPUT:

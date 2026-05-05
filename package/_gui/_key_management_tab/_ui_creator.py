@@ -3,7 +3,7 @@
 import tkinter as tk
 from pathlib import Path
 from tkinter import ttk, messagebox
-from typing import cast, TYPE_CHECKING
+from typing import TYPE_CHECKING
 
 from ._controller import Controller
 from ..._core.keys import creator
@@ -77,12 +77,12 @@ class UICreator:
 
 
     """public methods"""
-    def setup_ui(self) -> None:
+    def setup_ui(self, parent: tk.Tk, dir_labels: dict[DirType, ttk.Label]) -> None:
         """设置用户界面"""
         self.__setup_parent_layout()
         self.__create_directory_info()
-        self.__create_key_creation_area()
-        self.__create_key_management_area()
+        self.__create_key_creation_area(dir_labels)
+        self.__create_key_management_area(parent, dir_labels)
         self.__parent.winfo_toplevel().minsize(800, 800)
 
 
@@ -105,7 +105,7 @@ class UICreator:
             foreground="blue",
         ).pack(anchor=tk.W)
 
-    def __create_key_creation_area(self) -> None:
+    def __create_key_creation_area(self, dir_labels: dict[DirType, ttk.Label]) -> None:
         create_frame = ttk.LabelFrame(self.__parent, text="创建新密钥对", padding="10")
         create_frame.grid(row=1, column=0, sticky=tk.EW, pady=5)
         create_frame.columnconfigure(1, weight=1)
@@ -113,7 +113,7 @@ class UICreator:
         self.__create_key_id_input(create_frame)
         self.__create_key_size_selection(create_frame)
         self.__create_encryption_options(create_frame)
-        self.__create_key_generation_button(create_frame)
+        self.__create_key_generation_button(create_frame, dir_labels)
 
     def __create_key_id_input(self, parent: tk.Widget) -> None:
         ttk.Label(parent, text="密钥ID:").grid(row=0, column=0, padx=5, pady=5, sticky=tk.W)
@@ -145,17 +145,22 @@ class UICreator:
         self.__password_entry.pack(side=tk.LEFT, fill=tk.X, expand=True)
         self.__password_entry.config(state=tk.DISABLED)
 
-    def __create_key_generation_button(self, parent: tk.Widget) -> None:
+    def __create_key_generation_button(self, parent: tk.Widget, dir_labels: dict[DirType, ttk.Label]) -> None:
+        assert self.__key_id_entry is not None
+        assert self.__key_size_combo is not None
+        assert self.__encryption_var is not None
+        assert self.__password_entry is not None
+        
         ui_components = [self.__key_id_entry, self.__key_size_combo, self.__encryption_var, self.__password_entry]
         if not all(ui_components):
             messagebox.showerror("错误", "UI组件未正确初始化")
             return
 
         key_setter = creator.KeySetter(
-            key_id_entry=cast(ttk.Entry, self.__key_id_entry),
-            key_size_combo=cast(ttk.Combobox, self.__key_size_combo),
-            encryption_var=cast(tk.BooleanVar, self.__encryption_var),
-            password_entry=cast(ttk.Entry, self.__password_entry),
+            key_id_entry=self.__key_id_entry,
+            key_size_combo=self.__key_size_combo,
+            encryption_var=self.__encryption_var,
+            password_entry=self.__password_entry,
         )
 
         callbacks = creator.CallBacks(
@@ -172,17 +177,18 @@ class UICreator:
                 key_setter=key_setter,
                 multi_km=self.__multi_km,
                 callbacks=callbacks,
+                dir_labels=dir_labels
             ),
         ).grid(row=0, column=4, padx=5, pady=5)
 
-    def __create_key_management_area(self) -> None:
+    def __create_key_management_area(self, root: tk.Tk, dir_labels: dict[DirType, ttk.Label]) -> None:
         manage_frame = ttk.LabelFrame(self.__parent, text="密钥对管理", padding="10")
         manage_frame.grid(row=2, column=0, sticky=tk.NSEW, pady=5)
 
         self.__setup_management_layout(manage_frame)
         self.__create_key_list_label(manage_frame)
         self.__create_key_list_area(manage_frame)
-        self.__create_operation_buttons(manage_frame)
+        self.__create_operation_buttons(manage_frame, root, dir_labels)
         self.__create_advanced_operations(manage_frame)
         self.__create_status_display(manage_frame)
 
@@ -225,7 +231,7 @@ class UICreator:
         # 列表创建完成后触发首次刷新
         self.__controller.refresh_key_list()
 
-    def __create_operation_buttons(self, parent: tk.Widget) -> None:
+    def __create_operation_buttons(self, parent: tk.Widget, root: tk.Tk, dir_labels: dict[DirType, ttk.Label]) -> None:
         btn_frame = ttk.Frame(parent)
         btn_frame.grid(row=2, column=0, sticky=tk.EW, pady=10)
         for i in range(3):
@@ -233,7 +239,7 @@ class UICreator:
 
         buttons = [
             ("加载选中密钥", self.__controller.load_selected_key),
-            ("删除选中密钥", self.__controller.delete_selected_key),
+            ("删除选中密钥", lambda: self.__controller.delete_selected_key(root, dir_labels)),
             ("刷新列表", lambda: self.__controller.refresh_key_list(click_refresh_btn=True)),
         ]
         for i, (text, command) in enumerate(buttons):
