@@ -2,7 +2,7 @@
 """密钥管理标签页UI创建器"""
 import tkinter as tk
 from pathlib import Path
-from tkinter import ttk, messagebox
+from tkinter import ttk
 from typing import TYPE_CHECKING
 
 from ._controller import Controller
@@ -18,7 +18,10 @@ if TYPE_CHECKING:
 
 class UICreator:
     """密钥管理标签页UI创建器"""
-    def __init__(self, parent: tk.Widget, multi_key_manager: MultiKeyManager, key_loader: KeyLoader) -> None:
+    def __init__(self,
+                 parent: tk.Widget,
+                 multi_key_manager: MultiKeyManager,
+                 key_loader: KeyLoader) -> None:
         self.__key_id_entry: ttk.Entry | None = None
         self.__encryption_var: tk.BooleanVar | None = None
         self.__key_size_combo: ttk.Combobox | None = None
@@ -38,10 +41,6 @@ class UICreator:
             parent=parent
         )
 
-    
-    @property
-    def multi_km(self) -> MultiKeyManager:
-        return self.__multi_km
     
     @property
     def controller(self) -> Controller:
@@ -77,12 +76,12 @@ class UICreator:
 
 
     """public methods"""
-    def setup_ui(self, parent: tk.Tk, dir_labels: dict[DirType, ttk.Label]) -> None:
+    def setup_ui(self) -> None:
         """设置用户界面"""
         self.__setup_parent_layout()
         self.__create_directory_info()
-        self.__create_key_creation_area(dir_labels)
-        self.__create_key_management_area(parent, dir_labels)
+        self.__create_key_creation_area()
+        self.__create_key_management_area()
         self.__parent.winfo_toplevel().minsize(800, 800)
 
 
@@ -105,7 +104,7 @@ class UICreator:
             foreground="blue",
         ).pack(anchor=tk.W)
 
-    def __create_key_creation_area(self, dir_labels: dict[DirType, ttk.Label]) -> None:
+    def __create_key_creation_area(self) -> None:
         create_frame = ttk.LabelFrame(self.__parent, text="创建新密钥对", padding="10")
         create_frame.grid(row=1, column=0, sticky=tk.EW, pady=5)
         create_frame.columnconfigure(1, weight=1)
@@ -113,7 +112,7 @@ class UICreator:
         self.__create_key_id_input(create_frame)
         self.__create_key_size_selection(create_frame)
         self.__create_encryption_options(create_frame)
-        self.__create_key_generation_button(create_frame, dir_labels)
+        self.__create_key_generation_button(create_frame)
 
     def __create_key_id_input(self, parent: tk.Widget) -> None:
         ttk.Label(parent, text="密钥ID:").grid(row=0, column=0, padx=5, pady=5, sticky=tk.W)
@@ -145,16 +144,15 @@ class UICreator:
         self.__password_entry.pack(side=tk.LEFT, fill=tk.X, expand=True)
         self.__password_entry.config(state=tk.DISABLED)
 
-    def __create_key_generation_button(self, parent: tk.Widget, dir_labels: dict[DirType, ttk.Label]) -> None:
-        assert self.__key_id_entry is not None
-        assert self.__key_size_combo is not None
-        assert self.__encryption_var is not None
-        assert self.__password_entry is not None
-        
-        ui_components = [self.__key_id_entry, self.__key_size_combo, self.__encryption_var, self.__password_entry]
-        if not all(ui_components):
-            messagebox.showerror("错误", "UI组件未正确初始化")
-            return
+    def __create_key_generation_button(self, parent: tk.Widget) -> None:
+        if self.__key_id_entry is None:
+            raise RuntimeError("密钥ID输入框未初始化")
+        if self.__key_size_combo is None:
+            raise RuntimeError("密钥长度下拉框未初始化")
+        if self.__encryption_var is None:
+            raise RuntimeError("加密选项变量未初始化")
+        if self.__password_entry is None:
+            raise RuntimeError("密码输入框未初始化")
 
         key_setter = creator.KeySetter(
             key_id_entry=self.__key_id_entry,
@@ -176,19 +174,18 @@ class UICreator:
             command=lambda: creator.create_key_pair(
                 key_setter=key_setter,
                 multi_km=self.__multi_km,
-                callbacks=callbacks,
-                dir_labels=dir_labels
+                callbacks=callbacks
             ),
         ).grid(row=0, column=4, padx=5, pady=5)
 
-    def __create_key_management_area(self, root: tk.Tk, dir_labels: dict[DirType, ttk.Label]) -> None:
+    def __create_key_management_area(self) -> None:
         manage_frame = ttk.LabelFrame(self.__parent, text="密钥对管理", padding="10")
         manage_frame.grid(row=2, column=0, sticky=tk.NSEW, pady=5)
 
         self.__setup_management_layout(manage_frame)
         self.__create_key_list_label(manage_frame)
         self.__create_key_list_area(manage_frame)
-        self.__create_operation_buttons(manage_frame, root, dir_labels)
+        self.__create_operation_buttons(manage_frame)
         self.__create_advanced_operations(manage_frame)
         self.__create_status_display(manage_frame)
 
@@ -231,7 +228,7 @@ class UICreator:
         # 列表创建完成后触发首次刷新
         self.__controller.refresh_key_list()
 
-    def __create_operation_buttons(self, parent: tk.Widget, root: tk.Tk, dir_labels: dict[DirType, ttk.Label]) -> None:
+    def __create_operation_buttons(self, parent: tk.Widget) -> None:
         btn_frame = ttk.Frame(parent)
         btn_frame.grid(row=2, column=0, sticky=tk.EW, pady=10)
         for i in range(3):
@@ -239,13 +236,11 @@ class UICreator:
 
         buttons = [
             ("加载选中密钥", self.__controller.load_selected_key),
-            ("删除选中密钥", lambda: self.__controller.delete_selected_key(root, dir_labels)),
+            ("删除选中密钥", lambda: self.__controller.delete_selected_key(self.__parent.winfo_toplevel())),
             ("刷新列表", lambda: self.__controller.refresh_key_list(click_refresh_btn=True)),
         ]
         for i, (text, command) in enumerate(buttons):
-            ttk.Button(btn_frame, text=text, command=command).grid(
-                row=0, column=i, padx=5, sticky=tk.EW
-            )
+            ttk.Button(btn_frame, text=text, command=command).grid(row=0, column=i, padx=5, sticky=tk.EW)
 
     def __create_advanced_operations(self, parent: tk.Widget) -> None:
         advanced_btn_frame = ttk.Frame(parent)
@@ -256,7 +251,7 @@ class UICreator:
         advanced_buttons = [
             ("查看加密状态", self.__controller.show_encryption_status),
             ("更改加密密码", self.__controller.change_key_password),
-            ("恢复配置",     self.__controller.recover_config),
+            ("恢复配置", self.__controller.recover_config),
         ]
         for i, (text, command) in enumerate(advanced_buttons):
             ttk.Button(advanced_btn_frame, text=text, command=command).grid(

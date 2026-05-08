@@ -1,11 +1,8 @@
 # package/_core/keys/managers/_multi_key_manager.py
 """多密钥对管理模块"""
-from email import message
-from math import sin
 from pathlib import Path
-from tkinter.messagebox import showerror
 from tkinter.simpledialog import askstring
-from typing import Callable, cast, TYPE_CHECKING, TypedDict
+from typing import cast, TYPE_CHECKING, TypedDict
 
 from ._single_key_manager import SingleKeyManager
 from .._config import save_config
@@ -17,7 +14,7 @@ from ...._utils.result import Status, Result
 from ...._utils.tools import get_path
 
 if TYPE_CHECKING:
-    from tkinter import Tk
+    from tkinter import Tk, Toplevel
     from ...._utils.enums import PassWord
 
 
@@ -87,14 +84,6 @@ class MultiKeyManager:
     def recovery_mgr(self) -> KeyRecoveryManager:
         return self.__recovery_mgr
 
-    @property
-    def recovery_callback(self) -> Callable[[str, PassWord], None] | None:
-        return self.__recovery_mgr.recovery_callback
-
-    @recovery_callback.setter
-    def recovery_callback(self, callback: Callable[[str, PassWord], None]) -> None:
-        self.__recovery_mgr.recovery_callback = callback
-
 
     """initialization helper"""
     def __get_config_file(self, config_file: str | None) -> str:
@@ -114,13 +103,12 @@ class MultiKeyManager:
             save_result (Result): 保存结果
         """
         config = {"key_pairs": self.__key_pairs, "current_key_id": self.__current_key_id}
-        success = save_config(config, self.__config_file, sign=True)
+        result = save_config(config, self.__config_file, sign=True)
         
-        if success:
+        if result.is_success:
             self.__config_secure = True
-            return Result(status=Status.SUCCESS)
         
-        return success
+        return result
 
     def load_key_pair(self, key_id: str, password: str | None = None) -> Result:
         """
@@ -134,7 +122,7 @@ class MultiKeyManager:
             load_result (Result): 加载结果，成功时返回当前密钥对的管理器
         """
         no_key_id = self.__no_key(key_id)
-        if no_key_id:
+        if no_key_id is not None:
             return no_key_id
         
         try:
@@ -181,7 +169,7 @@ class MultiKeyManager:
         except Exception as e:
             return Result(status=Status.SYSTEM_ERROR, msg=f"加载密钥系统错误: {str(e)}")
 
-    def delete_key_pair(self, key_id: str, parent: Tk) -> Result:
+    def delete_key_pair(self, key_id: str, parent: Tk | Toplevel) -> Result:
         """
         删除指定的密钥对
         
@@ -193,7 +181,7 @@ class MultiKeyManager:
             delete_result (Result): 删除结果
         """
         no_key_id = self.__no_key(key_id)
-        if no_key_id:
+        if no_key_id is not None:
             return no_key_id
         
         if self.__current_key_id == key_id:
@@ -245,7 +233,7 @@ class MultiKeyManager:
             change_result (Result): 修改结果
         """
         no_key_id = self.__no_key(key_id)
-        if no_key_id:
+        if no_key_id is not None:
             return no_key_id
         
         try:
@@ -328,7 +316,7 @@ class MultiKeyManager:
             encryption_status_result (Result): 成功状态和加密状态描述
         """
         no_key_id = self.__no_key(key_id)
-        if no_key_id:
+        if no_key_id is not None:
             return no_key_id
         
         is_encrypted = self.__key_pairs[key_id].get("is_encrypted", False)
@@ -369,7 +357,7 @@ class MultiKeyManager:
             return Result(status=Status.KEY_NOT_FOUND)
         
     @staticmethod
-    def __validate_password(key_id: str, parent: Tk) -> Result:
+    def __validate_password(key_id: str, parent: Tk | Toplevel) -> Result:
         """验证密码"""
         prompt: str = f"密钥 '{key_id}' 已加密，删除前需验证\n请输入密码:"
         password: str | None = askstring("密码输入", prompt, show="*", parent=parent)

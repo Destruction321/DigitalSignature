@@ -26,6 +26,7 @@ class MainWindow:
         self.__multi_km: MultiKeyManager = multi_km
         self.__key_loader: KeyLoader = key_loader
         self.__backup_buttons: dict[str, ttk.Button] = {}
+        self.__ui_state_mgr = get_ui_state_manager()
         self.__cleanups: CleanUps | None = None
         self.__backups: BackUps | None = None
         self.__status_label: ttk.Label | None = None  # 状态标签
@@ -76,9 +77,9 @@ class MainWindow:
         self.__create_backup_area(main_frame)
         self.__create_status_bar(main_frame)
 
-        ui_state_mgr = get_ui_state_manager()
-        ui_state_mgr.register_status_handler(self.__handle_status_update)
-        ui_state_mgr.register_result_handler(self.__handle_result_show)
+        self.__ui_state_mgr.register_status_handler(self.__handle_status_update)
+        self.__ui_state_mgr.register_result_handler(self.__handle_result_show)
+        self.__ui_state_mgr.register_dir_labels_handler(lambda: update_directory_info(self.__dir_labels))
 
 
     """private UI creator"""
@@ -117,15 +118,14 @@ class MainWindow:
         notebook.add(file_tab, text="文件签名")
 
         # 创建标签页实例
-        self.__key_tab = KeyManagementTab(key_tab, self.__multi_km, self.__key_loader, self.__dir_labels)
+        self.__key_tab = KeyManagementTab(key_tab, self.__multi_km, self.__key_loader)
         self.__text_tab = TextSigningTab(text_tab)
         self.__file_tab = FileSigningTab(file_tab)
         
-        self.__cleanups = CleanUps(self.__root, self.__dir_labels)
+        self.__cleanups = CleanUps(self.__root)
         self.__backups = BackUps(
             root=self.__root,
             backup_buttons=self.__backup_buttons,
-            dir_labels=self.__dir_labels,
             refresh_callback=self.__key_tab.refresh_key_list,
             multi_km=self.__multi_km,
             key_loader=self.__key_loader
@@ -133,8 +133,8 @@ class MainWindow:
 
     def __create_tools_area(self, parent: tk.Widget) -> None:
         """创建系统工具区域"""
-        assert self.__cleanups is not None
-        
+        assert self.__cleanups is not None, "cleanups 模块未初始化"
+
         tools_frame: ttk.LabelFrame = ttk.LabelFrame(parent, text="系统工具", padding="5")
         tools_frame.grid(row=2, column=0, sticky=tk.EW, pady=5)
         tools_frame.columnconfigure(0, weight=1)
@@ -152,7 +152,7 @@ class MainWindow:
                 key_loader=self.__key_loader,
                 click_reload_btn=True
             )),
-            ("刷新目录信息", lambda: update_directory_info(self.__dir_labels))
+            ("刷新目录信息", self.__ui_state_mgr.update_dir_labels)
         ]
 
         for text, command in buttons_row1:
@@ -173,7 +173,7 @@ class MainWindow:
 
     def __create_backup_area(self, parent: tk.Widget) -> None:
         """创建备份工具区域"""
-        assert self.__backups is not None
+        assert self.__backups is not None, "backups 模块未初始化"   
         
         backup_frame: ttk.LabelFrame = ttk.LabelFrame(parent, text="备份工具", padding="5")
         backup_frame.grid(row=3, column=0, sticky=tk.EW, pady=5)
@@ -204,19 +204,20 @@ class MainWindow:
 
     def __handle_status_update(self, message: str) -> None:
         """处理状态更新"""
-        if self.__status_label:
-            self.__status_label.config(text=message)
+        assert self.__status_label is not None, "状态标签未初始化"
+        self.__status_label.config(text=message)
 
     def __handle_result_show(self, text: str, tab_type: str) -> None:
         """处理结果显示"""
-        assert self.__file_tab is not None
-        assert self.__text_tab is not None
-        assert self.__file_tab.result_text is not None
-        assert self.__text_tab.result_text is not None
+        assert self.__file_tab is not None, "文件标签页未初始化"
+        assert self.__text_tab is not None, "文本标签页未初始化"
+        assert self.__file_tab.result_text is not None, "文件结果文本框未初始化"
+        assert self.__text_tab.result_text is not None, "文本结果文本框未初始化"
         
         if tab_type == "file" and hasattr(self.__file_tab, "result_text"):
             self.__file_tab.result_text.delete("1.0", tk.END)
             self.__file_tab.result_text.insert("1.0", text)
+            
         elif tab_type == "text" and hasattr(self.__text_tab, "result_text"):
             self.__text_tab.result_text.delete("1.0", tk.END)
             self.__text_tab.result_text.insert("1.0", text)

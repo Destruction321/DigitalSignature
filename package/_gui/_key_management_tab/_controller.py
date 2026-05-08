@@ -8,16 +8,13 @@ from ..._core.keys.managers import SingleKeyManager
 from ..._utils.constants import ENCRYPTED, UNENCRYPTED
 from ..._utils.enums import PassWord
 from ..._utils.result import Status
-from ..._utils.tools import update_directory_info
 from ..._utils.ui_state_manager import get_ui_state_manager
 
 if TYPE_CHECKING:
-    from tkinter import Tk, Widget
-    from tkinter.ttk import Label
+    from tkinter import Tk, Toplevel, Widget
     from ._km_protocol import KeyManagerProtocol
     from ..._core.keys.loader import KeyLoader
     from ..._core.keys.managers import MultiKeyManager
-    from ..._utils.enums import DirType
     from ..._utils.ui_state_manager import UIStateManager
     
 
@@ -36,15 +33,15 @@ class Controller:
         self.__key_id_map: dict[str, str] = {}
 
         # 注册恢复回调
-        self.__multi_km.recovery_callback = self.__handle_key_recovery
+        self.__multi_km.recovery_mgr.recovery_callback = self.__handle_key_recovery
 
         # 密码验证服务
         self.__password_validator = PasswordResetter(
-            self.__multi_km,
-            parent,
+            multi_key_manager=self.__multi_km,
+            parent_window=parent,
             update_status=self.__ui_state_mgr.update_status,
             refresh_list=self.refresh_key_list,
-            update_security=self.update_security_status,
+            update_security=self.update_security_status
         )
 
 
@@ -143,7 +140,7 @@ class Controller:
             messagebox.showerror("系统错误", f"加载密钥时发生系统错误: {str(e)}")
             return None
 
-    def delete_selected_key(self, parent: Tk, dir_labels: dict[DirType, Label]) -> None:
+    def delete_selected_key(self, parent: Tk | Toplevel) -> None:
         """删除选中的密钥"""
         key_id = self.__get_selected_key_id()
         if key_id is None:
@@ -152,20 +149,22 @@ class Controller:
         if not messagebox.askyesno("确认", f"确定要删除密钥对 '{key_id}' 吗？"):
             return
 
-        delete_result = self.__multi_km.delete_key_pair(key_id, parent)
+        
+        root = parent.winfo_toplevel()
+        delete_result = self.__multi_km.delete_key_pair(key_id, root)
         if not delete_result.is_success:
             messagebox.showerror("删除失败", delete_result.msg)
             return
 
         self.refresh_key_list()
         self.update_key_status()
-        update_directory_info(dir_labels)
         self.__ui_state_mgr.update_status(f"删除密钥对: {key_id}")
 
         if key_id == self.__loaded_key_id:
             self.__loaded_key_id = None
 
         self.update_security_status(True)
+        self.__ui_state_mgr.update_dir_labels()
         messagebox.showinfo("成功", delete_result.msg)
 
     def show_encryption_status(self) -> None:

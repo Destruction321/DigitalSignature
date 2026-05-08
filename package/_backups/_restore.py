@@ -11,12 +11,12 @@ from ._backup_ops import ops
 class Restore:
     """备份恢复器"""
     def __init__(self,
-                 parent: tk.Tk,
+                 root: tk.Tk,
                  update_status_callback: Callable[[str], None],
                  update_dir_callback: Callable[[], None],
                  refresh_key_callback: Callable[[], None],
                  reload_key_callback: Callable[[], None]) -> None:
-        self.__parent = parent
+        self.__root = root
         self.__update_status = update_status_callback
         self.__update_dir = update_dir_callback
         self.__refresh_key = refresh_key_callback
@@ -37,26 +37,27 @@ class Restore:
             messagebox.showinfo("恢复备份", backups.msg)
             return
 
-        self.__dialog = tk.Toplevel(self.__parent)
+        self.__dialog = tk.Toplevel(self.__root)
         self.__dialog.title("恢复备份")
         self.__dialog.geometry("600x500")
-        self.__dialog.transient(self.__parent)
+        self.__dialog.transient(self.__root)
         self.__dialog.grab_set()
 
         self.__dialog.update_idletasks()
-        x = (self.__parent.winfo_screenwidth() - self.__dialog.winfo_width()) // 2
-        y = (self.__parent.winfo_screenheight() - self.__dialog.winfo_height()) // 2
+        x = (self.__root.winfo_screenwidth() - self.__dialog.winfo_width()) // 2
+        y = (self.__root.winfo_screenheight() - self.__dialog.winfo_height()) // 2
         self.__dialog.geometry(f"+{x}+{y}")
 
         self.__create_ui(backups.data)
-        assert self.__listbox is not None
+        
+        assert self.__listbox is not None, "列表框未创建"
         self.__listbox.bind("<Double-Button-1>", lambda _event: self.__on_restore())
 
 
     """private methods"""
     def __create_ui(self, backups: list[dict[str, Any]]) -> None:
         """创建UI"""
-        assert self.__dialog is not None
+        assert self.__dialog is not None, "对话框未创建"
         
         main_frame = ttk.Frame(self.__dialog, padding="20")
         main_frame.pack(fill=tk.BOTH, expand=True)
@@ -123,7 +124,7 @@ class Restore:
 
     def __populate_list(self, backups: list[dict[str, Any]]) -> None:
         """填充备份列表"""
-        assert self.__listbox is not None
+        assert self.__listbox is not None, "列表框未创建"
         
         self.__backup_items = []
         for backup in backups:
@@ -135,8 +136,8 @@ class Restore:
 
     def __on_restore(self) -> None:
         """执行恢复（强制验证完整性）"""
-        assert self.__listbox is not None
-        assert self.__skip_verify_var is not None
+        assert self.__listbox is not None, "列表框未创建"
+        assert self.__skip_verify_var is not None, "跳过验证选项未创建"
         
         selection = self.__listbox.curselection()
         if not selection:
@@ -169,9 +170,9 @@ class Restore:
         self.__restore(selected_backup)
 
     def __restore(self, selected_backup: dict[str, Any]) -> None:
-        assert self.__overwrite_var is not None
-        assert self.__dialog is not None
-        
+        assert self.__overwrite_var is not None, "覆盖选项未创建"
+        assert self.__dialog is not None, "恢复对话框未创建"
+
         operation = "覆盖" if self.__overwrite_var.get() else "合并"
         confirm_msg = (
             f"确定要{operation}恢复备份吗？\n\n"

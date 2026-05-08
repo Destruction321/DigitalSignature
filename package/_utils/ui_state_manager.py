@@ -9,6 +9,7 @@ class UIStateManager:
     def __init__(self) -> None:
         self.__status_handlers: list[Callable[[str], None]] = []
         self.__result_handlers: list[Callable[[str, str], None]] = []
+        self.__dir_handlers: list[Callable[[], None]] = []
         self.__logger = getLogger(__name__)
 
     
@@ -32,10 +33,28 @@ class UIStateManager:
         """
         self.__result_handlers.append(handler)
         self.__logger.debug(f"注册结果处理器: {handler.__name__}")
+        
+    def register_dir_labels_handler(self, handler: Callable[[], None]) -> None:
+        """
+        注册目录标签更新处理器
+        
+        Args:
+            handler: 需要注册的目录标签更新处理器
+        """
+        self.__dir_handlers.append(handler)
+        self.__logger.debug(f"注册目录标签更新处理器: {handler.__name__}")
+
+    def update_dir_labels(self) -> None:
+        """通知所有目录标签更新处理器"""
+        for handler in self.__dir_handlers:
+            try:
+                handler()
+            except Exception as e:
+                self.__logger.error(f"目录标签处理器错误: {e}")
 
     def update_status(self, message: Any) -> None:
         """
-        更新状态 - 通知所有注册的处理器
+        更新状态 - 通知所有注册的处理器（目录标签更新除外）
         
         Args:
             message: 提示信息
@@ -51,7 +70,7 @@ class UIStateManager:
 
     def show_result(self, text: Any, tab_type: str = "file") -> None:
         """
-        显示结果 - 通知所有注册的处理器
+        显示结果 - 通知所有注册的处理器（目录标签更新除外）
         
         Args:
             text: 显示文本

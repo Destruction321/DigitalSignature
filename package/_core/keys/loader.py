@@ -18,12 +18,12 @@ class KeyLoader:
     def __init__(self, 
                  multi_key_manager: MultiKeyManager, 
                  parent: Tk,
-                 key_loaded_callback: Callable[[Any], None] | None = None,
-                 update_status_callback: Callable[[str], None] | None = None) -> None:
+                 key_loaded_callback: Callable[[Any], None],
+                 update_status_callback: Callable[[str], None]) -> None:
         self.__multi_km: MultiKeyManager = multi_key_manager
         self.__parent: Tk = parent
-        self.__key_loaded_callback: Callable[[Any], None] | None = key_loaded_callback
-        self.__update_status: Callable[[str], None] | None = update_status_callback
+        self.__key_loaded_callback: Callable[[Any], None] = key_loaded_callback
+        self.__update_status: Callable[[str], None] = update_status_callback
     
     
     @property
@@ -63,8 +63,7 @@ class KeyLoader:
             # 尝试静默加载
             load_result = self.__multi_km.load_key_pair(key_id, None)
             if load_result.is_success:
-                if self.__key_loaded_callback:
-                    self.__key_loaded_callback(cast(SingleKeyManager, load_result.data))
+                self.__key_loaded_callback(cast(SingleKeyManager, load_result.data))
                     
             return load_result
 
@@ -126,20 +125,14 @@ class KeyLoader:
             if not password.is_success:  # 用户取消
                 return password
             
-        if self.__update_status:
-            self.__update_status(f"密码错误次数过多，加载失败")
-            
-        if self.__key_loaded_callback:
-            self.__key_loaded_callback(None)
+        self.__update_status(f"密码错误次数过多，加载失败")
+        self.__key_loaded_callback(None)
             
         return Result(status=Status.PASSWORD_ERROR, msg="密码错误次数过多，加载失败")
         
     def __handle_key_loading_success(self, key_id: str, key_manager: SingleKeyManager) -> None:
         """处理加载成功"""
-        if self.__update_status:
-            self.__update_status(f"已加载密钥对: {key_id}")
-            
-        if self.__key_loaded_callback:
-            self.__key_loaded_callback(key_manager)
+        self.__update_status(f"已加载密钥对: {key_id}")
+        self.__key_loaded_callback(key_manager)
             
         messagebox.showinfo("成功", f"密钥对 '{key_id}' 加载成功")

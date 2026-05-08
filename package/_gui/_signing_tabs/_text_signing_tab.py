@@ -65,10 +65,8 @@ class TextSigningTab(BaseSigningTab):
         self.__text_editor.insert("1.0", default_text)
 
     def _get_content(self) -> str:
-        if self.__text_editor:
-            return self.__text_editor.get("1.0", tk.END).strip()
-        
-        return ""
+        assert self.__text_editor is not None, "文本编辑区未初始化"
+        return self.__text_editor.get("1.0", tk.END).strip()
 
     def _sign_content(self, km: SingleKeyManager, content: str) -> None:
         try:
@@ -105,9 +103,10 @@ class TextSigningTab(BaseSigningTab):
     
     """private methods"""
     def __clear_content(self) -> None:
-        if self.__text_editor:
-            self.__text_editor.delete("1.0", tk.END)
-            self._ui_state_mgr.update_status("文本已清空")
+        assert self.__text_editor is not None, "文本编辑区未初始化"
+        
+        self.__text_editor.delete("1.0", tk.END)
+        self._ui_state_mgr.update_status("文本已清空")
 
     def __save_content(self) -> None:
         content = self._get_content()

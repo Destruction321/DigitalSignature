@@ -1,14 +1,14 @@
 # package/_backups/_backups.py
 """数字签名窗口备份方法模块"""
 from tkinter import Menu, messagebox, Widget
-from tkinter.ttk import Button, Label
+from tkinter.ttk import Button
 from typing import cast, Callable, TYPE_CHECKING
 
 from ._dialog import dialog_show
 from ._backup_ops.ops import create_backup, list_backups_with_integrity
 from ._restore import Restore
 from .._utils.enums import DirType
-from .._utils.tools import reload_current_key, update_directory_info
+from .._utils.tools import reload_current_key
 from .._utils.ui_state_manager import get_ui_state_manager
 
 if TYPE_CHECKING:
@@ -23,13 +23,11 @@ class BackUps:
     def __init__(self,
                  root: Tk,
                  backup_buttons: dict[str, Button],
-                 dir_labels: dict[DirType, Label],
                  refresh_callback: Callable[[], None],
                  multi_km: MultiKeyManager,
                  key_loader: KeyLoader) -> None:
         self.__root: Tk = root
         self.__backup_buttons: dict[str, Button] = backup_buttons
-        self.__dir_labels: dict[DirType, Label] = dir_labels
         self.__refresh_callback: Callable[[], None] = refresh_callback
         self.__multi_km: MultiKeyManager = multi_km
         self.__key_loader: KeyLoader = key_loader
@@ -56,14 +54,14 @@ class BackUps:
     def restore_backup_dialog(self) -> None:
         """恢复备份对话框"""
         backups = list_backups_with_integrity()
-        if not backups:
+        if not backups.is_success:
             messagebox.showinfo("恢复备份", "没有找到可用的备份文件")
             return
 
         dialog = Restore(
-            parent=self.__root,
+            root=self.__root,
             update_status_callback=self.__ui_state_mgr.update_status,
-            update_dir_callback=lambda: update_directory_info(self.__dir_labels),
+            update_dir_callback=self.__ui_state_mgr.update_dir_labels,
             refresh_key_callback=self.__refresh_callback,
             reload_key_callback=lambda: reload_current_key(self.__multi_km, self.__key_loader)
         )
@@ -71,7 +69,7 @@ class BackUps:
 
     def backup_manager_dialog(self) -> None:
         """统一备份管理对话框"""
-        parent_window = cast(Widget, self.__root.winfo_toplevel())
+        parent_window = cast(Widget, self.__root)
         dialog_show(parent_window, self.__ui_state_mgr.update_status)
 
 

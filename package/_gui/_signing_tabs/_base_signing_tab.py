@@ -2,6 +2,7 @@
 """签名标签页基类"""
 import tkinter as tk
 from abc import ABC, abstractmethod
+from logging import warning
 from tkinter import ttk, messagebox
 from tkinter.filedialog import askopenfilename
 from tkinter.scrolledtext import ScrolledText
@@ -181,9 +182,12 @@ class BaseSigningTab(ABC):
         Args:
             text (str): 结果文本
         """
-        if self.__result_text:
-            self.__result_text.delete("1.0", tk.END)
-            self.__result_text.insert("1.0", text)
+        if self.__result_text is None:
+            warning("结果文本区未初始化", stack_info=True)
+            return
+        
+        self.__result_text.delete("1.0", tk.END)
+        self.__result_text.insert("1.0", text)
 
         self._ui_state_mgr.show_result(text, self.__tab_type)
 
@@ -328,6 +332,9 @@ class BaseSigningTab(ABC):
 
     def __clear_results(self) -> None:
         """清空结果显示区域"""
-        if self.__result_text:
-            self.__result_text.delete("1.0", tk.END)
+        if self.__result_text is None:
+            warning("结果文本区未初始化", stack_info=True)
+            return
+        
+        self.__result_text.delete("1.0", tk.END)
         self._ui_state_mgr.update_status("结果已清空")

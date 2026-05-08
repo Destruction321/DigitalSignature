@@ -5,7 +5,6 @@ from typing import TYPE_CHECKING
 
 from . import _cleanup_ops
 from .._utils.enums import DirType
-from .._utils.tools import update_directory_info
 from .._utils.ui_state_manager import get_ui_state_manager
 
 if TYPE_CHECKING:
@@ -15,10 +14,9 @@ if TYPE_CHECKING:
 
 class CleanUps:
     """数字签名窗口清理模块"""
-    def __init__(self, root: Tk, dir_labels: dict[DirType, ttk.Label]) -> None:
+    def __init__(self, root: Tk) -> None:
         self.__cleanup_days_threshold: int = 30
         self.__root: Tk = root
-        self.__dir_labels: dict[DirType, ttk.Label] = dir_labels
         self.__ui_state_mgr: UIStateManager = get_ui_state_manager()
     
     
@@ -35,20 +33,17 @@ class CleanUps:
                 self.__ui_state_mgr.update_status,
                 selected_days
             )
-            update_directory_info(self.__dir_labels)
             self.__handle_cleanup_result(cleanup_result)
 
     def cleanup_temp_files(self) -> None:
         """清理临时文件"""
         cleanup_result = _cleanup_ops.cleanup_temp_files()
         self.__handle_cleanup_result(cleanup_result)
-        update_directory_info(self.__dir_labels)
 
     def cleanup_orphaned_keys(self) -> None:
         """清理孤立的密钥文件"""
         cleanup_result = _cleanup_ops.cleanup_orphaned_keys()
         self.__handle_cleanup_result(cleanup_result)
-        update_directory_info(self.__dir_labels)
 
     def cleanup_old_files(self) -> None:
         """清理旧文件"""
@@ -62,7 +57,6 @@ class CleanUps:
                 self.__cleanup_days_threshold,
                 [DirType.TEXTS, DirType.SIGNATURES, DirType.TEMP]
             )
-            update_directory_info(self.__dir_labels)
             self.__handle_cleanup_result(cleanup_result)
 
 
@@ -71,6 +65,7 @@ class CleanUps:
         """处理清理结果"""
         message = cleanup_result.msg
         self.__ui_state_mgr.update_status(message)
+        self.__ui_state_mgr.update_dir_labels()
         if cleanup_result.is_success:
             messagebox.showinfo("清理完成", message)
         else:

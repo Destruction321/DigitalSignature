@@ -90,28 +90,32 @@ class Verifier:
                                      backup: dict[str, Any],
                                      callback: Callable[[dict[str, Any]], None]) -> None:
         """单个备份验证线程函数"""
-        assert self.__verify_dialog is not None
-        
         try:
+            if self.__verify_dialog is None:
+                raise RuntimeError("单个验证对话框未创建")
             verify_result = verify_backup_integrity(backup_path)
             
         except Exception as e:
             verify_result = Result(status=Status.BACKUP_VERIFY_FAILED, msg=f"验证失败: {str(e)}")
             
+        if self.__verify_dialog is None:
+            return
+        
         self.__verify_dialog.after(0, lambda: self.__update_single_result(verify_result, backup, callback))
 
     def __batch_verification_thread(self,
                                     backup_items: list[dict[str, Any]],
                                     callback: Callable[[list[dict[str, Any]]], None]) -> None:
         """批量验证线程函数"""
-        assert self.__progress_dialog is not None
-        
         valid_count = 0
         invalid_count = 0
         total_count = len(backup_items)
 
         for i, backup in enumerate(backup_items):
             # 处理当前备份
+            if self.__progress_dialog is None:  # 中途关闭，停止验证
+                return
+            
             self.__process_single_backup_in_batch(i, backup, total_count)
 
             # 统计结果
@@ -122,13 +126,18 @@ class Verifier:
 
         # 完成验证
         verification_result = [total_count, valid_count, invalid_count]
+        
+        if self.__progress_dialog is None:
+            return
+        
         self.__progress_dialog.after(
             0, lambda: self.__finish_batch_verification(verification_result, callback, backup_items)
         )
 
     def __process_single_backup_in_batch(self, index: int, backup: dict[str, Any], total_count: int) -> None:
         """在批量验证中处理单个备份"""
-        assert self.__progress_dialog is not None
+        if self.__progress_dialog is None:
+            return
 
         # 更新进度
         backup_path = Path(backup.get("path", ""))
@@ -156,14 +165,14 @@ class Verifier:
                 else:
                     result = f"⚠ {backup["name"]}: {message}\n"
 
-                self.__progress_dialog.after(0, lambda r=result: self.__add_batch_result(r)) # type: ignore
+                self.__progress_dialog.after(0, lambda r=result: self.__add_batch_result(r))
             else:
                 # 备份路径不存在
                 backup["integrity_valid"] = False
                 backup["integrity_message"] = "备份路径不存在"
                 backup["display_name"] = f"{backup["name"]}"
                 result = f"{backup["name"]}: 备份路径不存在\n"
-                self.__progress_dialog.after(0, lambda r=result: self.__add_batch_result(r)) # type: ignore
+                self.__progress_dialog.after(0, lambda r=result: self.__add_batch_result(r))
 
         except Exception as e:
             # 验证失败
@@ -171,7 +180,7 @@ class Verifier:
             backup["integrity_message"] = f"验证失败: {str(e)}"
             backup["display_name"] = f"{backup["name"]}"
             result = f"{backup["name"]}: 验证失败 - {str(e)}\n"
-            self.__progress_dialog.after(0, lambda r=result: self.__add_batch_result(r)) # type: ignore
+            self.__progress_dialog.after(0, lambda r=result: self.__add_batch_result(r))
 
     def __create_single_verify_dialog(self, backup: dict[str, Any]) -> None:
         """创建单个验证对话框"""
@@ -208,13 +217,10 @@ class Verifier:
                                backup: dict[str, Any],
                                callback: Callable[[dict[str, Any]], None]) -> None:
         """更新单个验证结果"""
-        assert self.__progress_label is not None
-        assert self.__result_label is not None
-        assert self.__close_button is not None
-        
-        if self.__verify_dialog is None:
-            return
-        
+        assert self.__progress_label is not None, "进度标签未创建"
+        assert self.__result_label is not None, "结果标签未创建"
+        assert self.__close_button is not None, "关闭按钮未创建"
+
         self.__progress_label.config(text="验证完成")
         if verify_result.is_success:
             self.__result_label.config(text=f"✓ {verify_result.msg}", foreground="green")
@@ -236,12 +242,11 @@ class Verifier:
         backup["checksum_data"] = verify_result.data
         backup["display_name"] = f"✓ {backup["name"]}" if verify_result.is_success else f"⚠ {backup["name"]}"
         
-        if callback:
-            callback(backup)
+        callback(backup)
 
     def __close_single_dialog(self) -> None:
         """关闭单个验证对话框"""
-        if self.__verify_dialog:
+        if self.__verify_dialog is not None:
             self.__verify_dialog.destroy()
             self.__verify_dialog = None
             self.__progress_label = None
@@ -290,30 +295,30 @@ class Verifier:
 
     def __update_batch_progress(self, current: int, total: int, status: str) -> None:
         """更新批量验证进度"""
-        if self.__progress_var and self.__status_label:
-            self.__progress_var.set(current)
-            self.__status_label.config(text=f"{status} ({current}/{total})")
+        assert self.__progress_var is not None, "进度变量未创建"
+        assert self.__status_label is not None, "状态标签未创建"
+        
+        self.__progress_var.set(current)
+        self.__status_label.config(text=f"{status} ({current}/{total})")
 
     def __add_batch_result(self, result: str) -> None:
         """添加批量验证结果到文本区域"""
-        if self.__result_text:
-            self.__result_text.config(state=tk.NORMAL)
-            self.__result_text.insert(tk.END, result)
-            self.__result_text.see(tk.END)
-            self.__result_text.config(state=tk.DISABLED)
+        assert self.__result_text is not None, "结果文本区域未创建"
+        
+        self.__result_text.config(state=tk.NORMAL)
+        self.__result_text.insert(tk.END, result)
+        self.__result_text.see(tk.END)
+        self.__result_text.config(state=tk.DISABLED)
 
     def __finish_batch_verification(self,
                                     verification_result: list[int],
                                     callback: Callable[[list[dict[str, Any]]], None],
                                     backup_items: list[dict[str, Any]]) -> None:
         """完成批量验证"""
-        assert self.__progress_var is not None
-        assert self.__status_label is not None
-        assert self.__batch_close_button is not None
+        assert self.__status_label is not None, "状态标签未创建"
+        assert self.__batch_close_button is not None, "关闭按钮未创建"
+        assert self.__progress_var is not None, "进度变量未创建"
         
-        if self.__progress_dialog is None:
-            return
-
         total = verification_result[0]
         valid = verification_result[1]
         invalid = verification_result[2]
@@ -330,12 +335,11 @@ class Verifier:
         self.__batch_close_button.config(state=tk.NORMAL)
 
         # 调用回调函数
-        if callback:
-            callback(backup_items)
+        callback(backup_items)
 
     def __close_batch_dialog(self) -> None:
         """关闭批量验证对话框"""
-        if self.__progress_dialog:
+        if self.__progress_dialog is not None:
             self.__progress_dialog.destroy()
             self.__progress_dialog = None
             self.__progress_var = None

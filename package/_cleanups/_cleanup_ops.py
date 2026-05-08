@@ -2,8 +2,8 @@
 """文件清理组件，统一管理所有清理操作"""
 from datetime import datetime
 from json import load, dump
+from logging import warning
 from pathlib import Path
-from tkinter import messagebox
 from typing import Callable
 
 from .._utils.constants import KEYS_CONFIG_FILE
@@ -40,7 +40,7 @@ def cleanup_all_files(update_status_callback: Callable[[str], None], days_old: i
         total_deleted = 0
         message_parts = ["完整清理结果："]
         
-        while temp_result.is_success and old_result.is_success and orphaned_result.is_success:
+        if temp_result.is_success and old_result.is_success and orphaned_result.is_success:
             total_deleted += temp_result.data
             message_parts.append(f"- 临时文件：清理 {temp_result.data} 个")
             
@@ -49,8 +49,7 @@ def cleanup_all_files(update_status_callback: Callable[[str], None], days_old: i
             
             total_deleted += orphaned_result.data
             message_parts.append(f"- 孤立密钥：清理 {orphaned_result.data} 个")
-            
-            break
+
         else:
             message = f"完整清理失败: \n{temp_result.msg}\n{old_result.msg}\n{orphaned_result.msg}"
             return Result(status=Status.CLEANUP_FAILED, msg=message)
@@ -156,7 +155,7 @@ def cleanup_orphaned_keys(valid_key_ids: list[str] | None = None) -> Result:
         return orphaned_key_ids
     
     result = _update_config(orphaned_key_ids, config_path, config_data)
-    if result:
+    if result is not None:
         return result
     
     if deleted_count == 0:
@@ -186,7 +185,7 @@ def _cleanup_directory_files(dir_path: Path, condition_func: Callable[[str], boo
             file_path.unlink()
             deleted_count += 1
         except Exception as e:
-            messagebox.showerror("删除文件失败", f"{file_name}: {e}")
+            warning(f"删除文件失败, {file_name}: {e}")
 
     return deleted_count
 

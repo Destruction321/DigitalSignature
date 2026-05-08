@@ -60,19 +60,15 @@ class Initializer:
 
     """DialogProtocol协议实现"""
     def set_info_text(self, text: str) -> None:
-        if self.__info_label:
-            self.__info_label.config(text=text)
+        assert self.__info_label is not None, "信息标签未初始化"
+        self.__info_label.config(text=text)
 
     def set_integrity_status(self, text: str, color: str) -> None:
-        if self.__integrity_label:
-            self.__integrity_label.config(
-                text=f"完整性状态：{text}",
-                foreground=color
-            )
+        assert self.__integrity_label is not None, "完整性标签未初始化"
+        self.__integrity_label.config(text=f"完整性状态：{text}", foreground=color)
 
     def populate_list(self, items: list[dict]) -> None:
-        if self.__listbox is None:
-            return
+        assert self.__listbox is not None, "列表框未初始化"
 
         self.__listbox.delete(0, tk.END)
 
@@ -93,15 +89,13 @@ class Initializer:
             self.__listbox.itemconfig(index, {"fg": color})
 
     def get_selected_index(self) -> int | None:
-        if self.__listbox is None:
-            return None
+        assert self.__listbox is not None, "列表框未初始化"
         
         selection = self.__listbox.curselection()
         return int(selection[0]) if selection else None
 
     def show_details(self, text: str) -> None:
-        if self.__details_text is None:
-            return
+        assert self.__details_text is not None, "详情文本框未初始化"
         
         self.__details_text.config(state=tk.NORMAL)
         self.__details_text.delete("1.0", tk.END)
@@ -109,8 +103,8 @@ class Initializer:
         self.__details_text.config(state=tk.DISABLED)
 
     def select_tab(self, index: int) -> None:
-        if self.__notebook:
-            self.__notebook.select(index)
+        assert self.__notebook is not None, "笔记本控件未初始化"
+        self.__notebook.select(index)
 
 
     """public methods"""
@@ -231,7 +225,7 @@ class Initializer:
 
     def __create_list_tab(self) -> None:
         """创建列表标签页"""
-        assert self.__notebook is not None
+        assert self.__notebook is not None, "笔记本控件未创建"
         
         list_tab = ttk.Frame(self.__notebook, padding="10")
         self.__notebook.add(list_tab, text="备份列表")
@@ -253,7 +247,7 @@ class Initializer:
 
     def __create_details_tab(self) -> None:
         """创建详细信息标签页"""
-        assert self.__notebook is not None
+        assert self.__notebook is not None, "笔记本控件未创建"
         
         details_tab = ttk.Frame(self.__notebook, padding="10")
         self.__notebook.add(details_tab, text="备份详情")
@@ -268,7 +262,7 @@ class Initializer:
 
     def __create_verify_tab(self) -> None:
         """创建验证标签页"""
-        assert self.__notebook is not None
+        assert self.__notebook is not None, "笔记本控件未创建"
         
         verify_tab = ttk.Frame(self.__notebook, padding="10")
         self.__notebook.add(verify_tab, text="完整性验证")

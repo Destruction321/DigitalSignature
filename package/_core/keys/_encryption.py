@@ -13,6 +13,10 @@ from cryptography.hazmat.primitives.hashes import SHA256
 from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 
 
+class EncryptError(Exception):
+    """加密失败"""
+    ...
+
 class DecryptError(Exception):
     """解密失败基类"""
     ...
@@ -34,27 +38,34 @@ def encrypt_private_key(private_key: RSAPrivateKey, password: str) -> str:
         private_key (RSAPrivateKey): 要加密的RSAPrivateKey对象
         password (str): 用于加密的密码
         
+    Raises:
+        Error (EecryptError): 如果加密密失败，抛出异常
+    
     Returns:
         encrypted_private_key (str): 加密后的私钥字符串
     """
-    salt = token_bytes(16)
-    iv = token_bytes(16)
+    try:
+        salt = token_bytes(16)
+        iv = token_bytes(16)
 
-    key = _derive_key(password, salt)
+        key = _derive_key(password, salt)
 
-    private_key_bytes = private_key.private_bytes(
-        encoding=serialization.Encoding.PEM,
-        format=serialization.PrivateFormat.PKCS8,
-        encryption_algorithm=serialization.NoEncryption()
-    )
+        private_key_bytes = private_key.private_bytes(
+            encoding=serialization.Encoding.PEM,
+            format=serialization.PrivateFormat.PKCS8,
+            encryption_algorithm=serialization.NoEncryption()
+        )
 
-    cipher = Cipher(AES(key), CFB(iv), backend=default_backend())
-    encryptor = cipher.encryptor()
-    encrypted_data = encryptor.update(private_key_bytes) + encryptor.finalize()
+        cipher = Cipher(AES(key), CFB(iv), backend=default_backend())
+        encryptor = cipher.encryptor()
+        encrypted_data = encryptor.update(private_key_bytes) + encryptor.finalize()
 
-    combined_data = salt + iv + encrypted_data
+        combined_data = salt + iv + encrypted_data
 
-    return b64encode(combined_data).decode("utf-8")
+        return b64encode(combined_data).decode("utf-8")
+    
+    except Exception as e:
+        raise EncryptError("私钥加密失败" + str(e)) from e
 
 
 def decrypt_private_key(encrypted_private_key: str, password: str) -> RSAPrivateKey:
@@ -66,7 +77,8 @@ def decrypt_private_key(encrypted_private_key: str, password: str) -> RSAPrivate
         password (str): 用于解密的密码
     
     Raises:
-        Error (DecryptError): 如果解密失败，抛出异常
+        PasswordError (PasswordError): 密码错误或数据损坏
+        DecryptError (DecryptError): 如果解密失败，抛出异常
     
     Returns:
         decrypted_private_key (RSAPrivateKey): 解密后的RSAPrivateKey对象
@@ -89,15 +101,14 @@ def decrypt_private_key(encrypted_private_key: str, password: str) -> RSAPrivate
             password=None,
             backend=default_backend()
         )
+        if not isinstance(private_key, RSAPrivateKey):
+            raise InvalidKeyError("解密后的数据不是有效的RSA私钥")
 
     except ValueError as e:
         raise PasswordError("密码错误或数据损坏") from e
 
     except Exception as e:
         raise DecryptError("解密过程发生未知错误：" + str(e)) from e
-
-    if not isinstance(private_key, RSAPrivateKey):
-        raise InvalidKeyError("解密后的数据不是有效的RSA私钥")
 
     return private_key
 

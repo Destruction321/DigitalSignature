@@ -73,10 +73,8 @@ class FileSigningTab(BaseSigningTab):
         ).grid(row=1, column=2, padx=5, pady=5)
 
     def _get_content(self) -> str:
-        if self.__file_path_entry:
-            return self.__file_path_entry.get().strip()
-        
-        return ""
+        assert self.__file_path_entry is not None, "文件选择区未初始化"
+        return self.__file_path_entry.get().strip()
 
     def _sign_content(self, km: SingleKeyManager, content: str) -> None:
         if not self.__validate_file_exists(content):
@@ -92,7 +90,7 @@ class FileSigningTab(BaseSigningTab):
             self._handle_operation_error("签名", e)
 
     def _verify_content(self, km: SingleKeyManager, content: str) -> None:
-        assert self.__signature_path_entry is not None
+        assert self.__signature_path_entry is not None, "签名路径输入框未初始化"
         
         if not self.__validate_file_exists(content):
             return
@@ -112,7 +110,9 @@ class FileSigningTab(BaseSigningTab):
     
     """private methods"""
     def __show_hash(self) -> None:
-        file_path = self._get_content()
+        assert self.__file_path_entry is not None, "文件路径输入框未初始化"
+        
+        file_path = self.__file_path_entry.get().strip()
         if not self.__validate_file_exists(file_path):
             return
 
@@ -139,21 +139,22 @@ class FileSigningTab(BaseSigningTab):
             self._handle_operation_error("获取文件哈希", e)
 
     def __update_signature_path(self, signature_path: str) -> None:
-        if self.__signature_path_entry:
-            self.__signature_path_entry.delete(0, tk.END)
-            self.__signature_path_entry.insert(0, signature_path)
+        assert self.__signature_path_entry is not None, "签名路径输入框未初始化"
+        
+        self.__signature_path_entry.delete(0, tk.END)
+        self.__signature_path_entry.insert(0, signature_path)
 
     def __on_file_selected(self, file_path: str) -> None:
         """选择文件"""
-        assert self.__file_path_entry is not None
+        assert self.__file_path_entry is not None, "文件路径输入框未初始化"
 
         self.__file_path_entry.delete(0, tk.END)
         self.__file_path_entry.insert(0, file_path)
 
     def __on_signature_selected(self, file_path: str) -> None:
         """选择签名文件"""
-        assert self.__signature_path_entry is not None
-        
+        assert self.__signature_path_entry is not None, "签名路径输入框未初始化"
+
         self.__signature_path_entry.delete(0, tk.END)
         self.__signature_path_entry.insert(0, file_path)
 

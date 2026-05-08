@@ -1,5 +1,6 @@
 # package/_utils/tools.py
 """工具函数"""
+from logging import error
 from pathlib import Path
 from tkinter import messagebox
 from typing import TYPE_CHECKING
@@ -69,7 +70,7 @@ def update_directory_info(dir_labels: dict[DirType, Label]) -> None:
     for category, label in dir_labels.items():
         # 获取目录路径
         dir_path = DIRS.get(category)
-        if not dir_path:
+        if dir_path is None:
             label.config(text=f"未知目录类别: {category}")
             continue
         
@@ -116,3 +117,13 @@ def reload_current_key(multi_km: MultiKeyManager, key_loader: KeyLoader, click_r
         return
     
     messagebox.showerror("加载失败", f"重新加载密钥失败:\n\n{reload_result.msg}")
+
+def none_type_error(operation: str) -> None:
+    """
+    用于处理未知原因的初始化失败问题
+    
+    Args:
+        operation (str): 发生错误的操作描述
+    """
+    error(operation, stack_info=True)
+    messagebox.showerror("Error", operation)

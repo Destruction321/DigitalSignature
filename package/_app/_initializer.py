@@ -14,7 +14,7 @@ from .._gui import MainWindow
 from .._utils.constants import BASE_DIR, KEYS_CONFIG_FILE
 from .._utils.enums import DirType, KeyType, FileType
 from .._utils.result import Status
-from .._utils.tools import get_path, update_directory_info
+from .._utils.tools import get_path
 from .._utils.ui_state_manager import get_ui_state_manager
 
 if TYPE_CHECKING:
@@ -50,12 +50,10 @@ class Initializer:
     """public methods"""
     def auto_load_current_key(self) -> None:
         """程序启动时自动加载当前密钥"""
+        assert self.__ui.key_tab is not None, "密钥管理标签页未初始化"
+        
         if self.__multi_km.current_key_id is None:
             self.__ui_state_mgr.update_status("请先在密钥管理标签页加载密钥对")
-            return
-
-        if self.__ui.key_tab is None:
-            messagebox.showerror("错误", "密钥管理页未初始化")
             return
 
         try:
@@ -67,7 +65,6 @@ class Initializer:
             if success and isinstance(result, SingleKeyManager):
                 # 设置密钥管理器
                 self.__set_current_key_manager(result)
-                update_directory_info(self.__ui.dir_labels)
                 self.__ui.key_tab.loaded_key_id = self.__multi_km.current_key_id
                 self.__ui_state_mgr.update_status(f"自动加载密钥成功: {self.__multi_km.current_key_id}")
             elif not success and loading_result.status == Status.NEED_PASSWORD:
@@ -80,19 +77,22 @@ class Initializer:
 
         # 更新密钥标签页显示
         self.__ui.key_tab.update_key_status()
+        self.__ui_state_mgr.update_dir_labels()
     
     
     """private methods"""
     def __on_key_loaded(self, key_manager: SingleKeyManager | None) -> None:
         """密钥加载成功时的回调"""
+        if self.__ui.key_tab is None:
+            raise RuntimeError("密钥管理标签页未初始化")
+        
         if key_manager is None or not hasattr(key_manager, "private_key"):
             self.__ui_state_mgr.update_status("密钥管理器无效，无法创建数字签名实例")
             self.__current_km = None
             self.__multi_km.current_key_id = None
 
             # 通知KeyManagementTab加载失败
-            if self.__ui.key_tab:
-                self.__ui.key_tab.loaded_key_id = None
+            self.__ui.key_tab.loaded_key_id = None
             return
 
         try:
@@ -107,14 +107,12 @@ class Initializer:
                     messagebox.showerror("密钥配置保存失败", f"密钥加载成功但配置保存失败：{save_result.msg}")
                     
                 # 通知KeyManagementTab密钥已真正加载
-                if self.__ui.key_tab:
-                    self.__ui.key_tab.loaded_key_id = key_id
+                self.__ui.key_tab.loaded_key_id = key_id
 
             self.__current_km = key_manager
             self.__update_key_managers()
 
             self.__ui_state_mgr.update_status(f"密钥对 '{key_id}' 已加载并准备就绪")
-            update_directory_info(self.__ui.dir_labels)
 
         except Exception as e:
             self.__ui_state_mgr.update_status(f"创建数字签名实例失败: {e}")
@@ -122,8 +120,7 @@ class Initializer:
             self.__multi_km.current_key_id = None
 
             # 通知KeyManagementTab加载失败
-            if self.__ui.key_tab:
-                self.__ui.key_tab.loaded_key_id = None
+            self.__ui.key_tab.loaded_key_id = None
 
     def __set_current_key_manager(self, key_manager: SingleKeyManager) -> None:
         """设置当前密钥管理器"""
@@ -141,7 +138,6 @@ class Initializer:
             # 更新状态
             key_id = getattr(key_manager, "key_id", "未知")
             self.__ui_state_mgr.update_status(f"密钥对 '{key_id}' 已加载并准备就绪")
-            update_directory_info(self.__ui.dir_labels)
 
         except Exception as e:
             messagebox.showerror("数字签名实例设置失败", f"{e}")
@@ -149,13 +145,15 @@ class Initializer:
 
     def __update_key_managers(self) -> None:
         """更新所有标签页的密钥管理器"""
-        assert self.__current_km is not None
-        
-        if self.__ui.text_tab:
-            self.__ui.text_tab.km = self.__current_km
+        if self.__current_km is None:
+            raise RuntimeError("当前密钥管理器为空，无法更新标签页")
+        if self.__ui.text_tab is None:
+            raise RuntimeError("文本签名标签页未初始化")
+        if self.__ui.file_tab is None:
+            raise RuntimeError("文件签名标签页未初始化")
 
-        if self.__ui.file_tab:
-            self.__ui.file_tab.km = self.__current_km
+        self.__ui.text_tab.km = self.__current_km
+        self.__ui.file_tab.km = self.__current_km
            
 
 def migrate_existing_files() -> None:
@@ -167,7 +165,7 @@ def migrate_existing_files() -> None:
             f"{PUBLIC_}key_*{_PEM}",
             KEYS_CONFIG_FILE
         ],
-        DirType.TEXTS:      [_TXT],
+        DirType.TEXTS: [_TXT],
         DirType.SIGNATURES: [_SIG]
     }
 
@@ -187,7 +185,7 @@ def migrate_existing_files() -> None:
                 
                 if invalid:
                     continue
-
+                    
                 new_path = Path(get_path(category, old_path.name))
                 if new_path.exists():
                     continue

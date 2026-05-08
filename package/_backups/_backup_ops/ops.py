@@ -72,7 +72,7 @@ def list_backups_with_integrity() -> Result:
     """
     backups = list_backups()
     if not backups.is_success:
-        return Result(status=backups.status, data=[], msg=backups.msg)
+        return backups
 
     for backup in backups.data:
         # 验证备份完整性
@@ -166,7 +166,7 @@ def list_backups() -> Result:
     except Exception as e:
         return Result(status=Status.FAILED, data=[], msg=f"列出备份时发生错误: {e}")
 
-def restore_backup(backup_dir: Path, overwrite: bool = False, backup_type: DirType | None = None) -> Result:
+def restore_backup(backup_dir: Path, overwrite: bool = False) -> Result:
     """
     从备份恢复数据
     
@@ -185,8 +185,7 @@ def restore_backup(backup_dir: Path, overwrite: bool = False, backup_type: DirTy
         return Result(status=Status.DIR_NOT_FOUND, msg=f"备份目录不存在: {backup_dir}")
         
     # 自动检测备份类型
-    if backup_type is None:
-        backup_type = _internal.detect_backup_type(backup_dir)
+    backup_type = _internal.detect_backup_type(backup_dir)
         
     if backup_type == DirType.UNKNOWN:
         return Result(status=Status.PARAM_EMPTY, msg="无法检测备份类型")
@@ -207,7 +206,7 @@ def restore_backup(backup_dir: Path, overwrite: bool = False, backup_type: DirTy
         return Result(status=Status.PERMISSION_DENIED, msg=f"恢复失败：权限不足: {e}")
         
     except Exception as e:
-        raise Exception(f"恢复系统错误: {str(e)}") from e
+        return Result(status=Status.SYSTEM_ERROR, msg=f"恢复系统错误: {e}")
 
 def delete_backup(backup_name: str) -> Result:
     """
@@ -237,4 +236,4 @@ def delete_backup(backup_name: str) -> Result:
         return Result(status=Status.PERMISSION_DENIED, msg=f"删除失败：权限不足: {e}")
         
     except Exception as e:
-        raise Exception(f"删除备份系统错误: {str(e)}") from e
+        return Result(status=Status.SYSTEM_ERROR, msg=f"删除备份系统错误: {e}")

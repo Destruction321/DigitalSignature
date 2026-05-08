@@ -25,7 +25,7 @@ def load_config(config_file: str, verify_integrity: bool = True) -> Result:
     """
     config_path = Path(config_file)
     if not config_path.exists():
-        return Result(status=Status.FILE_NOT_FOUND, data={}, msg=f"配置文件不存在: {config_file}")
+        return Result(status=Status.FILE_NOT_FOUND, msg=f"配置文件不存在: {config_file}")
         
     try:
         with open(config_file, "r", encoding="utf-8") as f:
@@ -38,18 +38,18 @@ def load_config(config_file: str, verify_integrity: bool = True) -> Result:
         secret_key = _get_secret_key()
         if not _verify_config(config_data, secret_key):
             message = "配置文件完整性校验失败（可能被篡改）"
-            return Result(status=Status.CONFIG_VERIFY_FAILED, data={}, msg=message)
+            return Result(status=Status.CONFIG_VERIFY_FAILED, msg=message)
             
         return Result(status=Status.SUCCESS, data=config_data, msg="配置文件加载并验证成功")
         
     except json.JSONDecodeError:
-        return Result(status=Status.CONFIG_CORRUPT, data={}, msg=f"配置文件损坏：JSON格式错误")
+        return Result(status=Status.CONFIG_CORRUPT, msg="配置文件损坏：JSON格式错误")
         
     except PermissionError as e:
-        return Result(status=Status.PERMISSION_DENIED, data={},  msg=f"加载配置失败：权限不足: {e}")
+        return Result(status=Status.PERMISSION_DENIED, msg=f"加载配置失败：权限不足: {e}")
         
     except Exception as e:
-        raise Exception(f"加载配置系统错误: {str(e)}") from e
+        return Result(status=Status.SYSTEM_ERROR, msg=f"配置文件恢复出现意外错误：{e}")
 
 def save_config(config: dict[str, Any], config_file: str, sign: bool = True) -> Result:
     """
@@ -105,8 +105,8 @@ def migrate_config(old_path: str, new_path: str) -> Result:
     try:
         # 加载旧配置
         old_config_result = load_config(old_path, verify_integrity=False)
-        if not old_config_result.data:
-            return Result(status=Status.CONFIG_CORRUPT, msg="旧配置文件为空或损坏，无法迁移")
+        if not old_config_result.is_success:
+            return old_config_result
         
         # 保存新配置
         save_result = save_config(old_config_result.data, new_path, sign=True)

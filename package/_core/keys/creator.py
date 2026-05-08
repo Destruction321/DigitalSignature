@@ -12,13 +12,12 @@ from cryptography.hazmat.primitives.asymmetric.rsa import generate_private_key
 from .managers import SingleKeyManager
 from ..._utils.constants import ENCRYPTED, UNENCRYPTED
 from ..._utils.result import Status, Result
-from ..._utils.tools import update_directory_info
+from ..._utils.ui_state_manager import get_ui_state_manager
 
 if TYPE_CHECKING:
     from tkinter import BooleanVar, Entry
-    from tkinter.ttk import Combobox, Label
+    from tkinter.ttk import Combobox
     from .managers import MultiKeyManager
-    from ..._utils.enums import DirType
 
 
 @dataclass
@@ -39,10 +38,7 @@ class CallBacks:
 
 
 """public methods"""
-def create_key_pair(key_setter: KeySetter,
-                    multi_km: MultiKeyManager,
-                    callbacks: CallBacks,
-                    dir_labels: dict[DirType, Label]) -> None:
+def create_key_pair(key_setter: KeySetter, multi_km: MultiKeyManager, callbacks: CallBacks) -> None:
     """
     创建新的密钥对
     
@@ -50,10 +46,9 @@ def create_key_pair(key_setter: KeySetter,
         key_setter (KeySetter): 密钥设置组件
         multi_km (MultiKeyManager): 密钥对管理器实例
         callbacks (CallBacks): 回调列表
-        dir_labels (dict[DirType, Label]): 目录标签字典
     """
     # 验证输入
-    validate_result = _validate_key_creation_inputs(key_setter)
+    validate_result = _validate_inputs(key_setter)
     if validate_result is None:
         return
     
@@ -68,8 +63,8 @@ def create_key_pair(key_setter: KeySetter,
     # 创建密钥对
     create_result = _create_key_pair(multi_km, key_id, key_size, password)
     if create_result.is_success:
-        _handle_key_creation_success(key_id, create_result.msg, key_setter, callbacks, multi_km)
-        update_directory_info(dir_labels)
+        _handle_creation_success(key_id, create_result.msg, key_setter, callbacks, multi_km)
+        get_ui_state_manager().update_dir_labels()  # 更新目录标签显示
         return
 
     messagebox.showerror("创建密钥对失败", create_result.msg)
@@ -77,7 +72,7 @@ def create_key_pair(key_setter: KeySetter,
 
 
 """private methods"""
-def _validate_key_creation_inputs(key_setter: KeySetter) -> tuple[str, int, str | None] | None:
+def _validate_inputs(key_setter: KeySetter) -> tuple[str, int, str | None] | None:
     """验证密钥创建输入"""
     # 密钥ID
     key_id = key_setter.key_id_entry.get().strip()
@@ -157,12 +152,12 @@ def _validate_password(encryption_var: BooleanVar, password_entry: Entry) -> Res
     
     return Result(status=Status.SUCCESS, data=password)
 
-def _handle_key_creation_success(key_id: str,
-                                 message: str,
-                                 key_setter: KeySetter,
-                                 callbacks: CallBacks,
-                                 multi_km: MultiKeyManager) -> None:
-    """处理密钥创建成功"""
+def _handle_creation_success(key_id: str,
+                             message: str,
+                             key_setter: KeySetter,
+                             callbacks: CallBacks,
+                             multi_km: MultiKeyManager) -> None:
+    """处理创建成功"""
     messagebox.showinfo("成功", message)
     
     # 重置表单
@@ -173,11 +168,8 @@ def _handle_key_creation_success(key_id: str,
     
     # 回调更新状态
     callbacks.update_status_callback(f"密钥 '{key_id}' 创建成功")
-    if callbacks.refresh_callback:
-        callbacks.refresh_callback()
-        
-    if callbacks.update_key_status_callback:
-        callbacks.update_key_status_callback()
+    callbacks.refresh_callback()
+    callbacks.update_key_status_callback()
         
     # 更新安全状态
     if hasattr(multi_km, "config_secure"):

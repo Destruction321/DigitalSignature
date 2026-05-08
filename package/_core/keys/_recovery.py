@@ -1,8 +1,8 @@
 # package/_core/keys/_recovery.py
 """密钥恢复管理器"""
 from datetime import datetime
+from logging import warning
 from pathlib import Path
-from tkinter.messagebox import showerror
 from typing import Callable, TYPE_CHECKING
 
 from . import _config
@@ -20,7 +20,6 @@ class KeyRecoveryManager:
     """密钥恢复管理器"""
     def __init__(self, multi_key_manager: MultiKeyManager):
         self.__multi_km: MultiKeyManager = multi_key_manager
-        self.__security_status_callback: Callable[[bool], None] | None = None
         self.__recovery_callback: Callable[[str, PassWord], None] | None = None
 
 
@@ -45,7 +44,6 @@ class KeyRecoveryManager:
             return self.__try_rebuild_from_files(click_btn=click_btn)
         
         except Exception as e:
-            # 兜底捕获：防止未预料的异常崩溃
             return Result(status=Status.SYSTEM_ERROR, msg=f"重建配置失败: {str(e)}")
 
     def load_keys_with_recovery(self) -> bool:
@@ -68,7 +66,6 @@ class KeyRecoveryManager:
         # 恢复失败：重置配置
         self.__multi_km.key_pairs = {}
         self.__multi_km.current_key_id = ""
-        self.__update_security_status(False)
         return False
 
 
@@ -83,13 +80,11 @@ class KeyRecoveryManager:
                 # 尝试迁移旧配置
                 migrated = _config.migrate_config(KEYS_CONFIG_FILE, self.__multi_km.config_file)
                 if not migrated.is_success or not config_file_path.exists():
-                    self.__update_security_status(False)
                     return Result(status=Status.FILE_NOT_FOUND, msg="配置文件不存在，迁移旧配置失败")
                     
             # 安全加载配置
             load_config_result = _config.load_config(self.__multi_km.config_file, verify_integrity=True)
             if not load_config_result.is_success:
-                self.__update_security_status(False)
                 return load_config_result
             
             config_data = load_config_result.data
@@ -97,7 +92,6 @@ class KeyRecoveryManager:
             # 验证配置结构
             validate_result = _config.validate_config_structure(config_data)
             if not validate_result.is_success:
-                self.__update_security_status(False)
                 return validate_result
             
             # 解析配置
@@ -107,11 +101,9 @@ class KeyRecoveryManager:
             
             # 验证配置完整性（文件存在性）
             config_integrity_result = self.__validate_config_integrity()
-            self.__update_security_status(config_integrity_result.is_success)
             return config_integrity_result
         
         except Exception as e:
-            self.__update_security_status(False)
             return Result(status=Status.SYSTEM_ERROR, msg=f"配置加载系统错误: {str(e)}")
 
     def __try_rebuild_from_files(self, click_btn: bool = False) -> Result:
@@ -152,7 +144,6 @@ class KeyRecoveryManager:
                     
             # 无可用密钥文件
             if not rebuilt_config:
-                self.__update_security_status(False)
                 return Result(status=Status.KEY_FILE_MISSING)
             
             # 更新配置并保存
@@ -160,7 +151,6 @@ class KeyRecoveryManager:
             self.__multi_km.current_key_id = next(iter(rebuilt_config.keys()))  # 默认选中第一个
             save_result = self.__multi_km.save_keys_config()
             if not save_result.is_success:
-                self.__update_security_status(False)
                 return save_result
             
             # 通知UI加密密钥已恢复
@@ -169,12 +159,10 @@ class KeyRecoveryManager:
                     self.__recovery_callback(key_id, PassWord.RECOVERY)
                     
             # 恢复成功
-            self.__update_security_status(True)
             message = f"从本地文件重建配置成功，恢复 {len(rebuilt_config)} 个密钥对"
             return Result(status=Status.SUCCESS, msg=message)
         
         except Exception as e:
-            self.__update_security_status(False)
             return Result(status=Status.SYSTEM_ERROR, msg=f"配置重建系统错误: {str(e)}")
 
     def __validate_config_integrity(self) -> Result:
@@ -201,11 +189,6 @@ class KeyRecoveryManager:
                 return Result(status=Status.KEY_FILE_MISSING, msg=f"密钥 '{key_id}' 的私钥/公钥文件缺失")
             
         return Result(status=Status.SUCCESS)
-
-    def __update_security_status(self, is_secure: bool) -> None:
-        """更新安全状态（回调通知）"""
-        if self.__security_status_callback:
-            self.__security_status_callback(is_secure)
 
     def __parse_key_information(self, file_name: str, keys_dir: Path) -> tuple[str, int, bool, str, str] | None:
         """从文件名解析密钥信息"""
@@ -245,7 +228,7 @@ class KeyRecoveryManager:
             return key_id, key_size, is_encrypted, private_path, public_path
         
         except Exception as e:
-            showerror("密钥解析失败", f"{file_name}: {e}")
+            warning("密钥解析失败", f"{file_name}: {e}")
             return None
        
         

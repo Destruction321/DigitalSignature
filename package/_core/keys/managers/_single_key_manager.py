@@ -1,5 +1,7 @@
 # package/_core/keys/managers/_single_key_manager.py
 """单个密钥对管理器"""
+from logging import exception
+
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric.rsa import RSAPrivateKey, RSAPublicKey
@@ -54,21 +56,11 @@ class SingleKeyManager:
 
     """public methods"""
     def save_keys(self, private_key_path: str, public_key_path: str, password: str | None = None) -> Result:
-        """
-        保存密钥到文件
-        
-        Args:
-            private_key_path (str): 私钥文件路径
-            public_key_path (str): 公钥文件路径
-            password (str | None): 用于加密私钥的密码（如果为None则不加密）
-            
-        Returns:
-            save_result (Result): 保存状态
-        """
         if self.__private_key is None or self.__public_key is None:
             return Result(status=Status.KEY_FILE_CORRUPT, msg="密钥未初始化，无法保存")
-            
+
         try:
+            # 处理私钥
             if password is not None:
                 encrypted_key_data = _encryption.encrypt_private_key(self.__private_key, password)
                 with open(private_key_path, "w") as f:
@@ -80,18 +72,29 @@ class SingleKeyManager:
                         format=serialization.PrivateFormat.PKCS8,
                         encryption_algorithm=serialization.NoEncryption()
                     ))
-                    
+
+            # 保存公钥
             with open(public_key_path, "wb") as f:
                 f.write(self.__public_key.public_bytes(
                     encoding=serialization.Encoding.PEM,
                     format=serialization.PublicFormat.SubjectPublicKeyInfo
                 ))
-                
+
             return Result(status=Status.SUCCESS)
+
+        except _encryption.EncryptError as e:
+            return Result(status=Status.KEY_FILE_CORRUPT, msg=str(e))
+        
+        except PermissionError as e:
+            return Result(status=Status.PERMISSION_DENIED, msg=f"权限不足: {e}")
+        
+        except OSError as e:
+            return Result(status=Status.SYSTEM_ERROR, msg=f"文件写入失败: {e}")
         
         except Exception as e:
-            return Result(status=Status.KEY_FILE_CORRUPT, msg=f"保存密钥失败: {str(e)}")
-
+            exception("保存密钥对失败")
+            return Result(status=Status.KEY_FILE_CORRUPT, msg=str(e))
+        
     def load_private_key(self, key_path: str, is_encrypted: bool, password: str | None = None) -> Result:
         """
         从文件加载私钥

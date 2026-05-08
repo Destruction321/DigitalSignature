@@ -31,7 +31,7 @@ def sign_file(key_manager: SingleKeyManager, file_path: Path, signature_path: st
     if not file_path.exists() or not file_path.is_file():
         return Result(status=Status.FILE_NOT_FOUND, msg=f"待签名文件不存在: {file_path}")
     
-    if key_manager is None or not key_manager.private_key:
+    if key_manager is None or key_manager.private_key is None:
         return Result(status=Status.KEY_FILE_CORRUPT, msg="密钥管理器未初始化或缺少私钥")
     
     # 处理签名路径
@@ -91,7 +91,7 @@ def verify_signature(key_manager: SingleKeyManager, file_path: str, signature_pa
             
         signature_path = found_path
         
-    if not key_manager.public_key:
+    if key_manager.public_key is None:
         return Result(status=Status.KEY_FILE_CORRUPT, msg="缺少公钥")
     
     try:
