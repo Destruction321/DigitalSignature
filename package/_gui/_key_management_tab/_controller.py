@@ -1,6 +1,7 @@
 # package/_gui/_key_management_tab/_controller.py
 """密钥管理标签页控制器"""
 from tkinter import messagebox
+from tkinter.simpledialog import askstring
 from typing import cast, TYPE_CHECKING
 
 from ._password_resetter import PasswordResetter
@@ -28,6 +29,7 @@ class Controller:
         self.__km_protocol: KeyManagerProtocol = km_protocol
         self.__multi_km: MultiKeyManager = multi_km
         self.__key_loader: KeyLoader = key_loader
+        self.__parent: Widget = parent
         self.__ui_state_mgr: UIStateManager = get_ui_state_manager()
         self.__loaded_key_id: str | None = None
         self.__key_id_map: dict[str, str] = {}
@@ -139,7 +141,7 @@ class Controller:
             messagebox.showerror("系统错误", f"加载密钥时发生系统错误: {str(e)}")
             return None
 
-    def delete_selected_key(self, parent: Tk | Toplevel) -> None:
+    def delete_selected_key(self) -> None:
         """删除选中的密钥"""
         key_id = self.__get_selected_key_id()
         if key_id is None:
@@ -148,9 +150,9 @@ class Controller:
         if not messagebox.askyesno("确认", f"确定要删除密钥对 '{key_id}' 吗？"):
             return
 
-        
-        root = parent.winfo_toplevel()
-        delete_result = self.__multi_km.delete_key_pair(key_id, root)
+        prompt: str = f"密钥 '{key_id}' 已加密，删除前需验证\n请输入密码:"
+        password: str | None = askstring("密码输入", prompt, show="*", parent=self.__parent.winfo_toplevel())
+        delete_result = self.__multi_km.delete_key_pair(key_id, password)
         if not delete_result.is_success:
             messagebox.showerror("删除失败", delete_result.msg)
             return

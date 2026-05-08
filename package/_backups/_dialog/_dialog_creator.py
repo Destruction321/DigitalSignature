@@ -3,7 +3,7 @@
 import tkinter as tk
 from tkinter import ttk
 from tkinter.scrolledtext import ScrolledText
-from typing import Any, Callable
+from typing import Any
 
 from ._dialog_controller import Controller
 from ..._utils.tools import format_size
@@ -30,7 +30,6 @@ def create_ui(parent: tk.Widget, backups: list[dict[str, Any]], dialog: tk.Tople
         parent (tk.Widget): 父窗口
         backups (list[dict[str, Any]]): 备份列表
         dialog (tk.Toplevel): 对话框对象
-        update_status_callback (Callable[[str], None]): 状态更新回调函数
     """
     main_frame: ttk.Frame = ttk.Frame(dialog, padding="15")
     main_frame.pack(fill=tk.BOTH, expand=True)

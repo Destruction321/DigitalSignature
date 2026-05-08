@@ -9,6 +9,7 @@ from typing import TYPE_CHECKING
 from ._base_signing_tab import BaseSigningTab
 from ..._core import signature
 from ..._utils.enums import DirType, FileType
+from ..._utils.result import Status, Result
 from ..._utils.tools import get_path
 
 if TYPE_CHECKING:
@@ -87,7 +88,7 @@ class FileSigningTab(BaseSigningTab):
             self._handle_sign_success(signature_file.data, content, file_hash)
 
         except Exception as e:
-            self._handle_operation_error("签名", e)
+            self._handle_operation_error("签名", str(e))
 
     def _verify_content(self, km: SingleKeyManager, content: str) -> None:
         assert self.__signature_path_entry is not None, "签名路径输入框未初始化"
@@ -105,7 +106,7 @@ class FileSigningTab(BaseSigningTab):
             self._handle_verify_success(is_valid.is_success, signature_path, content, file_hash)
 
         except Exception as e:
-            self._handle_operation_error("验证", e)
+            self._handle_operation_error("验证", str(e))
 
     
     """private methods"""
@@ -118,10 +119,11 @@ class FileSigningTab(BaseSigningTab):
 
         try:
             file_hash_info = self.__get_file_hash_info(Path(file_path))
-            if isinstance(file_hash_info, Exception):
-                self._handle_operation_error("获取文件哈希", file_hash_info)
+            if not file_hash_info.is_success:
+                self._handle_operation_error("获取文件哈希", file_hash_info.msg)
                 return
             
+            file_hash_info = file_hash_info.data
             if not file_hash_info.get("sha256"):
                 self._show_warning("无法计算文件哈希")
                 return
@@ -136,7 +138,7 @@ class FileSigningTab(BaseSigningTab):
             self._ui_state_mgr.update_status("文件哈希已显示")
 
         except Exception as e:
-            self._handle_operation_error("获取文件哈希", e)
+            self._handle_operation_error("获取文件哈希", str(e))
 
     def __update_signature_path(self, signature_path: str) -> None:
         assert self.__signature_path_entry is not None, "签名路径输入框未初始化"
@@ -174,19 +176,21 @@ class FileSigningTab(BaseSigningTab):
             
         return True
     
-    def __get_file_hash_info(self, file_path: Path) -> dict | Exception:
+    def __get_file_hash_info(self, file_path: Path) -> Result:
         """获取文件哈希信息"""
         if not file_path.exists():
-            return {}
+            return Result(status=Status.FILE_NOT_FOUND)
 
         file_size = file_path.stat().st_size
-        sha256_hash = sha256(file_path.read_bytes()).hexdigest()
-        if isinstance(sha256_hash, Exception):
-            return sha256_hash
-
-        return {
-            "path": file_path,
-            "size": file_size,
-            "sha256": sha256_hash,
-            "size_formatted": f"{file_size} 字节"
-        }
+        try:
+            sha256_hash = sha256(file_path.read_bytes()).hexdigest()
+            result = {
+                "path": file_path,
+                "size": file_size,
+                "sha256": sha256_hash,
+                "size_formatted": f"{file_size} 字节"
+            }
+            return Result(status=Status.SUCCESS, data=result)
+        
+        except Exception as e:
+            return Result(status=Status.FAILED, msg=f"哈希过程出现未知错误：{e}")

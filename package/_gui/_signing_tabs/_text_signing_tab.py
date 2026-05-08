@@ -78,7 +78,7 @@ class TextSigningTab(BaseSigningTab):
             temp_file.unlink()
 
         except Exception as e:
-            self._handle_operation_error("签名", e)
+            self._handle_operation_error("签名", str(e))
 
     def _verify_content(self, km: SingleKeyManager, content: str) -> None:
         signature_path = self._browse_file(
@@ -98,7 +98,7 @@ class TextSigningTab(BaseSigningTab):
             Path(temp_file).unlink()
 
         except Exception as e:
-            self._handle_operation_error("验证", e)
+            self._handle_operation_error("验证", str(e))
 
     
     """private methods"""

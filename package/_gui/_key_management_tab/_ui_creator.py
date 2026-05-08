@@ -9,7 +9,6 @@ from ._controller import Controller
 from ..._core.keys import creator
 from ..._utils.enums import DirType
 from ..._utils.tools import get_path
-from ..._utils.ui_state_manager import get_ui_state_manager
 
 if TYPE_CHECKING:
     from ..._core.keys.loader import KeyLoader
@@ -230,7 +229,7 @@ class UICreator:
 
         buttons = [
             ("加载选中密钥", self.__controller.load_selected_key),
-            ("删除选中密钥", lambda: self.__controller.delete_selected_key(self.__parent.winfo_toplevel())),
+            ("删除选中密钥", self.__controller.delete_selected_key),
             ("刷新列表", lambda: self.__controller.refresh_key_list(click_refresh_btn=True)),
         ]
         for i, (text, command) in enumerate(buttons):

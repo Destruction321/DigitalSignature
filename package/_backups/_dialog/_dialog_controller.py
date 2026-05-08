@@ -2,7 +2,7 @@
 """备份管理对话框控制器"""
 from pathlib import Path
 from tkinter import messagebox
-from typing import Any, Callable, TYPE_CHECKING
+from typing import Any, TYPE_CHECKING
 
 from .._backup_ops.ops import list_backups_with_integrity, delete_backup
 from .._verifier import Verifier
@@ -12,7 +12,6 @@ from ..._utils.ui_state_manager import get_ui_state_manager
 if TYPE_CHECKING:
     from tkinter import Widget
     from ._dialog_protocol import DialogProtocol
-    from ..._utils.ui_state_manager import UIStateManager
 
 
 class Controller:
@@ -21,7 +20,6 @@ class Controller:
         self.__dialog_protocol: DialogProtocol = dialog_protocol
         self.__verifier: Verifier = Verifier(parent)
         self.__backup_items: list[dict] = []
-        self.__ui_state_mgr = get_ui_state_manager()
 
 
     """public methods"""
@@ -68,7 +66,7 @@ class Controller:
         try:
             delete_result = delete_backup(selected_backup["name"])
             if delete_result.is_success:
-                self.__ui_state_mgr.update_status(f"备份删除成功: {selected_backup["name"]}")
+                get_ui_state_manager().update_status(f"备份删除成功: {selected_backup["name"]}")
                 messagebox.showinfo("删除成功", f"备份删除成功！\n\n{delete_result.msg}")
                 self.refresh_list()
             else:

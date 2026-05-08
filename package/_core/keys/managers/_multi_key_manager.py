@@ -168,7 +168,7 @@ class MultiKeyManager:
         except Exception as e:
             return Result(status=Status.SYSTEM_ERROR, msg=f"加载密钥系统错误: {str(e)}")
 
-    def delete_key_pair(self, key_id: str, parent: Tk | Toplevel) -> Result:
+    def delete_key_pair(self, key_id: str, password: str | None) -> Result:
         """
         删除指定的密钥对
         
@@ -193,7 +193,7 @@ class MultiKeyManager:
             public_key_path = Path(key_info["public_key_path"])
             
             if key_info["is_encrypted"]:
-                validate_result = self.__validate_password(key_id, parent)
+                validate_result = self.__validate_password(password)
                 if not validate_result.is_success:
                     return validate_result
                 
@@ -356,11 +356,8 @@ class MultiKeyManager:
             return Result(status=Status.KEY_NOT_FOUND)
         
     @staticmethod
-    def __validate_password(key_id: str, parent: Tk | Toplevel) -> Result:
+    def __validate_password(password: str | None) -> Result:
         """验证密码"""
-        prompt: str = f"密钥 '{key_id}' 已加密，删除前需验证\n请输入密码:"
-        password: str | None = askstring("密码输入", prompt, show="*", parent=parent)
-
         if password is None or not password.strip():
             return Result(status=Status.CANCEL_INPUT)
         else:

@@ -15,7 +15,6 @@ if TYPE_CHECKING:
     from tkinter import Tk
     from .._core.keys.loader import KeyLoader
     from .._core.keys.managers import MultiKeyManager
-    from .._utils.ui_state_manager import UIStateManager
         
 
 class BackUps:
@@ -31,7 +30,6 @@ class BackUps:
         self.__refresh_callback: Callable[[], None] = refresh_callback
         self.__multi_km: MultiKeyManager = multi_km
         self.__key_loader: KeyLoader = key_loader
-        self.__update_status: Callable[[str], None] = get_ui_state_manager().update_status
     
     
     """public methods -- bind to buttons"""
@@ -80,7 +78,7 @@ class BackUps:
     def __handle_backup_result(self, success: bool, result: str, operation: str) -> None:
         """处理备份结果"""
         if success:
-            self.__update_status(f"{operation}完成")
+            get_ui_state_manager().update_status(f"{operation}完成")
             messagebox.showinfo("备份成功", f"{operation}完成:\n\n{result}")
         else:
             messagebox.showerror("备份失败", f"{operation}失败:\n\n{result}")

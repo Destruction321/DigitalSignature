@@ -214,11 +214,11 @@ class MainWindow:
         assert self.__file_tab.result_text is not None, "文件结果文本框未初始化"
         assert self.__text_tab.result_text is not None, "文本结果文本框未初始化"
         
-        if tab_type == "file" and hasattr(self.__file_tab, "result_text"):
+        if tab_type == "file":
             self.__file_tab.result_text.delete("1.0", tk.END)
             self.__file_tab.result_text.insert("1.0", text)
             
-        elif tab_type == "text" and hasattr(self.__text_tab, "result_text"):
+        elif tab_type == "text":
             self.__text_tab.result_text.delete("1.0", tk.END)
             self.__text_tab.result_text.insert("1.0", text)
             

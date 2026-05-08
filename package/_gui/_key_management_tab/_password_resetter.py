@@ -6,6 +6,7 @@ from typing import Callable, cast, TYPE_CHECKING, TypedDict
 from ..._utils.constants import MAX_PASSWORD_ATTEMPTS
 from ..._utils.enums import PassWord
 from ..._utils.result import Status, Result
+from ..._utils.ui_state_manager import get_ui_state_manager
 
 if TYPE_CHECKING:
     from tkinter import Widget
@@ -24,14 +25,12 @@ class PasswordResetter:
     def __init__(self,
                  multi_key_manager: MultiKeyManager,
                  parent_window: Widget,
-                 update_status: Callable[[str], None] | None = None,
-                 refresh_list: Callable[[], None] | None = None,
-                 update_security: Callable[[bool], None] | None = None) -> None:
+                 refresh_list: Callable[[], None],
+                 update_security: Callable[[bool], None]) -> None:
         self.__multi_km = multi_key_manager
         self.__parent_window = parent_window
-        self.__update_status_callback: Callable[[str], None] | None = update_status
-        self.__refresh_callback: Callable[[], None] | None = refresh_list
-        self.__update_security_callback: Callable[[bool], None] | None = update_security
+        self.__refresh_callback: Callable[[], None] = refresh_list
+        self.__update_security_callback: Callable[[bool], None] = update_security
 
 
     """public methods"""
@@ -163,14 +162,9 @@ class PasswordResetter:
             return change_result  # 传递更改失败状态
         
         # 成功回调
-        if self.__refresh_callback:
-            self.__refresh_callback()
-            
-        if self.__update_security_callback:
-            self.__update_security_callback(True)
-            
-        if self.__update_status_callback:
-            self.__update_status_callback(f"{context_text}密钥密码: {key_id}")
+        self.__refresh_callback()
+        self.__update_security_callback(True)
+        get_ui_state_manager().update_status(f"{context_text}密钥密码: {key_id}")
         
         # 成功结果
         status_desc = "设置加密" if new_password else "移除加密"

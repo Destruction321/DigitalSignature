@@ -4,7 +4,7 @@ from tkinter import END
 from dataclasses import dataclass
 from datetime import datetime
 from tkinter import messagebox
-from typing import Any, Callable, TYPE_CHECKING
+from typing import Callable, TYPE_CHECKING
 
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives.asymmetric.rsa import generate_private_key
@@ -14,7 +14,6 @@ from ..._utils.constants import ENCRYPTED, UNENCRYPTED
 from ..._utils.enums import Level
 from ..._utils.result import Status, Result
 from ..._utils.ui_state_manager import get_ui_state_manager
-from package._utils import ui_state_manager
 
 if TYPE_CHECKING:
     from tkinter import BooleanVar, Entry
@@ -174,5 +173,4 @@ def _handle_creation_success(key_id: str,
     callbacks.update_key_status_callback()
         
     # 更新安全状态
-    if hasattr(multi_km, "config_secure"):
-        multi_km.config_secure = True
+    multi_km.config_secure = True
