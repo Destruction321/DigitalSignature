@@ -7,10 +7,12 @@ from typing import Any, Callable, TYPE_CHECKING
 from .._backup_ops.ops import list_backups_with_integrity, delete_backup
 from .._verifier import Verifier
 from ..._utils.tools import format_size
+from ..._utils.ui_state_manager import get_ui_state_manager
 
 if TYPE_CHECKING:
     from tkinter import Widget
     from ._dialog_protocol import DialogProtocol
+    from ..._utils.ui_state_manager import UIStateManager
 
 
 class Controller:
@@ -19,6 +21,7 @@ class Controller:
         self.__dialog_protocol: DialogProtocol = dialog_protocol
         self.__verifier: Verifier = Verifier(parent)
         self.__backup_items: list[dict] = []
+        self.__ui_state_mgr = get_ui_state_manager()
 
 
     """public methods"""
@@ -44,7 +47,7 @@ class Controller:
         if click_btn:
             messagebox.showinfo("成功", "刷新成功")
 
-    def delete_selected_backup(self, update_status_callback: Callable[[str], None]) -> None:
+    def delete_selected_backup(self) -> None:
         """删除选中的备份"""
         index = self.__dialog_protocol.get_selected_index()
         if index is None:
@@ -65,7 +68,7 @@ class Controller:
         try:
             delete_result = delete_backup(selected_backup["name"])
             if delete_result.is_success:
-                update_status_callback(f"备份删除成功: {selected_backup["name"]}")
+                self.__ui_state_mgr.update_status(f"备份删除成功: {selected_backup["name"]}")
                 messagebox.showinfo("删除成功", f"备份删除成功！\n\n{delete_result.msg}")
                 self.refresh_list()
             else:

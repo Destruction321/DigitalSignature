@@ -93,7 +93,7 @@ class SingleKeyManager:
         
         except Exception as e:
             exception("保存密钥对失败")
-            return Result(status=Status.KEY_FILE_CORRUPT, msg=str(e))
+            return Result(status=Status.SYSTEM_ERROR, msg=str(e))
         
     def load_private_key(self, key_path: str, is_encrypted: bool, password: str | None = None) -> Result:
         """
@@ -138,6 +138,7 @@ class SingleKeyManager:
             return Result(status=Status.KEY_FILE_CORRUPT, msg=str(e))
         
         except Exception as e:
+            exception("加载密钥对失败")
             return Result(status=Status.SYSTEM_ERROR, msg=str(e))
 
     def load_public_key(self, key_path: str) -> Result:

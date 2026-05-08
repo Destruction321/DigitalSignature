@@ -22,10 +22,7 @@ def center_dialog(parent: tk.Widget, dialog: tk.Toplevel) -> None:
     y = (parent.winfo_screenheight() - dialog.winfo_height()) // 2
     dialog.geometry(f"+{x}+{y}")
 
-def create_ui(parent: tk.Widget,
-              backups: list[dict[str, Any]],
-              dialog: tk.Toplevel,
-              update_status_callback: Callable[[str], None]) -> None:
+def create_ui(parent: tk.Widget, backups: list[dict[str, Any]], dialog: tk.Toplevel) -> None:
     """
     创建UI界面
     
@@ -42,7 +39,7 @@ def create_ui(parent: tk.Widget,
 
     initializer.create_header(main_frame, backups)
     initializer.create_notebook(main_frame)
-    initializer.create_button_area(main_frame, dialog, update_status_callback)
+    initializer.create_button_area(main_frame, dialog)
 
 
 class Initializer:
@@ -154,10 +151,7 @@ class Initializer:
         self.__create_details_tab()
         self.__create_verify_tab()
 
-    def create_button_area(self,
-                           parent: ttk.Frame,
-                           dialog: tk.Toplevel,
-                           update_status_callback: Callable[[str], None]) -> None:
+    def create_button_area(self, parent: ttk.Frame, dialog: tk.Toplevel) -> None:
         """
         创建按钮区域
         
@@ -181,7 +175,7 @@ class Initializer:
         ttk.Button(
             left_frame,
             text="删除选中备份",
-            command=lambda: self.__controller.delete_selected_backup(update_status_callback)
+            command=self.__controller.delete_selected_backup
         ).pack(side=tk.LEFT, padx=5)
         
         ttk.Button(

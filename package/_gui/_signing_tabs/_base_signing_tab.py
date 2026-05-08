@@ -2,13 +2,13 @@
 """签名标签页基类"""
 import tkinter as tk
 from abc import ABC, abstractmethod
-from logging import warning
 from tkinter import ttk, messagebox
 from tkinter.filedialog import askopenfilename
 from tkinter.scrolledtext import ScrolledText
 from typing import Callable, TYPE_CHECKING
 
 from ..._utils.constants import BASE_DIR
+from ..._utils.enums import Level
 from ..._utils.ui_state_manager import get_ui_state_manager
 
 if TYPE_CHECKING:
@@ -175,21 +175,19 @@ class BaseSigningTab(ABC):
 
         return self.__km, content
 
-    def _show_result(self, text: str) -> None:
+    def _show_result(self, text: str, level: Level = Level.INFO, log: bool = False) -> None:
         """
         显示结果
         
         Args:
             text (str): 结果文本
         """
-        if self.__result_text is None:
-            warning("结果文本区未初始化", stack_info=True)
-            return
+        assert self.__result_text is not None, "结果显示区未初始化"
         
         self.__result_text.delete("1.0", tk.END)
         self.__result_text.insert("1.0", text)
 
-        self._ui_state_mgr.show_result(text, self.__tab_type)
+        self._ui_state_mgr.show_result(text, self.__tab_type, level, log=log)
 
     def _show_warning(self, message: str) -> None:
         """
@@ -199,7 +197,7 @@ class BaseSigningTab(ABC):
             message (str): 警告消息文本
         """
         messagebox.showwarning("警告", message)
-        self._ui_state_mgr.update_status(f"警告: {message}")
+        self._ui_state_mgr.update_status(f"警告: {message}", Level.WARNING, log=True)
 
     def _handle_operation_error(self, operation_name: str, error: Exception) -> None:
         """
@@ -211,7 +209,7 @@ class BaseSigningTab(ABC):
         """
         error_message = f"{operation_name}失败: {error}"
         messagebox.showerror("错误", error_message)
-        self._ui_state_mgr.update_status(f"{operation_name}失败")
+        self._ui_state_mgr.update_status(f"{operation_name}失败", Level.ERROR, log=True)
 
     @staticmethod
     def _browse_file(title: str = "选择文件",
@@ -295,8 +293,10 @@ class BaseSigningTab(ABC):
         """返回结果字符串"""
         msg: list[str] = ["成功", "完整且未被篡改"] if is_valid else ["失败", "可能已被篡改"]
         error = f"{"" if is_valid else "\n也可能使用了错误的签名文件或公钥文件。"}"
+        level = Level.INFO if is_valid else Level.WARNING
+        log = False if is_valid else True
 
-        self._ui_state_mgr.update_status(f"{self.__tab_type.capitalize()}验证{msg[0]}")
+        self._ui_state_mgr.update_status(f"{self.__tab_type.capitalize()}验证{msg[0]}", level, log=log)
         result_text = (
             f"签名验证{msg[0]}！\n\n"
             f"{self._content_label[0]}路径: {content_path}\n"
@@ -305,7 +305,7 @@ class BaseSigningTab(ABC):
             f"{self._content_label[0]}{msg[1]}。{error}"
         )
 
-        self._show_result(result_text)
+        self._show_result(result_text, level, log=log)
 
     def __get_operation_buttons(self, title: str) -> list:
         """获取操作按钮配置"""
@@ -332,9 +332,7 @@ class BaseSigningTab(ABC):
 
     def __clear_results(self) -> None:
         """清空结果显示区域"""
-        if self.__result_text is None:
-            warning("结果文本区未初始化", stack_info=True)
-            return
+        assert self.__result_text is not None, "结果显示区未初始化"
         
         self.__result_text.delete("1.0", tk.END)
         self._ui_state_mgr.update_status("结果已清空")

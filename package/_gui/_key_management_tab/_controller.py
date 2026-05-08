@@ -6,7 +6,7 @@ from typing import cast, TYPE_CHECKING
 from ._password_resetter import PasswordResetter
 from ..._core.keys.managers import SingleKeyManager
 from ..._utils.constants import ENCRYPTED, UNENCRYPTED
-from ..._utils.enums import PassWord
+from ..._utils.enums import PassWord, Level
 from ..._utils.result import Status
 from ..._utils.ui_state_manager import get_ui_state_manager
 
@@ -39,7 +39,6 @@ class Controller:
         self.__password_validator = PasswordResetter(
             multi_key_manager=self.__multi_km,
             parent_window=parent,
-            update_status=self.__ui_state_mgr.update_status,
             refresh_list=self.refresh_key_list,
             update_security=self.update_security_status
         )
@@ -63,7 +62,11 @@ class Controller:
         Args:
             click_refresh_btn (bool): 是否由点击刷新按钮触发，默认为 False（非按钮触发）
         """
-        self.__multi_km.recovery_mgr.try_rebuild_from_files(click_refresh_btn)
+        if click_refresh_btn:
+            self.__multi_km.recovery_mgr.try_rebuild_from_files(click_refresh_btn)
+        else:
+            self.__multi_km.recovery_mgr.try_secure_direct_load()
+        
         keys = list(self.__multi_km.key_pairs.keys())
         if not keys:
             if click_refresh_btn:
@@ -134,7 +137,7 @@ class Controller:
                 return cast(SingleKeyManager, load_result.data)
             else:
                 messagebox.showerror("加载失败", load_result.msg)
-                self.__ui_state_mgr.update_status(f"加载失败: {load_result.msg}")
+                self.__ui_state_mgr.update_status(f"加载失败: {load_result.msg}", Level.ERROR, log=True)
                 return None
         except Exception as e:
             messagebox.showerror("系统错误", f"加载密钥时发生系统错误: {str(e)}")

@@ -4,15 +4,17 @@ from tkinter import END
 from dataclasses import dataclass
 from datetime import datetime
 from tkinter import messagebox
-from typing import Callable, TYPE_CHECKING
+from typing import Any, Callable, TYPE_CHECKING
 
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives.asymmetric.rsa import generate_private_key
 
 from .managers import SingleKeyManager
 from ..._utils.constants import ENCRYPTED, UNENCRYPTED
+from ..._utils.enums import Level
 from ..._utils.result import Status, Result
 from ..._utils.ui_state_manager import get_ui_state_manager
+from package._utils import ui_state_manager
 
 if TYPE_CHECKING:
     from tkinter import BooleanVar, Entry
@@ -31,7 +33,6 @@ class KeySetter:
 @dataclass
 class CallBacks:
     """回调列表"""
-    update_status_callback: Callable[[str], None]
     refresh_callback: Callable[[], None]
     update_key_status_callback: Callable[[], None]
     toggle_password_callback: Callable[[], None]
@@ -53,22 +54,23 @@ def create_key_pair(key_setter: KeySetter, multi_km: MultiKeyManager, callbacks:
         return
     
     key_id, key_size, password = validate_result
+    ui_state_mgr = get_ui_state_manager()
     
     # 检查密钥ID是否重复
     if key_id in multi_km.key_pairs:
         messagebox.showerror("创建密钥对失败", Status.KEY_ID_DUPLICATE.desc)
-        callbacks.update_status_callback(Status.KEY_ID_DUPLICATE.desc)
+        ui_state_mgr.update_status(Status.KEY_ID_DUPLICATE.desc)
         return
     
     # 创建密钥对
     create_result = _create_key_pair(multi_km, key_id, key_size, password)
     if create_result.is_success:
         _handle_creation_success(key_id, create_result.msg, key_setter, callbacks, multi_km)
-        get_ui_state_manager().update_dir_labels()  # 更新目录标签显示
+        ui_state_mgr.update_dir_labels()
         return
 
     messagebox.showerror("创建密钥对失败", create_result.msg)
-    callbacks.update_status_callback(f"创建密钥对失败: {create_result.msg}")
+    ui_state_mgr.update_status(f"创建密钥对失败: {create_result.msg}", Level.ERROR, log=True)
 
 
 """private methods"""
@@ -167,7 +169,7 @@ def _handle_creation_success(key_id: str,
     callbacks.toggle_password_callback()
     
     # 回调更新状态
-    callbacks.update_status_callback(f"密钥 '{key_id}' 创建成功")
+    get_ui_state_manager().update_status(f"密钥 '{key_id}' 创建成功")
     callbacks.refresh_callback()
     callbacks.update_key_status_callback()
         

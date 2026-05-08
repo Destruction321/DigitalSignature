@@ -93,6 +93,7 @@ class Verifier:
         try:
             if self.__verify_dialog is None:
                 raise RuntimeError("单个验证对话框未创建")
+            
             verify_result = verify_backup_integrity(backup_path)
             
         except Exception as e:

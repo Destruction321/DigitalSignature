@@ -31,7 +31,7 @@ class BackUps:
         self.__refresh_callback: Callable[[], None] = refresh_callback
         self.__multi_km: MultiKeyManager = multi_km
         self.__key_loader: KeyLoader = key_loader
-        self.__ui_state_mgr: UIStateManager = get_ui_state_manager()
+        self.__update_status: Callable[[str], None] = get_ui_state_manager().update_status
     
     
     """public methods -- bind to buttons"""
@@ -60,8 +60,6 @@ class BackUps:
 
         dialog = Restore(
             root=self.__root,
-            update_status_callback=self.__ui_state_mgr.update_status,
-            update_dir_callback=self.__ui_state_mgr.update_dir_labels,
             refresh_key_callback=self.__refresh_callback,
             reload_key_callback=lambda: reload_current_key(self.__multi_km, self.__key_loader)
         )
@@ -70,7 +68,7 @@ class BackUps:
     def backup_manager_dialog(self) -> None:
         """统一备份管理对话框"""
         parent_window = cast(Widget, self.__root)
-        dialog_show(parent_window, self.__ui_state_mgr.update_status)
+        dialog_show(parent_window)
 
 
     """private methods"""
@@ -82,7 +80,7 @@ class BackUps:
     def __handle_backup_result(self, success: bool, result: str, operation: str) -> None:
         """处理备份结果"""
         if success:
-            self.__ui_state_mgr.update_status(f"{operation}完成")
+            self.__update_status(f"{operation}完成")
             messagebox.showinfo("备份成功", f"{operation}完成:\n\n{result}")
         else:
             messagebox.showerror("备份失败", f"{operation}失败:\n\n{result}")

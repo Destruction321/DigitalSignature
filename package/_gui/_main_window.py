@@ -79,7 +79,7 @@ class MainWindow:
 
         self.__ui_state_mgr.register_status_handler(self.__handle_status_update)
         self.__ui_state_mgr.register_result_handler(self.__handle_result_show)
-        self.__ui_state_mgr.register_dir_labels_handler(lambda: update_directory_info(self.__dir_labels))
+        self.__ui_state_mgr.register_dir_labels_handler(self.__update_dir_labels)
 
 
     """private UI creator"""
@@ -221,3 +221,6 @@ class MainWindow:
         elif tab_type == "text" and hasattr(self.__text_tab, "result_text"):
             self.__text_tab.result_text.delete("1.0", tk.END)
             self.__text_tab.result_text.insert("1.0", text)
+            
+    def __update_dir_labels(self) -> None:
+        update_directory_info(self.__dir_labels)

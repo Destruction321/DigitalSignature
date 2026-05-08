@@ -3,7 +3,7 @@
 from datetime import datetime
 from hashlib import sha256
 from json import dump
-from logging import warning
+from logging import warning, error
 from pathlib import Path
 from shutil import copyfile, copytree, rmtree
 from typing import Any, Final
@@ -220,7 +220,7 @@ def get_backups(backups: list[dict[str, Any]], current_dir: Path) -> None:
             }
             backups.append(backup_info)
         except Exception as e:
-            warning(f"无法访问备份目录 {item}: {e}")
+            error(f"无法访问备份目录 {item}: {e}")
             continue
 
 def detect_backup_type(backup_dir: Path) -> DirType:

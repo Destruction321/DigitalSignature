@@ -2,7 +2,7 @@
 """数字签名窗口初始化器"""
 from collections import Counter
 from glob import glob
-from logging import warning
+from logging import warning, error
 from pathlib import Path
 from tkinter import messagebox
 from typing import TYPE_CHECKING
@@ -12,7 +12,7 @@ from .._core.keys.loader import KeyLoader
 from .._core.keys.managers import SingleKeyManager, MultiKeyManager
 from .._gui import MainWindow
 from .._utils.constants import BASE_DIR, KEYS_CONFIG_FILE
-from .._utils.enums import DirType, KeyType, FileType
+from .._utils.enums import DirType, KeyType, FileType, Level
 from .._utils.result import Status
 from .._utils.tools import get_path
 from .._utils.ui_state_manager import get_ui_state_manager
@@ -30,8 +30,7 @@ class Initializer:
         self.__key_loader: KeyLoader = KeyLoader(
             multi_key_manager=self.__multi_km,
             parent=root,
-            key_loaded_callback=self.__on_key_loaded,
-            update_status_callback=self.__ui_state_mgr.update_status,
+            key_loaded_callback=self.__on_key_loaded
         )
         
         self.__current_km: SingleKeyManager | None = None  # 当前密钥管理器
@@ -53,7 +52,7 @@ class Initializer:
         assert self.__ui.key_tab is not None, "密钥管理标签页未初始化"
         
         if self.__multi_km.current_key_id is None:
-            self.__ui_state_mgr.update_status("请先在密钥管理标签页加载密钥对")
+            self.__ui_state_mgr.update_status("请先在密钥管理标签页加载密钥对", Level.WARNING)
             return
 
         try:
@@ -70,10 +69,10 @@ class Initializer:
             elif not success and loading_result.status == Status.NEED_PASSWORD:
                 self.__ui_state_mgr.update_status(f"密钥 '{self.__multi_km.current_key_id}' 已加密，请手动加载")
             else:
-                self.__ui_state_mgr.update_status("自动加载密钥失败，请手动加载")
+                self.__ui_state_mgr.update_status("自动加载密钥失败，请手动加载", Level.WARNING, log=True)
 
         except Exception as e:
-            self.__ui_state_mgr.update_status(f"自动加载密钥出错: {e}")
+            self.__ui_state_mgr.update_status(f"自动加载密钥出错: {e}", Level.ERROR, log=True)
 
         # 更新密钥标签页显示
         self.__ui.key_tab.update_key_status()
@@ -87,7 +86,7 @@ class Initializer:
             raise RuntimeError("密钥管理标签页未初始化")
         
         if key_manager is None or not hasattr(key_manager, "private_key"):
-            self.__ui_state_mgr.update_status("密钥管理器无效，无法创建数字签名实例")
+            self.__ui_state_mgr.update_status("密钥管理器无效，无法创建数字签名实例", Level.ERROR, log=True)
             self.__current_km = None
             self.__multi_km.current_key_id = None
 
@@ -115,7 +114,7 @@ class Initializer:
             self.__ui_state_mgr.update_status(f"密钥对 '{key_id}' 已加载并准备就绪")
 
         except Exception as e:
-            self.__ui_state_mgr.update_status(f"创建数字签名实例失败: {e}")
+            self.__ui_state_mgr.update_status(f"创建数字签名实例失败: {e}", Level.ERROR, log=True)
             self.__current_km = None
             self.__multi_km.current_key_id = None
 
@@ -140,7 +139,7 @@ class Initializer:
             self.__ui_state_mgr.update_status(f"密钥对 '{key_id}' 已加载并准备就绪")
 
         except Exception as e:
-            messagebox.showerror("数字签名实例设置失败", f"{e}")
+            error(f"数字签名实例设置失败, {e}")
             self.__current_km = None
 
     def __update_key_managers(self) -> None:

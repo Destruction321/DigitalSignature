@@ -4,7 +4,7 @@ from tkinter import IntVar, LEFT, messagebox, Toplevel, ttk
 from typing import TYPE_CHECKING
 
 from . import _cleanup_ops
-from .._utils.enums import DirType
+from .._utils.enums import DirType, Level
 from .._utils.ui_state_manager import get_ui_state_manager
 
 if TYPE_CHECKING:
@@ -29,10 +29,7 @@ class CleanUps:
         # 如果用户选择了天数（点击了确定），则执行完整清理
         if selected_days is not None:
             self.__cleanup_days_threshold = selected_days
-            cleanup_result = _cleanup_ops.cleanup_all_files(
-                self.__ui_state_mgr.update_status,
-                selected_days
-            )
+            cleanup_result = _cleanup_ops.cleanup_all_files(selected_days)
             self.__handle_cleanup_result(cleanup_result)
 
     def cleanup_temp_files(self) -> None:
@@ -64,8 +61,12 @@ class CleanUps:
     def __handle_cleanup_result(self, cleanup_result) -> None:
         """处理清理结果"""
         message = cleanup_result.msg
-        self.__ui_state_mgr.update_status(message)
+        level = Level.INFO if cleanup_result.is_success else Level.WARNING
+        log = False if cleanup_result.is_success else True
+        
+        self.__ui_state_mgr.update_status(message, level, log=log)
         self.__ui_state_mgr.update_dir_labels()
+        
         if cleanup_result.is_success:
             messagebox.showinfo("清理完成", message)
         else:

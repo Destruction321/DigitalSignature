@@ -33,3 +33,13 @@ class PassWord(Enum):
     """需要密码的操作枚举"""
     CHANGE = "change"
     RECOVERY = "recovery"   
+
+@unique
+class Level(Enum):
+    """日志级别枚举"""
+    DEBUG = "debug"
+    INFO = "info"
+    WARNING = "warning"
+    ERROR = "error"
+    CRITICAL = "critical"
+    

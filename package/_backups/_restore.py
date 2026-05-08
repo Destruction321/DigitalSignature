@@ -3,22 +3,23 @@
 import tkinter as tk
 from pathlib import Path
 from tkinter import messagebox, ttk
-from typing import Any, Callable
+from typing import Any, Callable, TYPE_CHECKING
 
 from ._backup_ops import ops
+from .._utils.ui_state_manager import get_ui_state_manager
+
+if TYPE_CHECKING:
+    from .._utils.ui_state_manager import UIStateManager
 
 
 class Restore:
     """备份恢复器"""
     def __init__(self,
                  root: tk.Tk,
-                 update_status_callback: Callable[[str], None],
-                 update_dir_callback: Callable[[], None],
                  refresh_key_callback: Callable[[], None],
                  reload_key_callback: Callable[[], None]) -> None:
         self.__root = root
-        self.__update_status = update_status_callback
-        self.__update_dir = update_dir_callback
+        self.__ui_state_mgr: UIStateManager = get_ui_state_manager()
         self.__refresh_key = refresh_key_callback
         self.__reload_key = reload_key_callback
 
@@ -189,10 +190,10 @@ class Restore:
                 Path(selected_backup["path"]), overwrite=self.__overwrite_var.get()
             )
             if restore_result.is_success:
-                self.__update_status(f"备份恢复完成: {selected_backup["name"]}")
+                self.__ui_state_mgr.update_status(f"备份恢复完成: {selected_backup["name"]}")
                 messagebox.showinfo("恢复成功", f"备份恢复成功！\n\n{restore_result.msg}")
                 self.__dialog.destroy()
-                self.__update_dir()
+                self.__ui_state_mgr.update_dir_labels()
                 self.__refresh_key()
                 self.__reload_key()
             else:

@@ -32,7 +32,6 @@ class UICreator:
 
         self.__parent: tk.Widget = parent
         self.__multi_km: MultiKeyManager = multi_key_manager
-        self.__ui_state_mgr = get_ui_state_manager()
 
         self.__controller: Controller = Controller(
             km_protocol=self,
@@ -145,14 +144,10 @@ class UICreator:
         self.__password_entry.config(state=tk.DISABLED)
 
     def __create_key_generation_button(self, parent: tk.Widget) -> None:
-        if self.__key_id_entry is None:
-            raise RuntimeError("密钥ID输入框未初始化")
-        if self.__key_size_combo is None:
-            raise RuntimeError("密钥长度下拉框未初始化")
-        if self.__encryption_var is None:
-            raise RuntimeError("加密选项变量未初始化")
-        if self.__password_entry is None:
-            raise RuntimeError("密码输入框未初始化")
+        assert self.__key_id_entry is not None, "密钥ID输入框未初始化"
+        assert self.__key_size_combo is not None, "密钥长度下拉框未初始化"
+        assert self.__encryption_var is not None, "加密选项变量未初始化"
+        assert self.__password_entry is not None, "密码输入框未初始化"
 
         key_setter = creator.KeySetter(
             key_id_entry=self.__key_id_entry,
@@ -162,7 +157,6 @@ class UICreator:
         )
 
         callbacks = creator.CallBacks(
-            update_status_callback=self.__ui_state_mgr.update_status,
             refresh_callback=self.__controller.refresh_key_list,
             update_key_status_callback=self.__controller.update_key_status,
             toggle_password_callback=self.__toggle_password_entry,

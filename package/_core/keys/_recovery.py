@@ -1,7 +1,7 @@
 # package/_core/keys/_recovery.py
 """密钥恢复管理器"""
 from datetime import datetime
-from logging import warning
+from logging import error
 from pathlib import Path
 from typing import Callable, TYPE_CHECKING
 
@@ -33,6 +33,20 @@ class KeyRecoveryManager:
 
 
     """public methods"""
+    def try_secure_direct_load(self) -> Result:
+        """
+        启动刷新列表接口
+        
+        Returns:
+            rebuild_result (Result): 恢复结果
+        """
+        try:
+            return self.__try_secure_direct_load()
+        
+        except Exception as e:
+            return Result(status=Status.SYSTEM_ERROR, msg=f"重建配置失败: {str(e)}")
+        
+        
     def try_rebuild_from_files(self, click_btn: bool = False) -> Result:
         """
         公共备份恢复接口
@@ -228,7 +242,7 @@ class KeyRecoveryManager:
             return key_id, key_size, is_encrypted, private_path, public_path
         
         except Exception as e:
-            warning("密钥解析失败", f"{file_name}: {e}")
+            error("密钥解析失败", f"{file_name}: {e}")
             return None
        
         

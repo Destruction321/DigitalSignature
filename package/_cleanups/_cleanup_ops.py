@@ -2,7 +2,7 @@
 """文件清理组件，统一管理所有清理操作"""
 from datetime import datetime
 from json import load, dump
-from logging import warning
+from logging import error
 from pathlib import Path
 from typing import Callable
 
@@ -10,6 +10,7 @@ from .._utils.constants import KEYS_CONFIG_FILE
 from .._utils.enums import DirType, FileType, KeyType
 from .._utils.result import Status, Result
 from .._utils.tools import get_path
+from .._utils.ui_state_manager import get_ui_state_manager
 
 
 """文件类型导出"""
@@ -20,7 +21,7 @@ _PUBLIC = KeyType.PUBLIC.value
 
 
 """public methods for 'CleanUps' to call"""
-def cleanup_all_files(update_status_callback: Callable[[str], None], days_old: int = 30) -> Result:
+def cleanup_all_files(days_old: int = 30) -> Result:
     """
     执行完整清理
         
@@ -54,7 +55,7 @@ def cleanup_all_files(update_status_callback: Callable[[str], None], days_old: i
             message = f"完整清理失败: \n{temp_result.msg}\n{old_result.msg}\n{orphaned_result.msg}"
             return Result(status=Status.CLEANUP_FAILED, msg=message)
         
-        update_status_callback(f"完整清理完成，共清理 {total_deleted} 个文件")
+        get_ui_state_manager().update_status(f"完整清理完成，共清理 {total_deleted} 个文件")
         
         if total_deleted == 0:
             message = "无文件需要清理"
@@ -185,7 +186,7 @@ def _cleanup_directory_files(dir_path: Path, condition_func: Callable[[str], boo
             file_path.unlink()
             deleted_count += 1
         except Exception as e:
-            warning(f"删除文件失败, {file_name}: {e}")
+            error(f"删除文件失败, {file_name}: {e}")
 
     return deleted_count
 

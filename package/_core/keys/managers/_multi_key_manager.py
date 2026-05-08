@@ -15,7 +15,6 @@ from ...._utils.tools import get_path
 
 if TYPE_CHECKING:
     from tkinter import Tk, Toplevel
-    from ...._utils.enums import PassWord
 
 
 class _KeyPairInfo(TypedDict):

@@ -7,6 +7,7 @@ from typing import Any, Callable, cast, TYPE_CHECKING
 from .managers import SingleKeyManager
 from ..._utils.constants import MAX_PASSWORD_ATTEMPTS
 from ..._utils.result import Status, Result
+from ..._utils.ui_state_manager import get_ui_state_manager
 
 if TYPE_CHECKING:
     from tkinter import Tk
@@ -18,12 +19,11 @@ class KeyLoader:
     def __init__(self, 
                  multi_key_manager: MultiKeyManager, 
                  parent: Tk,
-                 key_loaded_callback: Callable[[Any], None],
-                 update_status_callback: Callable[[str], None]) -> None:
+                 key_loaded_callback: Callable[[Any], None]) -> None:
         self.__multi_km: MultiKeyManager = multi_key_manager
         self.__parent: Tk = parent
         self.__key_loaded_callback: Callable[[Any], None] = key_loaded_callback
-        self.__update_status: Callable[[str], None] = update_status_callback
+        self.__update_status: Callable[[str], None] = get_ui_state_manager().update_status
     
     
     @property
