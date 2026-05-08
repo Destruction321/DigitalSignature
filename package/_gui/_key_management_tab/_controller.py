@@ -62,11 +62,7 @@ class Controller:
         Args:
             click_refresh_btn (bool): 是否由点击刷新按钮触发，默认为 False（非按钮触发）
         """
-        if click_refresh_btn:
-            self.__multi_km.recovery_mgr.try_rebuild_from_files(click_refresh_btn)
-        else:
-            self.__multi_km.recovery_mgr.try_secure_direct_load()
-        
+        self.__multi_km.recovery_mgr.load_keys_with_recovery()
         keys = list(self.__multi_km.key_pairs.keys())
         if not keys:
             if click_refresh_btn:
