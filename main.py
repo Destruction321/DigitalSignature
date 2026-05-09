@@ -43,6 +43,7 @@ def _initialize_loggers() -> None:
         logging.critical("这是 critical 信息")
 
 def _handler(exc_type, exc_value, exc_tb):
+    """全局错误捕获钩子"""
     if issubclass(exc_type, KeyboardInterrupt):
         sys.__excepthook__(exc_type, exc_value, exc_tb)
         return
