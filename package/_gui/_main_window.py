@@ -223,4 +223,5 @@ class MainWindow:
             self.__text_tab.result_text.insert("1.0", text)
             
     def __update_dir_labels(self) -> None:
+        """封装目录更新函数以供注册调用"""
         update_directory_info(self.__dir_labels)

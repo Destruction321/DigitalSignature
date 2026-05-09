@@ -12,7 +12,7 @@ from ..._utils.result import Status
 from ..._utils.ui_state_manager import get_ui_state_manager
 
 if TYPE_CHECKING:
-    from tkinter import Tk, Toplevel, Widget
+    from tkinter import Widget
     from ._km_protocol import KeyManagerProtocol
     from ..._core.keys.loader import KeyLoader
     from ..._core.keys.managers import MultiKeyManager
@@ -150,8 +150,8 @@ class Controller:
         if not messagebox.askyesno("确认", f"确定要删除密钥对 '{key_id}' 吗？"):
             return
 
-        prompt: str = f"密钥 '{key_id}' 已加密，删除前需验证\n请输入密码:"
-        password: str | None = askstring("密码输入", prompt, show="*", parent=self.__parent.winfo_toplevel())
+        prompt = f"密钥 '{key_id}' 已加密，删除前需验证\n请输入密码:"
+        password = askstring("密码输入", prompt, show="*", parent=self.__parent.winfo_toplevel())
         delete_result = self.__multi_km.delete_key_pair(key_id, password)
         if not delete_result.is_success:
             messagebox.showerror("删除失败", delete_result.msg)

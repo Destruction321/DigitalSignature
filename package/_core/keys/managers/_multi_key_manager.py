@@ -1,7 +1,6 @@
 # package/_core/keys/managers/_multi_key_manager.py
 """多密钥对管理模块"""
 from pathlib import Path
-from tkinter.simpledialog import askstring
 from typing import cast, TYPE_CHECKING, TypedDict
 
 from ._single_key_manager import SingleKeyManager

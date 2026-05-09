@@ -1,6 +1,5 @@
 # package/_gui/_signing_tabs/_base_signing_tab.py
 """签名标签页基类"""
-from asyncio import streams
 import tkinter as tk
 from abc import ABC, abstractmethod
 from tkinter import ttk, messagebox
