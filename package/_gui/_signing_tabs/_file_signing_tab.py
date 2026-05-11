@@ -185,7 +185,7 @@ class FileSigningTab(BaseSigningTab):
         try:
             sha256_hash = sha256(file_path.read_bytes()).hexdigest()
             result = {
-                "path": file_path,
+                "path": file_path.as_posix(),
                 "size": file_size,
                 "sha256": sha256_hash,
                 "size_formatted": f"{file_size} 字节"

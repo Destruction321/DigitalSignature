@@ -1,7 +1,7 @@
 # package/_core/keys/managers/_multi_key_manager.py
 """多密钥对管理模块"""
 from pathlib import Path
-from typing import cast, TYPE_CHECKING, TypedDict
+from typing import cast, TypedDict
 
 from ._single_key_manager import SingleKeyManager
 from .._config import save_config
@@ -11,9 +11,6 @@ from ...._utils.constants import ENCRYPTED, KEYS_CONFIG_FILE, UNENCRYPTED
 from ...._utils.enums import DirType, KeyType, FileType
 from ...._utils.result import Status, Result
 from ...._utils.tools import get_path
-
-if TYPE_CHECKING:
-    from tkinter import Tk, Toplevel
 
 
 class _KeyPairInfo(TypedDict):
@@ -341,8 +338,8 @@ class MultiKeyManager:
 
         keys_dir = get_path(DirType.KEYS)
         return (
-            str(Path(keys_dir, private_key_file)),
-            str(Path(keys_dir, public_key_file))
+            str(Path(keys_dir, private_key_file).as_posix()),
+            str(Path(keys_dir, public_key_file).as_posix())
         )
 
 

@@ -29,7 +29,7 @@ def sign_file(key_manager: SingleKeyManager, file_path: Path, signature_path: st
     """
     # 校验参数
     if not file_path.exists() or not file_path.is_file():
-        return Result(status=Status.FILE_NOT_FOUND, msg=f"待签名文件不存在: {file_path}")
+        return Result(status=Status.FILE_NOT_FOUND, msg=f"待签名文件不存在: {file_path.as_posix()}")
     
     if key_manager is None or key_manager.private_key is None:
         return Result(status=Status.KEY_FILE_CORRUPT, msg="密钥管理器未初始化或缺少私钥")

@@ -236,9 +236,9 @@ class KeyRecoveryManager:
                 return None
             
             # 构建文件路径
-            private_path = str(keys_dir / file_name)
+            private_path = str((keys_dir / file_name).resolve().as_posix())
             public_file_name = f"{PUBLIC_}{key_id}_{key_size}{_PEM}"
-            public_path = str(keys_dir / public_file_name)
+            public_path = str((keys_dir / public_file_name).resolve().as_posix())
             return key_id, key_size, is_encrypted, private_path, public_path
         
         except Exception as e:

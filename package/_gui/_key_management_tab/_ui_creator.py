@@ -47,16 +47,14 @@ class UICreator:
 
     """KeyManagerProtocol协议实现"""
     def populate_key_list(self, items: list[tuple[str, str]]) -> None:
-        if self.__key_listbox is None:
-            return
+        assert self.__key_listbox is not None, "密钥列表框未初始化"
 
         self.__key_listbox.delete(0, tk.END)
         for display_text, _ in items:
             self.__key_listbox.insert(tk.END, display_text)
 
     def get_selected_display_text(self) -> str | None:
-        if self.__key_listbox is None:
-            return None
+        assert self.__key_listbox is not None, "密钥列表框未初始化"
         
         selection = self.__key_listbox.curselection()
         if not selection:
@@ -65,12 +63,14 @@ class UICreator:
         return self.__key_listbox.get(selection[0])
 
     def set_key_status(self, text: str, color: str) -> None:
-        if self.__key_status_label:
-            self.__key_status_label.config(text=text, foreground=color)
+        assert self.__key_status_label is not None, "密钥状态标签未初始化"
+        
+        self.__key_status_label.config(text=text, foreground=color)
 
     def set_security_status(self, text: str, color: str) -> None:
-        if self.__security_status_label:
-            self.__security_status_label.config(text=text, foreground=color)
+        assert self.__security_status_label is not None, "安全状态标签未初始化"
+        
+        self.__security_status_label.config(text=text, foreground=color)
 
 
     """public methods"""
@@ -273,10 +273,10 @@ class UICreator:
 
     def __toggle_password_entry(self) -> None:
         """切换密码输入框启用状态"""
-        if self.__password_entry is None:
-            return
+        assert self.__encryption_var is not None, "加密选项变量未初始化"
+        assert self.__password_entry is not None, "密码输入框未初始化"
 
-        if self.__encryption_var and self.__encryption_var.get():
+        if self.__encryption_var.get():
             self.__password_entry.config(state=tk.NORMAL)
         else:
             self.__password_entry.config(state=tk.DISABLED)

@@ -10,7 +10,7 @@ ENCRYPTED = "已加密"
 UNENCRYPTED = "未加密"
 
 # 数据文件夹路径
-_BASE_DIR: Final[Path] = Path.cwd() / "data"
+_BASE_DIR: Final[Path] = (Path.cwd() / "data").resolve()
 
 # 对外暴露的数据文件夹路径
 BASE_DIR: Final[str] = str(_BASE_DIR)

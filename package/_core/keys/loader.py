@@ -24,12 +24,7 @@ class KeyLoader:
         self.__parent: Tk = parent
         self.__key_loaded_callback: Callable[[Any], None] = key_loaded_callback
         self.__update_status: Callable[[str], None] = get_ui_state_manager().update_status
-    
-    
-    @property
-    def parent(self) -> Tk:
-        return self.__parent
-    
+
 
     """public methods"""
     def load_key(self, key_id: str, silent: bool = False) -> Result:

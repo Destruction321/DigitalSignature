@@ -5,6 +5,7 @@ from tkinter.simpledialog import askstring
 from typing import cast, TYPE_CHECKING
 
 from ._password_resetter import PasswordResetter
+from ._recovery_dialog import ask_recovery_choice
 from ..._core.keys.managers import SingleKeyManager
 from ..._utils.constants import ENCRYPTED, UNENCRYPTED
 from ..._utils.enums import PassWord, Level
@@ -32,6 +33,7 @@ class Controller:
         self.__parent: Widget = parent
         self.__ui_state_mgr: UIStateManager = get_ui_state_manager()
         self.__loaded_key_id: str | None = None
+        self.__recovery_choice: bool | None = None  # None=未选择, True=重置, False=跳过
         self.__key_id_map: dict[str, str] = {}
 
         # 注册恢复回调
@@ -191,14 +193,16 @@ class Controller:
 
     def recover_config(self) -> None:
         """恢复配置"""
-        if not messagebox.askyesno(
+        self.__recovery_choice = None  # 确保恢复选择被重置
+        recovery = messagebox.askyesno(
             "恢复密钥配置",
             "确定要恢复密钥配置吗？\n\n"
             "这将：\n"
             "1. 扫描密钥目录重建配置\n"
             "2. 遇到加密密钥时提示重新设置密码\n"
             "3. 当前配置将被覆盖",
-        ):
+        )
+        if not recovery:
             return
 
         result = self.__multi_km.recovery_mgr.try_rebuild_from_files(click_btn=True)
@@ -212,6 +216,7 @@ class Controller:
         else:
             messagebox.showerror("错误", f"配置恢复失败: {result.msg}")
 
+        self.__recovery_choice = None  # 重置恢复选择
 
     """private methods"""
     def __get_selected_key_id(self) -> str | None:
@@ -239,12 +244,19 @@ class Controller:
         if action != PassWord.RECOVERY:
             return
 
-        if messagebox.askyesno(
-            "加密密钥恢复",
-            f"发现加密密钥 '{key_id}'，您想要做什么？\n\n"
-            f"是(Y): 重置密码（需要输入旧密码，最多尝试3次）\n"
-            f"否(N): 暂时跳过，稍后手动处理",
-        ):
+        if self.__recovery_choice is True:
+            self.__handle_change_result(key_id, PassWord.RECOVERY)
+            return
+        elif self.__recovery_choice is False:
+            self.__ui_state_mgr.update_status(f"跳过加密密钥 '{key_id}' 的恢复")
+            return
+
+        choice, remember = ask_recovery_choice(key_id)
+
+        if remember:
+            self.__recovery_choice = choice
+
+        if choice:
             self.__handle_change_result(key_id, PassWord.RECOVERY)
         else:
             self.__ui_state_mgr.update_status(f"跳过加密密钥 '{key_id}' 的恢复")

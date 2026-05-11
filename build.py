@@ -24,13 +24,13 @@ def get_pyinstaller_exe() -> Path | None:
         venv_dir = Path(sys.prefix)
         exe_path = venv_dir / "Scripts" / "pyinstaller.exe"
         if exe_path.exists():
-            return exe_path
+            return exe_path.resolve()
     
     # 方法3：从 PATH 中查找
     try:
         exe_path = which("pyinstaller.exe")
         if exe_path:
-            return Path(exe_path)
+            return Path(exe_path).resolve()
     except:
         pass
     
@@ -119,7 +119,7 @@ if __name__ == "__main__":
         print(f"\033[33m找到 PyInstaller: {pyinstaller_exe}\033[0m")
 
         # 构建命令
-        project_root = Path(__file__).parent
+        project_root = Path(__file__).parent.resolve()
         cmd = build_command(pyinstaller_exe, project_root)
         
         # 执行构建命令

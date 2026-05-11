@@ -55,7 +55,7 @@ def backup_data(data_type: DirType, backup_dir: str | None = None) -> Result:
         return Result(
             status=Status.SUCCESS,
             data=backup_dir,
-            msg=f"{DATA_TYPE[data_type]}备份完成: {Path(backup_dir).resolve()}"
+            msg=f"{DATA_TYPE[data_type]}备份完成: {Path(backup_dir).resolve().as_posix()}"
         )
         
     except PermissionError as e:
@@ -82,7 +82,11 @@ def restore_full_backup(backup_dir: Path, data_dir: Path, overwrite: bool) -> Re
    
     try:
         _copy_tree_excluding_checksum(backup_dir, data_dir)
-        message = f"完整数据恢复完成: {backup_dir} -> {data_dir}"
+        message = (
+            f"完整数据恢复完成: \n"
+            f"备份目录：{backup_dir.resolve().as_posix()}\n"
+            f"恢复目录：{data_dir.resolve().as_posix()}"
+        )
         return Result(status=Status.RESTORE_SUCCESS, msg=message)
         
     except Exception as e:
@@ -129,7 +133,7 @@ def restore_partial_backup(backup_dir: Path, data_type: DirType, overwrite: bool
             message = f"复制文件 {file_name} 失败: {e}"
             return Result(status=Status.RESTORE_FAILED, msg=message)
         
-    message = f"{DATA_TYPE[data_type]}恢复完成: 复制了 {len(copied_files)} 个文件到 {dir}"
+    message = f"{DATA_TYPE[data_type]}恢复完成: 复制了 {len(copied_files)} 个文件到 {dir.resolve().as_posix()}"
     return Result(status=Status.RESTORE_SUCCESS, data=len(copied_files), msg=message)
 
 def create_backup_checksum(backup_dir: Path, backup_type: str) -> None:
@@ -179,7 +183,7 @@ def calculate_backup_checksum(backup_dir: Path) -> tuple[str, int, int]:
         if file_path.name in excluded_files:
             continue
 
-        relative_path = file_path.relative_to(backup_dir).as_posix()  # 统一用 /
+        relative_path = file_path.relative_to(backup_dir).as_posix()
         
         try:
             file_size = file_path.stat().st_size
@@ -194,7 +198,7 @@ def calculate_backup_checksum(backup_dir: Path) -> tuple[str, int, int]:
                     hash_sha256.update(chunk)
                     
         except Exception as e:
-            warning(f"警告：无法读取文件 {file_path}: {e}")
+            warning(f"警告：无法读取文件 {file_path.as_posix()}: {e}")
             continue
 
     return hash_sha256.hexdigest(), file_count, total_size
@@ -220,7 +224,7 @@ def get_backups(backups: list[dict[str, Any]], current_dir: Path) -> None:
             }
             backups.append(backup_info)
         except Exception as e:
-            error(f"无法访问备份目录 {item}: {e}")
+            error(f"无法访问备份目录 {item.as_posix()}: {e}")
             continue
 
 def detect_backup_type(backup_dir: Path) -> DirType:

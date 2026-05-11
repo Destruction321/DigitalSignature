@@ -39,7 +39,7 @@ def encrypt_private_key(private_key: RSAPrivateKey, password: str) -> str:
         password (str): 用于加密的密码
         
     Raises:
-        Error (EecryptError): 如果加密密失败，抛出异常
+        Error (EncryptError): 如果加密密失败，抛出异常
     
     Returns:
         encrypted_private_key (str): 加密后的私钥字符串
