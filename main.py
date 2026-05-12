@@ -7,9 +7,10 @@ from tkinter import Tk, messagebox
 import package
 
 
+log_dir = Path("logs")
+
 def _initialize_loggers() -> None:
     """初始化日志记录器"""
-    log_dir = Path("logs")
     test = not log_dir.exists()
     log_dir.mkdir(parents=True, exist_ok=True)
 
@@ -55,7 +56,7 @@ def _handler(exc_type, exc_value, exc_tb):
         f"发生未预期的错误，程序可能处于不稳定状态。\n\n"
         f"错误类型：{exc_type.__name__}\n"
         f"错误信息：{exc_value}\n\n"
-        f"详细信息已记录到日志文件。"
+        f"详细信息已记录到日志文件，路径：{(log_dir / "warning.log").as_posix()}。"
     )
 
 

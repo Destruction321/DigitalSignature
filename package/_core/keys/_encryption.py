@@ -13,6 +13,7 @@ from cryptography.hazmat.primitives.hashes import SHA256
 from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 
 
+"""自定义加密与解密异常类"""
 class EncryptError(Exception):
     """加密失败"""
     ...

@@ -187,6 +187,7 @@ class Verifier:
         self.__verify_dialog.geometry("400x250")
         self.__verify_dialog.transient(self.__parent.winfo_toplevel())
         self.__verify_dialog.grab_set()
+        self.__verify_dialog.protocol("WM_DELETE_WINDOW", lambda: None)  # 验证期间禁用 X 关闭按钮
         self.__center_dialog(self.__verify_dialog)
 
         # 创建UI
@@ -218,6 +219,7 @@ class Verifier:
         assert self.__progress_label is not None, "进度标签未创建"
         assert self.__result_label is not None, "结果标签未创建"
         assert self.__close_button is not None, "关闭按钮未创建"
+        assert self.__verify_dialog is not None, "验证对话框未创建"
 
         self.__progress_label.config(text="验证完成")
         if verify_result.is_success:
@@ -235,6 +237,7 @@ class Verifier:
             self.__result_label.config(text=self.__result_label.cget("text") + f"\n\n{details}")
             
         self.__close_button.config(state=tk.NORMAL)
+        self.__verify_dialog.protocol("WM_DELETE_WINDOW", self.__close_single_dialog)
         backup["integrity_valid"] = verify_result.is_success
         backup["integrity_message"] = verify_result.msg
         backup["checksum_data"] = verify_result.data
@@ -258,6 +261,7 @@ class Verifier:
         self.__progress_dialog.geometry("500x400")
         self.__progress_dialog.transient(self.__parent.winfo_toplevel())
         self.__progress_dialog.grab_set()
+        self.__progress_dialog.protocol("WM_DELETE_WINDOW", lambda: None)  # 验证期间禁用 X 关闭按钮
         self.__center_dialog(self.__progress_dialog)
 
         # 创建UI
@@ -316,6 +320,7 @@ class Verifier:
         assert self.__status_label is not None, "状态标签未创建"
         assert self.__batch_close_button is not None, "关闭按钮未创建"
         assert self.__progress_var is not None, "进度变量未创建"
+        assert self.__progress_dialog is not None, "验证对话框未创建"
         
         total = verification_result[0]
         valid = verification_result[1]
@@ -331,8 +336,8 @@ class Verifier:
 
         self.__add_batch_result(summary)
         self.__batch_close_button.config(state=tk.NORMAL)
+        self.__progress_dialog.protocol("WM_DELETE_WINDOW", self.__close_batch_dialog)
 
-        # 调用回调函数
         callback(backup_items)
 
     def __close_batch_dialog(self) -> None:

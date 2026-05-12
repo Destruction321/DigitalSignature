@@ -191,7 +191,7 @@ class Controller:
     
 
 def _get_directory_structure(path: Path, max_depth: int = 2, current_depth: int = 0) -> str:
-    """获取目录结构，仅在包含子目录的目录后添加斜杠"""
+    """获取目录结构"""
     if current_depth >= max_depth:
         return ""
 
@@ -202,7 +202,7 @@ def _get_directory_structure(path: Path, max_depth: int = 2, current_depth: int 
 
         for i, item in enumerate(items):
             item_path: Path = path / item
-            prefix: str = "    " * current_depth
+            prefix: str = "    " * current_depth  # 根据当前深度添加缩进
 
             # 检查是否为目录
             if not item_path.is_dir():
