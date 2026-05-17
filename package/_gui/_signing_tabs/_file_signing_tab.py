@@ -8,12 +8,46 @@ from typing import TYPE_CHECKING
 
 from ._base_signing_tab import BaseSigningTab
 from ..._core import signature
+from ..._gui.progress_dialog import ProgressDialog
 from ..._utils.enums import DirType, FileType
 from ..._utils.result import Status, Result
 from ..._utils.tools import get_path
+from ..._utils.worker import Worker
 
 if TYPE_CHECKING:
     from ..._core.keys.managers import SingleKeyManager
+
+
+class _FileSignWorker(Worker):
+    """在后台线程对文件签名，分块读取时报告进度"""
+    def __init__(self, km: SingleKeyManager, file_path: Path) -> None:
+        super().__init__()
+        self.__km = km
+        self.__file_path = file_path
+
+    def do_work(self) -> Result:
+        return signature.sign_file(
+            self.__km,
+            self.__file_path,
+            progress_callback=self._report_progress
+        )
+
+class _FileVerifyWorker(Worker):
+    """在后台线程验证文件签名，分块读取时报告进度"""
+    def __init__(self, km: SingleKeyManager, file_path: str,
+                 signature_path: Path) -> None:
+        super().__init__()
+        self.__km = km
+        self.__file_path = file_path
+        self.__signature_path = signature_path
+
+    def do_work(self) -> Result:
+        return signature.verify_signature(
+            self.__km,
+            self.__file_path,
+            self.__signature_path,
+            progress_callback=self._report_progress
+        )
 
 
 class FileSigningTab(BaseSigningTab):
@@ -84,33 +118,56 @@ class FileSigningTab(BaseSigningTab):
     def _sign_content(self, km: SingleKeyManager, content: str) -> None:
         if not self.__validate_file_exists(content):
             return
-        
-        try:
-            signature_file = signature.sign_file(km, Path(content))
-            file_hash = sha256(Path(content).read_bytes()).hexdigest()
-            self.__update_signature_path(signature_file.data)
-            self._handle_sign_success(signature_file.data, content, file_hash)
 
-        except Exception as e:
-            self._handle_operation_error("签名", str(e))
+        file_path = Path(content)
+        dialog = ProgressDialog(
+            parent=self._parent,
+            title="文件签名",
+            message="正在对文件进行数字签名...",
+        )
+        worker = _FileSignWorker(km, file_path)
+        result = dialog.run(worker)
+
+        if result.is_success:
+            file_hash = sha256(file_path.read_bytes()).hexdigest()
+            self.__update_signature_path(result.data)
+            self._handle_sign_success(result.data, content, file_hash)
+            return
+
+        if result.status != Status.CANCEL_INPUT:
+            self._handle_operation_error("签名", result.msg)
 
     def _verify_content(self, km: SingleKeyManager, content: str) -> None:
         assert self.__signature_path_entry is not None, "签名路径输入框未初始化"
-        
+
         if not self.__validate_file_exists(content):
             return
-        
+
         signature_path = self.__signature_path_entry.get().strip()
         if not self.__validate_file_exists(signature_path, "签名"):
             return
 
-        try:
-            is_valid = signature.verify_signature(km, content, Path(signature_path))
-            file_hash = sha256(Path(content).read_bytes()).hexdigest()
-            self._handle_verify_success(is_valid.is_success, signature_path, content, file_hash)
+        file_path = Path(content)
+        dialog = ProgressDialog(
+            parent=self._parent,
+            title="签名验证",
+            message="正在验证文件签名...",
+        )
+        worker = _FileVerifyWorker(km, content, Path(signature_path))
+        result = dialog.run(worker)
 
-        except Exception as e:
-            self._handle_operation_error("验证", str(e))
+        if result.is_success:
+            file_hash = sha256(file_path.read_bytes()).hexdigest()
+            self._handle_verify_success(True, signature_path, content, file_hash)
+            return
+
+        if result.status == Status.VERIFY_FAILED:
+            file_hash = sha256(file_path.read_bytes()).hexdigest()
+            self._handle_verify_success(False, signature_path, content, file_hash)
+            return
+
+        if result.status != Status.CANCEL_INPUT:
+            self._handle_operation_error("验证", result.msg)
 
     
     """private methods"""

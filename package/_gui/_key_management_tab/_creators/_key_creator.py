@@ -2,17 +2,20 @@
 """密钥创建模块"""
 from dataclasses import dataclass
 from datetime import datetime
+import tkinter as tk
 from tkinter import END, messagebox
 from typing import Callable, TYPE_CHECKING
 
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives.asymmetric.rsa import generate_private_key
 
+from ...progress_dialog import ProgressDialog
 from ...._core.keys.managers import SingleKeyManager
 from ...._utils.constants import ENCRYPTED, UNENCRYPTED
 from ...._utils.enums import Level
 from ...._utils.result import Status, Result
 from ...._utils.ui_state_manager import get_ui_state_manager
+from ...._utils.worker import Worker
 
 if TYPE_CHECKING:
     from tkinter import BooleanVar, Entry
@@ -36,39 +39,77 @@ class CallBacks:
     toggle_password_callback: Callable[[], None]
 
 
+class _KeyCreationWorker(Worker):
+    """在后台线程生成 RSA 密钥对并保存"""
+    def __init__(self,
+                 multi_km: MultiKeyManager,
+                 key_id: str,
+                 key_size: int, password: str | None) -> None:
+        super().__init__()
+        self.__multi_km = multi_km
+        self.__key_id = key_id
+        self.__key_size = key_size
+        self.__password = password
+
+
+    def do_work(self) -> Result:
+        self._report_progress(0.0, "正在生成密钥对...")
+        if self.is_cancelled:
+            return Result(status=Status.CANCEL_INPUT, msg="操作已取消")
+       
+        result = _create_key_pair(self.__multi_km, self.__key_id, self.__key_size, self.__password)
+        if result.is_success and not self.is_cancelled:
+            self._report_progress(1.0, "生成完成")
+        
+        return result
+
+
 """public methods"""
-def create_key_pair(key_setter: KeySetter, multi_km: MultiKeyManager, callbacks: CallBacks) -> None:
+def create_key_pair(key_setter: KeySetter,
+                    multi_km: MultiKeyManager,
+                    callbacks: CallBacks,
+                    parent: tk.Widget) -> None:
     """
     创建新的密钥对
-    
+
     Args:
         key_setter (KeySetter): 密钥设置组件
         multi_km (MultiKeyManager): 密钥对管理器实例
         callbacks (CallBacks): 回调列表
+        parent (tk.Widget): 父窗口
     """
-    # 验证输入
+    # 验证输入（必须在主线程，访问 tkinter 控件）
     validate_result = _validate_inputs(key_setter)
     if validate_result is None:
         return
-    
+
     key_id, key_size, password = validate_result
     ui_state_mgr = get_ui_state_manager()
-    
+
     # 检查密钥ID是否重复
     if key_id in multi_km.key_pairs:
         messagebox.showerror("创建密钥对失败", Status.KEY_ID_DUPLICATE.msg)
         ui_state_mgr.update_status(Status.KEY_ID_DUPLICATE.msg)
         return
-    
-    # 创建密钥对
-    create_result = _create_key_pair(multi_km, key_id, key_size, password)
+
+    # 启动后台线程 + 进度对话框
+    dialog = ProgressDialog(
+        parent=parent,
+        title="生成密钥对",
+        message=f"正在生成 {key_size} 位 RSA 密钥对...",
+        indeterminate=True,
+    )
+    worker = _KeyCreationWorker(multi_km, key_id, key_size, password)
+    create_result = dialog.run(worker)
+
     if create_result.is_success:
         _handle_creation_success(key_id, create_result.msg, key_setter, callbacks, multi_km)
         ui_state_mgr.update_dir_labels()
         return
 
-    messagebox.showerror("创建密钥对失败", create_result.msg)
-    ui_state_mgr.update_status(f"创建密钥对失败: {create_result.msg}", Level.ERROR, log=True)
+    if create_result.status != Status.CANCEL_INPUT:
+        messagebox.showerror("创建密钥对失败", create_result.msg)
+        ui_state_mgr.update_status(f"创建密钥对失败: {create_result.msg}", Level.ERROR, log=True)
 
 
 """private methods"""

@@ -7,7 +7,7 @@ from logging import warning, error
 from os import stat_result
 from pathlib import Path
 from shutil import copyfile, copytree, rmtree
-from typing import Final
+from typing import Callable, Final
 
 from ..._utils.enums import DirType, FileType
 from ..._utils.result import Status, Result
@@ -64,22 +64,11 @@ def backup_data(data_type: DirType) -> Result:
         return Result(status=Status.BACKUP_FAILED, msg=f"备份失败: {e}")
 
 def restore_full_backup(backup_dir: Path, _data_type: DirType, overwrite: bool) -> Result:
-    """
-    恢复完整备份
-    
-    Args:
-        backup_dir (Path): 备份目录路径
-        _data_type (DirType): 数据类型，实际为DirType.FULL，但参数保留以匹配接口
-        overwrite (bool): 是否覆盖现有文件
-    
-    Returns:
-        result (Result): 恢复结果，成功时包含结果消息
-    """
-    # 删除所有现有文件（如果覆盖）
+    """恢复完整备份"""
     data_dir = Path(get_path(DirType.FULL))
     if overwrite and data_dir.exists():
         rmtree(data_dir)
-   
+
     try:
         _copy_tree_excluding_checksum(backup_dir, data_dir)
         message = (
@@ -88,51 +77,40 @@ def restore_full_backup(backup_dir: Path, _data_type: DirType, overwrite: bool) 
             f"恢复目录：{data_dir.resolve().as_posix()}"
         )
         return Result(status=Status.RESTORE_SUCCESS, msg=message)
-        
+
     except Exception as e:
         return Result(status=Status.RESTORE_FAILED, msg=f"完整恢复失败: {e}")
 
+
 def restore_partial_backup(backup_dir: Path, data_type: DirType, overwrite: bool) -> Result:
-    """
-    恢复部分备份（密钥、文本、签名）
-    
-    Args:
-        backup_dir (Path): 备份目录路径
-        data_type (DirType): 数据类型
-        overwrite (bool): 是否覆盖现有文件
-    
-    Returns:
-        result (Result): 恢复结果，成功时包含结果消息
-    """
+    """恢复部分备份（密钥、文本、签名）"""
     dir = Path(get_path(data_type))
     dir.mkdir(parents=True, exist_ok=True)
-    
+
     if overwrite:
         result = _rm_dir(dir, data_type)
         if result is not None and not result.is_success:
             return result
-                
-    # 复制文件
+
     copied_files = []
     for file_name in backup_dir.iterdir():
         file_name = file_name.name
         if file_name == CHECKSUM_FILE:
             continue
-        
+
         src_path = backup_dir / file_name
         dst_path = dir / file_name
-        
+
         if not src_path.is_file():
             continue
-        
+
         try:
             copyfile(src_path, dst_path)
             copied_files.append(file_name)
-            
         except Exception as e:
             message = f"复制文件 {file_name} 失败: {e}"
             return Result(status=Status.RESTORE_FAILED, msg=message)
-        
+
     message = f"{DATA_TYPE[data_type]}恢复完成: 复制了 {len(copied_files)} 个文件到 {dir.resolve().as_posix()}"
     return Result(status=Status.RESTORE_SUCCESS, data=len(copied_files), msg=message)
 
@@ -158,33 +136,35 @@ def create_backup_checksum(backup_dir: Path, backup_type: str) -> None:
     with open(checksum_file, "w", encoding="utf-8") as f:
         dump(checksum_data, f, ensure_ascii=False, indent=2)
 
-def calculate_backup_checksum(backup_dir: Path) -> tuple[str, int, int]:
+def calculate_backup_checksum(backup_dir: Path,
+                              progress_callback: Callable[[float, str], None] | None = None) -> tuple[str, int, int]:
     """
     计算备份目录的校验和、文件数量和总大小
-    
+
     Args:
         backup_dir (Path): 备份路径
-        
+        progress_callback (Callable | None): 可选进度回调 (fraction, message)
+
     Returns:
         result (tuple[str, int, int]): 校验结果，包括哈希值、文件数量、目录大小
     """
+    excluded_files = [CHECKSUM_FILE]
+    file_list = sorted(
+        p for p in backup_dir.rglob("*")
+        if p.is_file() and p.name not in excluded_files
+    )
+    total_files = len(file_list)
+    if total_files == 0:
+        return sha256().hexdigest(), 0, 0
+
     hash_sha256 = sha256()
     file_count = 0
     total_size = 0
+    processed = 0
 
-    # 排除校验文件本身
-    excluded_files = [CHECKSUM_FILE]
-
-    # 递归获取所有文件并计算校验和
-    for file_path in sorted(backup_dir.rglob("*")):
-        if not file_path.is_file():
-            continue
-        
-        if file_path.name in excluded_files:
-            continue
-
+    for file_path in file_list:
         relative_path = file_path.relative_to(backup_dir).as_posix()
-        
+
         try:
             file_size = file_path.stat().st_size
             file_count += 1
@@ -196,7 +176,11 @@ def calculate_backup_checksum(backup_dir: Path) -> tuple[str, int, int]:
             with open(file_path, 'rb') as f:
                 for chunk in iter(lambda: f.read(4096), b''):
                     hash_sha256.update(chunk)
-                    
+
+            processed += 1
+            if progress_callback:
+                progress_callback(processed / total_files, f"校验中... {processed}/{total_files}")
+
         except Exception as e:
             warning(f"警告：无法读取文件 {file_path.as_posix()}: {e}")
             continue
@@ -210,6 +194,7 @@ def get_backups(backups: list[dict[str, str | Path | datetime | int]], current_d
     Args:
         backups (list[dict[str, str | Path | datetime | int]]):
             用于存储备份信息的列表，函数会将备份信息添加到该列表中
+        
         current_dir (Path): 当前目录路径，函数会在该目录下查找备份目录
     """
     for item in current_dir.iterdir():

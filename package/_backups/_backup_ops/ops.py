@@ -20,10 +20,10 @@ _BACKUP_OPERATIONS: Final[dict[DirType, Callable[[], Result]]] = {
 }
 
 _RESTORE_OPERATIONS: Final[dict[DirType, Callable[[Path, DirType, bool], Result]]] = {
-    DirType.FULL: lambda bd, dd, ov: _internal.restore_full_backup(bd, dd, ov),
-    DirType.KEYS: lambda bd, dd, ov: _internal.restore_partial_backup(bd, dd, ov),
-    DirType.TEXTS: lambda bd, dd, ov: _internal.restore_partial_backup(bd, dd, ov),
-    DirType.SIGNATURES: lambda bd, dd, ov: _internal.restore_partial_backup(bd, dd, ov)
+    DirType.FULL: _internal.restore_full_backup,
+    DirType.KEYS: _internal.restore_partial_backup,
+    DirType.TEXTS: _internal.restore_partial_backup,
+    DirType.SIGNATURES: _internal.restore_partial_backup
 }
 
 
@@ -169,40 +169,24 @@ def list_backups() -> Result:
         return Result(status=Status.FAILED, data=[], msg=f"列出备份时发生错误: {e}")
 
 def restore_backup(backup_dir: Path, overwrite: bool = False) -> Result:
-    """
-    从备份恢复数据
-    
-    Args:
-        backup_dir (Path): 备份数据路径
-        overwrite (bool): 是否覆写原数据
-        backup_type (DirType | None): 备份数据类型
-        
-    Raises:
-        system_error (Exception): 系统错误
-        
-    Returns:
-        restore_result (Result): 恢复结果
-    """
+    """从备份恢复数据"""
     if not backup_dir.exists():
         return Result(status=Status.DIR_NOT_FOUND, msg=f"备份目录不存在: {backup_dir}")
-        
-    # 自动检测备份类型
+
     backup_type = _internal.detect_backup_type(backup_dir)
-        
     if backup_type == DirType.UNKNOWN:
         return Result(status=Status.PARAM_EMPTY, msg="无法检测备份类型")
-        
-    # 执行恢复
+
     operation = _RESTORE_OPERATIONS.get(backup_type)
     if not operation:
         return Result(status=Status.PARAM_EMPTY, msg=f"不支持的备份类型: {backup_type.value}")
-        
+
     try:
         return operation(backup_dir, backup_type, overwrite)
-    
+
     except PermissionError as e:
         return Result(status=Status.PERMISSION_DENIED, msg=f"恢复失败：权限不足: {e}")
-        
+
     except Exception as e:
         return Result(status=Status.SYSTEM_ERROR, msg=f"恢复系统错误: {e}")
 
@@ -235,3 +219,8 @@ def delete_backup(backup_name: str) -> Result:
         
     except Exception as e:
         return Result(status=Status.SYSTEM_ERROR, msg=f"删除备份系统错误: {e}")
+
+def calculate_backup_checksum(backup_dir: Path,
+                              progress_callback: Callable[[float, str], None] | None = None) -> tuple[str, int, int]:
+    """对外的计算备份校验和的接口"""
+    return _internal.calculate_backup_checksum(backup_dir, progress_callback)

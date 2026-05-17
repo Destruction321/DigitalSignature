@@ -149,22 +149,24 @@ class Restore:
         selected_backup = self.__backup_items[int(selection[0])]
         backup_path = Path(selected_backup["path"])
         
+        assert self.__dialog is not None, "恢复对话框未创建"
+
         if self.__skip_verify_var.get():
             self.__restore(selected_backup)
             return
-            
+
         verify_result = ops.verify_backup_integrity(backup_path)
         if verify_result.is_success:
             self.__restore(selected_backup)
             return
-            
+
         response = messagebox.askyesno(
             "备份完整性验证失败",
             f"备份完整性验证失败：\n\n{verify_result.msg}\n\n是否仍然继续恢复？（不推荐）"
         )
         if not response:
             return
-        
+
         self.__restore(selected_backup)
 
     def __restore(self, selected_backup: dict[str, Any]) -> None:
@@ -182,7 +184,7 @@ class Restore:
         )
         if not messagebox.askyesno("确认恢复", confirm_msg):
             return
-        
+
         try:
             restore_result = ops.restore_backup(
                 Path(selected_backup["path"]), overwrite=self.__overwrite_var.get()

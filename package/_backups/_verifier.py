@@ -1,7 +1,6 @@
 # package/_backups/_verifier.py
 """备份验证器，负责处理备份完整性验证"""
 import tkinter as tk
-from threading import Thread
 from pathlib import Path
 from tkinter import ttk, messagebox
 from tkinter.scrolledtext import ScrolledText
@@ -16,120 +15,52 @@ class Verifier:
     """备份验证器，负责处理备份完整性验证"""
     def __init__(self, parent: tk.Widget) -> None:
         self.__parent: tk.Widget = parent
-        
-        # 验证对话框相关属性
         self.__verify_dialog: tk.Toplevel | None = None
         self.__progress_dialog: tk.Toplevel | None = None
-
-        # 单个验证对话框控件
-        self.__progress_label: ttk.Label | None = None
         self.__result_label: ttk.Label | None = None
         self.__close_button: ttk.Button | None = None
-
-        # 批量验证对话框控件
         self.__progress_var: tk.IntVar | None = None
-        self.__progress_bar: ttk.Progressbar | None = None
         self.__status_label: ttk.Label | None = None
         self.__result_text: ScrolledText | None = None
         self.__batch_close_button: ttk.Button | None = None
 
 
-    """public methods in module 'backup'"""
+    """public methods"""
     def verify_single_backup(self,
                              backup: dict[str, Any],
                              callback: Callable[[dict[str, Any]], None]) -> None:
-        """
-        验证单个备份
-        
-        Args:
-            backup (dict[str, Any]): 备份信息字典
-            callback (Callable[[dict[str, Any]], None]): 验证完成后的回调函数，参数为更新后的备份信息字典
-        """
         backup_path = backup.get("path", "")
         if not backup_path or not Path(backup_path).exists():
             messagebox.showerror("验证失败", "备份路径不存在")
             return
-        
+
         self.__create_single_verify_dialog(backup)
-        
-        thread = Thread(
-            target=self.__single_verification_thread,
-            args=(Path(backup_path), backup, callback),
-            daemon=True
-        )
-        thread.start()
+        try:
+            verify_result = verify_backup_integrity(backup_path)
+        except Exception as e:
+            verify_result = Result(status=Status.BACKUP_VERIFY_FAILED, msg=f"验证失败: {str(e)}")
+        self.__update_single_result(verify_result, backup, callback)
 
     def verify_all_backups(self,
                            backup_items: list[dict[str, Any]],
                            callback: Callable[[list[dict[str, Any]]], None]) -> None:
-        """
-        验证所有备份
-        
-        Args:
-            backup_items (list[dict[str, Any]]): 备份信息列表
-            callback (Callable[[list[dict[str, Any]]], None]): 验证完成后的回调函数，参数为更新后的备份信息列表    
-        """
         if not backup_items:
             messagebox.showinfo("验证备份", "没有找到备份文件")
             return
 
         self.__create_batch_verify_dialog(len(backup_items))
-
-        # 启动验证线程
-        thread = Thread(
-            target=self.__batch_verification_thread,
-            args=(backup_items, callback),
-            daemon=True
-        )
-        thread.start()
-        
-    
-    """private methods"""
-    def __single_verification_thread(self,
-                                     backup_path: Path,
-                                     backup: dict[str, Any],
-                                     callback: Callable[[dict[str, Any]], None]) -> None:
-        """单个备份验证线程函数"""
-        try:
-            verify_result = verify_backup_integrity(backup_path)
-            
-        except Exception as e:
-            verify_result = Result(status=Status.BACKUP_VERIFY_FAILED, msg=f"验证失败: {str(e)}")
-            
-        if self.__verify_dialog is None:
-            return
-        
-        self.__verify_dialog.after(0, lambda: self.__update_single_result(verify_result, backup, callback))
-
-    def __batch_verification_thread(self,
-                                    backup_items: list[dict[str, Any]],
-                                    callback: Callable[[list[dict[str, Any]]], None]) -> None:
-        """批量验证线程函数"""
         valid_count = 0
         invalid_count = 0
-        total_count = len(backup_items)
 
         for i, backup in enumerate(backup_items):
-            # 处理当前备份
-            if self.__progress_dialog is None:  # 中途关闭，停止验证
-                return
-            
-            self.__process_single_backup_in_batch(i, backup, total_count)
-
-            # 统计结果
+            self.__process_single_backup_in_batch(i, backup, len(backup_items))
             if backup.get("integrity_valid", False):
                 valid_count += 1
             else:
                 invalid_count += 1
 
-        # 完成验证
-        verification_result = [total_count, valid_count, invalid_count]
-        
-        if self.__progress_dialog is None:
-            return
-        
-        self.__progress_dialog.after(
-            0, lambda: self.__finish_batch_verification(verification_result, callback, backup_items)
+        self.__finish_batch_verification(
+            [len(backup_items), valid_count, invalid_count], callback, backup_items
         )
 
     def __process_single_backup_in_batch(self, index: int, backup: dict[str, Any], total_count: int) -> None:

@@ -158,8 +158,16 @@ class Controller:
         if not messagebox.askyesno("确认", f"确定要删除密钥对 '{key_id}' 吗？"):
             return
 
-        prompt = f"密钥 '{key_id}' 已加密，删除前需验证\n请输入密码:"
-        password = askstring("密码输入", prompt, show="*", parent=self.__parent.winfo_toplevel())
+        status_result = self.__multi_km.get_key_encryption_status(key_id)
+        password: str | None = None
+        if status_result.is_success and status_result.data:
+            password = askstring(
+                "密码验证", f"密钥 '{key_id}' 已加密，删除前需验证\n请输入密码:",
+                show="*", parent=self.__parent.winfo_toplevel()
+            )
+            if password is None:
+                return
+
         delete_result = self.__multi_km.delete_key_pair(key_id, password)
         if not delete_result.is_success:
             messagebox.showerror("删除失败", delete_result.msg)

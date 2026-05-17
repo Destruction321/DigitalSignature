@@ -176,7 +176,8 @@ class UICreator:
             command=lambda: _key_creator.create_key_pair(
                 key_setter=key_setter,
                 multi_km=self.__multi_km,
-                callbacks=callbacks
+                callbacks=callbacks,
+                parent=self.__parent,
             ),
         ).grid(row=0, column=4, padx=5, pady=5)
 
