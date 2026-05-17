@@ -1,9 +1,8 @@
 # package/_core/keys/creator.py
 """密钥创建模块"""
-from tkinter import END
 from dataclasses import dataclass
 from datetime import datetime
-from tkinter import messagebox
+from tkinter import END, messagebox
 from typing import Callable, TYPE_CHECKING
 
 from cryptography.hazmat.backends import default_backend

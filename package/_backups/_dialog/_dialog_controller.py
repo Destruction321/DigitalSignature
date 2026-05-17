@@ -19,7 +19,7 @@ class Controller:
     def __init__(self, dialog_protocol: DialogProtocol, parent: Widget) -> None:
         self.__dialog_protocol: DialogProtocol = dialog_protocol
         self.__verifier: Verifier = Verifier(parent)
-        self.__backup_items: list[dict] = []
+        self.__backup_items: list[dict] = []  # 备份列表
 
 
     """public methods"""

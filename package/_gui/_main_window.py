@@ -32,9 +32,9 @@ class MainWindow:
         self.__status_label: ttk.Label | None = None  # 状态标签
         
         self.__dir_labels: dict[DirType, ttk.Label] = {}  # 目录标签
-        self.__key_tab: KeyManagementTab | None = None  # 密钥管理标签页
-        self.__text_tab: TextSigningTab | None = None  # 文本签名标签页
-        self.__file_tab: FileSigningTab | None = None  # 文件签名标签页
+        self.__key_tab: KeyManagementTab | None = None
+        self.__text_tab: TextSigningTab | None = None
+        self.__file_tab: FileSigningTab | None = None
         
     
     @property

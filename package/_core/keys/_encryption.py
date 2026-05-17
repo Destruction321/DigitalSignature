@@ -40,7 +40,7 @@ def encrypt_private_key(private_key: RSAPrivateKey, password: str) -> str:
         password (str): 用于加密的密码
         
     Raises:
-        Error (EncryptError): 如果加密密失败，抛出异常
+        Error (EncryptError): 如果加密失败，抛出异常
     
     Returns:
         encrypted_private_key (str): 加密后的私钥字符串
@@ -79,7 +79,7 @@ def decrypt_private_key(encrypted_private_key: str, password: str) -> RSAPrivate
     
     Raises:
         PasswordError (PasswordError): 密码错误或数据损坏
-        DecryptError (DecryptError): 如果解密失败，抛出异常
+        DecryptError (DecryptError): 其他异常
     
     Returns:
         decrypted_private_key (RSAPrivateKey): 解密后的RSAPrivateKey对象

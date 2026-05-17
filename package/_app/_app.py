@@ -16,8 +16,8 @@ class APP:
         self.__initializer: _initializer.Initializer = _initializer.Initializer(root)
         
         # 创建UI
-        self.__initializer.ui.setup_main_window()
-        self.__initializer.ui.setup_ui()
+        self.__initializer.ui_setter.setup_main_window()
+        self.__initializer.ui_setter.setup_ui()
         
         # 数据处理
         _initializer.migrate_existing_files()

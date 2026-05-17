@@ -6,7 +6,7 @@ from json import dump
 from logging import warning, error
 from pathlib import Path
 from shutil import copyfile, copytree, rmtree
-from typing import Any, Final
+from typing import Final
 
 from ..._utils.enums import DirType, FileType
 from ..._utils.result import Status, Result
@@ -29,7 +29,7 @@ DATA_TYPE: Final[dict[DirType, str]] = {
 
 
 """public methods"""
-def backup_data(data_type: DirType, backup_dir: str | None = None) -> Result:
+def backup_data(data_type: DirType) -> Result:
     """
     通用备份方法
     
@@ -40,11 +40,9 @@ def backup_data(data_type: DirType, backup_dir: str | None = None) -> Result:
     Returns:
         result (Result): 备份结果，成功时包含备份路径和结果消息
     """
-    if backup_dir is None:
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        backup_dir = (
-            f"{DATA if data_type == DirType.FULL else data_type.value}{BACKUP}{timestamp}"
-        )
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    backup_type = DATA if data_type == DirType.FULL else data_type.value
+    backup_dir = Path(f"{backup_type}{BACKUP}{timestamp}").resolve().as_posix()
         
     data_dir = get_path(DirType.FULL) if data_type == DirType.FULL else get_path(data_type)
     if not Path(data_dir).exists():
@@ -55,7 +53,7 @@ def backup_data(data_type: DirType, backup_dir: str | None = None) -> Result:
         return Result(
             status=Status.SUCCESS,
             data=backup_dir,
-            msg=f"{DATA_TYPE[data_type]}备份完成: {Path(backup_dir).resolve().as_posix()}"
+            msg=f"{DATA_TYPE[data_type]}备份完成: {backup_dir}"
         )
         
     except PermissionError as e:
@@ -64,19 +62,20 @@ def backup_data(data_type: DirType, backup_dir: str | None = None) -> Result:
     except Exception as e:
         return Result(status=Status.BACKUP_FAILED, msg=f"备份失败: {e}")
 
-def restore_full_backup(backup_dir: Path, data_dir: Path, overwrite: bool) -> Result:
+def restore_full_backup(backup_dir: Path, _data_type: DirType, overwrite: bool) -> Result:
     """
     恢复完整备份
     
     Args:
         backup_dir (Path): 备份目录路径
-        data_dir (Path): 数据目录路径
+        _data_type (DirType): 数据类型，实际为DirType.FULL，但参数保留以匹配接口
         overwrite (bool): 是否覆盖现有文件
     
     Returns:
         result (Result): 恢复结果，成功时包含结果消息
     """
     # 删除所有现有文件（如果覆盖）
+    data_dir = Path(get_path(DirType.FULL))
     if overwrite and data_dir.exists():
         rmtree(data_dir)
    
@@ -203,12 +202,13 @@ def calculate_backup_checksum(backup_dir: Path) -> tuple[str, int, int]:
 
     return hash_sha256.hexdigest(), file_count, total_size
 
-def get_backups(backups: list[dict[str, Any]], current_dir: Path) -> None:
+def get_backups(backups: list[dict[str, str | Path | datetime | int]], current_dir: Path) -> None:
     """
     获取备份列表
     
     Args:
-        backups (list[dict[str, Any]]): 用于存储备份信息的列表，函数会将备份信息添加到该列表中
+        backups (list[dict[str, str | Path | datetime | int]]):
+            用于存储备份信息的列表，函数会将备份信息添加到该列表中
         current_dir (Path): 当前目录路径，函数会在该目录下查找备份目录
     """
     for item in current_dir.iterdir():
@@ -241,34 +241,17 @@ def detect_backup_type(backup_dir: Path) -> DirType:
     KEYS, TEXTS, SIGNATURES = _get_dir_type()
     if backup_name.startswith(f"{DATA}{BACKUP}"):
         return DirType.FULL
-    elif backup_name.startswith(f"{KEYS}{BACKUP}"):
+    
+    if backup_name.startswith(f"{KEYS}{BACKUP}"):
         return DirType.KEYS
-    elif backup_name.startswith(f"{TEXTS}{BACKUP}"):
+    
+    if backup_name.startswith(f"{TEXTS}{BACKUP}"):
         return DirType.TEXTS
-    elif backup_name.startswith(f"{SIGNATURES}{BACKUP}"):
+    
+    if backup_name.startswith(f"{SIGNATURES}{BACKUP}"):
         return DirType.SIGNATURES
-    else:
-        return _inferred_type(backup_dir)
-
-def extract_backup_path(result: str, backup_dir: str | None = None) -> str:
-    """
-    从结果消息中提取备份路径
     
-    Args:
-        result: (str): 包含备份路径的结果消息
-        backup_dir: (str | None): 备份路径，如果已知则直接返回
-    
-    Returns:
-        str: 备份路径
-    """
-    if backup_dir:
-        return backup_dir
-
-    # 尝试从结果消息中提取路径
-    if "备份完成:" in result:
-        return result.split("备份完成:")[-1].strip()
-
-    return result.strip()
+    return _inferred_type(backup_dir)
 
 
 """private methods"""

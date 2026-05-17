@@ -136,7 +136,7 @@ class Restore:
             self.__backup_items.append(backup)
 
     def __on_restore(self) -> None:
-        """执行恢复（强制验证完整性）"""
+        """执行恢复"""
         assert self.__listbox is not None, "列表框未创建"
         assert self.__skip_verify_var is not None, "跳过验证选项未创建"
         
@@ -171,6 +171,7 @@ class Restore:
         self.__restore(selected_backup)
 
     def __restore(self, selected_backup: dict[str, Any]) -> None:
+        """恢复确认"""
         assert self.__overwrite_var is not None, "覆盖选项未创建"
         assert self.__dialog is not None, "恢复对话框未创建"
 

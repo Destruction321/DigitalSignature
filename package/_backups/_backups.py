@@ -26,7 +26,9 @@ class BackUps:
                  multi_km: MultiKeyManager,
                  key_loader: KeyLoader) -> None:
         self.__root: Tk = root
-        self.__backup_buttons: dict[str, Button] = backup_buttons
+        self.__backup_buttons: dict[str, Button] = backup_buttons  # 引用传递
+        
+        # Restore所需参数
         self.__refresh_callback: Callable[[], None] = refresh_callback
         self.__multi_km: MultiKeyManager = multi_km
         self.__key_loader: KeyLoader = key_loader

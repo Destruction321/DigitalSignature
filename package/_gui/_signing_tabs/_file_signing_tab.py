@@ -54,7 +54,11 @@ class FileSigningTab(BaseSigningTab):
             text="浏览文件",
             command=lambda: self._browse_file(
                 title="选择文件",
-                file_types=[("所有文件", "*.*"), ("文本文件", f"*{FileType.TEXT.value}"), ("文档", "*.docx *.pdf")],
+                file_types=[
+                    ("所有文件", "*.*"),
+                    ("文本文件", f"*{FileType.TEXT.value}"),
+                    ("文档", "*.doc *.docx *.pdf")
+                ],
                 callback=self.__on_file_selected
             )
         ).grid(row=0, column=2, padx=5, pady=5)

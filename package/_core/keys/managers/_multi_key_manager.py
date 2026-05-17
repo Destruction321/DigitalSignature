@@ -4,8 +4,8 @@ from pathlib import Path
 from typing import cast, TypedDict
 
 from ._single_key_manager import SingleKeyManager
-from .._config import save_config
 from .. import _encryption
+from .._config import save_config
 from .._recovery import KeyRecoveryManager
 from ...._utils.constants import ENCRYPTED, KEYS_CONFIG_FILE, UNENCRYPTED
 from ...._utils.enums import DirType, KeyType, FileType
@@ -47,37 +47,40 @@ class MultiKeyManager:
         return self.__str__()
     
     
+    """getters"""
+    @property
+    def config_file(self) -> str:
+        return self.__config_file
+    
+    @property
+    def recovery_mgr(self) -> KeyRecoveryManager:
+        return self.__recovery_mgr
+    
     @property
     def config_secure(self) -> bool:
         return self.__config_secure
 
-    @config_secure.setter
-    def config_secure(self, value: bool) -> None:
-        self.__config_secure = value
-
     @property
     def key_pairs(self) -> dict[str, _KeyPairInfo]:
         return self.__key_pairs
+    
+    @property
+    def current_key_id(self) -> str | None:
+        return self.__current_key_id
+    
+    
+    """setters"""
+    @config_secure.setter
+    def config_secure(self, value: bool) -> None:
+        self.__config_secure = value
 
     @key_pairs.setter
     def key_pairs(self, key_pairs: dict[str, _KeyPairInfo]) -> None:
         self.__key_pairs = key_pairs
 
-    @property
-    def config_file(self) -> str:
-        return self.__config_file
-
-    @property
-    def current_key_id(self) -> str | None:
-        return self.__current_key_id
-
     @current_key_id.setter
     def current_key_id(self, value: str | None) -> None:
         self.__current_key_id = value
-    
-    @property
-    def recovery_mgr(self) -> KeyRecoveryManager:
-        return self.__recovery_mgr
 
 
     """initialization helper"""

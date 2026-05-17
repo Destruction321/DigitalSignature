@@ -3,23 +3,23 @@
 from shutil import rmtree
 from json import load
 from pathlib import Path
-from typing import Any, Callable, Final
+from typing import Callable, Final
 
 from . import _internal
 from ..._utils.enums import DirType
 from ..._utils.result import Status, Result
-from ..._utils.tools import format_size, get_path
+from ..._utils.tools import format_size
 
 
 """操作映射"""
-_BACKUP_OPERATIONS: Final[dict[DirType, Callable[[str | None], Result]]] = {
-    DirType.FULL: lambda backup_dir=None: _internal.backup_data(DirType.FULL, backup_dir),
-    DirType.KEYS: lambda backup_dir=None: _internal.backup_data(DirType.KEYS, backup_dir),
-    DirType.TEXTS: lambda backup_dir=None: _internal.backup_data(DirType.TEXTS, backup_dir),
-    DirType.SIGNATURES: lambda backup_dir=None: _internal.backup_data(DirType.SIGNATURES, backup_dir)
+_BACKUP_OPERATIONS: Final[dict[DirType, Callable[[], Result]]] = {
+    DirType.FULL: lambda: _internal.backup_data(DirType.FULL),
+    DirType.KEYS: lambda: _internal.backup_data(DirType.KEYS),
+    DirType.TEXTS: lambda: _internal.backup_data(DirType.TEXTS),
+    DirType.SIGNATURES: lambda: _internal.backup_data(DirType.SIGNATURES)
 }
 
-_RESTORE_OPERATIONS: Final[dict[DirType, Callable[[Path, Any, bool], Result]]] = {
+_RESTORE_OPERATIONS: Final[dict[DirType, Callable[[Path, DirType, bool], Result]]] = {
     DirType.FULL: lambda bd, dd, ov: _internal.restore_full_backup(bd, dd, ov),
     DirType.KEYS: lambda bd, dd, ov: _internal.restore_partial_backup(bd, dd, ov),
     DirType.TEXTS: lambda bd, dd, ov: _internal.restore_partial_backup(bd, dd, ov),
@@ -28,7 +28,7 @@ _RESTORE_OPERATIONS: Final[dict[DirType, Callable[[Path, Any, bool], Result]]] =
 
 
 """methods"""
-def create_backup(backup_type: DirType = DirType.FULL, backup_dir: str | None = None) -> Result:
+def create_backup(backup_type: DirType = DirType.FULL) -> Result:
     """
     创建备份
     
@@ -45,12 +45,12 @@ def create_backup(backup_type: DirType = DirType.FULL, backup_dir: str | None = 
         return Result(status=Status.PARAM_EMPTY, msg=message)
         
     # 执行备份
-    backup_result = operation(backup_dir)
+    backup_result = operation()
     if not backup_result.is_success:
         return backup_result
     
     # 生成校验和
-    backup_path = _internal.extract_backup_path(backup_result.msg, backup_dir)
+    backup_path = backup_result.data
     if backup_path and Path(backup_path).exists():
         try:
             _internal.create_backup_checksum(Path(backup_path), backup_type.value)
@@ -149,7 +149,7 @@ def list_backups() -> Result:
     Returns:
         result (Result): 备份列表结果，成功时包含备份信息列表，每项包含名称、路径、创建时间和大小
     """
-    backups: list[dict[str, Any]] = []
+    backups = []
     current_dir = Path.cwd()
 
     try:
@@ -196,11 +196,7 @@ def restore_backup(backup_dir: Path, overwrite: bool = False) -> Result:
         return Result(status=Status.PARAM_EMPTY, msg=f"不支持的备份类型: {backup_type.value}")
         
     try:
-        if backup_type == DirType.FULL:
-            restore_result = operation(backup_dir, Path(get_path(DirType.FULL)), overwrite)
-        else:
-            restore_result = operation(backup_dir, backup_type, overwrite)
-        return restore_result
+        return operation(backup_dir, backup_type, overwrite)
     
     except PermissionError as e:
         return Result(status=Status.PERMISSION_DENIED, msg=f"恢复失败：权限不足: {e}")

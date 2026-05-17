@@ -29,22 +29,7 @@ class SingleKeyManager:
         return self.__str__()
 
 
-    @property
-    def private_key(self) -> RSAPrivateKey | None:
-        return self.__private_key
-
-    @private_key.setter
-    def private_key(self, private_key: RSAPrivateKey) -> None:
-        self.__private_key = private_key
-
-    @property
-    def public_key(self) -> RSAPublicKey | None:
-        return self.__public_key
-    
-    @public_key.setter
-    def public_key(self, public_key: RSAPublicKey) -> None:
-        self.__public_key = public_key
-
+    """getters"""
     @property
     def key_id(self) -> str:
         return self.__key_id
@@ -52,10 +37,39 @@ class SingleKeyManager:
     @property
     def key_size(self) -> int:
         return self.__key_size
+    
+    @property
+    def private_key(self) -> RSAPrivateKey | None:
+        return self.__private_key
+
+    @property
+    def public_key(self) -> RSAPublicKey | None:
+        return self.__public_key
+
+    
+    """key setters"""
+    @private_key.setter
+    def private_key(self, private_key: RSAPrivateKey) -> None:
+        self.__private_key = private_key
+    
+    @public_key.setter
+    def public_key(self, public_key: RSAPublicKey) -> None:
+        self.__public_key = public_key
 
 
     """public methods"""
     def save_keys(self, private_key_path: str, public_key_path: str, password: str | None = None) -> Result:
+        """
+        保存密钥对
+
+        Args:
+            private_key_path (str): 私钥文件路径
+            public_key_path (str): 公钥文件路径
+            password (str | None): 用于加密私钥的密码。Defaults to None.
+
+        Returns:
+            save_result (Result): 保存结果，包含状态和消息
+        """
         if self.__private_key is None or self.__public_key is None:
             return Result(status=Status.KEY_FILE_CORRUPT, msg="密钥未初始化，无法保存")
 
