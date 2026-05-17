@@ -2,7 +2,7 @@
 """密钥管理标签页"""
 from typing import TYPE_CHECKING
 
-from ._ui_creator import UICreator
+from ._creators.ui_creator import UICreator
 
 if TYPE_CHECKING:
     from tkinter import Widget

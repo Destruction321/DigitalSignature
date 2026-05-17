@@ -4,6 +4,7 @@ from datetime import datetime
 from hashlib import sha256
 from json import dump
 from logging import warning, error
+from os import stat_result
 from pathlib import Path
 from shutil import copyfile, copytree, rmtree
 from typing import Final
@@ -219,7 +220,7 @@ def get_backups(backups: list[dict[str, str | Path | datetime | int]], current_d
             backup_info = {
                 "name": item.name,
                 "path": item,
-                "created_time": datetime.fromtimestamp(item.stat().st_birthtime),
+                "created_time": datetime.fromtimestamp(_get_creation_time(item.stat())),
                 "size": _get_directory_size(item)
             }
             backups.append(backup_info)
@@ -316,6 +317,14 @@ def _get_directory_size(directory: Path) -> int:
                 total_size += file_path.stat().st_size
 
     return total_size
+
+def _get_creation_time(stat: stat_result) -> float:
+    """获取文件创建时间"""
+    birthtime = getattr(stat, "st_birthtime", None)
+    if birthtime is not None:
+        return birthtime
+    
+    return getattr(stat, "st_ctime", getattr(stat, "st_mtime", 0.0))
 
 def _get_file_type() -> tuple[str, str, str]:
     """导出文件类型"""

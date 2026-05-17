@@ -1,4 +1,4 @@
-# package/_core/keys/creator.py
+# package/_gui/_key_management_tab/_creators/_key_creator.py
 """密钥创建模块"""
 from dataclasses import dataclass
 from datetime import datetime
@@ -8,16 +8,16 @@ from typing import Callable, TYPE_CHECKING
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives.asymmetric.rsa import generate_private_key
 
-from .managers import SingleKeyManager
-from ..._utils.constants import ENCRYPTED, UNENCRYPTED
-from ..._utils.enums import Level
-from ..._utils.result import Status, Result
-from ..._utils.ui_state_manager import get_ui_state_manager
+from ...._core.keys.managers import SingleKeyManager
+from ...._utils.constants import ENCRYPTED, UNENCRYPTED
+from ...._utils.enums import Level
+from ...._utils.result import Status, Result
+from ...._utils.ui_state_manager import get_ui_state_manager
 
 if TYPE_CHECKING:
     from tkinter import BooleanVar, Entry
     from tkinter.ttk import Combobox
-    from .managers import MultiKeyManager
+    from ...._core.keys.managers import MultiKeyManager
 
 
 @dataclass
@@ -56,8 +56,8 @@ def create_key_pair(key_setter: KeySetter, multi_km: MultiKeyManager, callbacks:
     
     # 检查密钥ID是否重复
     if key_id in multi_km.key_pairs:
-        messagebox.showerror("创建密钥对失败", Status.KEY_ID_DUPLICATE.desc)
-        ui_state_mgr.update_status(Status.KEY_ID_DUPLICATE.desc)
+        messagebox.showerror("创建密钥对失败", Status.KEY_ID_DUPLICATE.msg)
+        ui_state_mgr.update_status(Status.KEY_ID_DUPLICATE.msg)
         return
     
     # 创建密钥对
@@ -84,7 +84,7 @@ def _validate_inputs(key_setter: KeySetter) -> tuple[str, int, str | None] | Non
     try:
         key_size = int(key_setter.key_size_combo.get())
     except (ValueError, AttributeError):
-        messagebox.showerror("创建密钥对失败", Status.KEY_SIZE_ERROR.desc)
+        messagebox.showerror("创建密钥对失败", Status.KEY_SIZE_ERROR.msg)
         return None
     
     # 密码验证
@@ -143,11 +143,11 @@ def _validate_password(encryption_var: BooleanVar, password_entry: Entry) -> Res
     
     password = password_entry.get().strip()
     if not password:
-        messagebox.showerror("创建密钥对失败", Status.NO_PASSWORD.desc)
+        messagebox.showerror("创建密钥对失败", Status.NO_PASSWORD.msg)
         return Result(status=Status.NO_PASSWORD)
     
     if len(password) < 6:
-        messagebox.showerror("创建密钥对失败", Status.PASSWORD_TOO_SHORT.desc)
+        messagebox.showerror("创建密钥对失败", Status.PASSWORD_TOO_SHORT.msg)
         return Result(status=Status.PASSWORD_TOO_SHORT)
     
     return Result(status=Status.SUCCESS, data=password)

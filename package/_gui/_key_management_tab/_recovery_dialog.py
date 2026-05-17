@@ -25,6 +25,7 @@ def ask_recovery_choice(key_id: str) -> tuple[bool, bool]:
 
     choice = tk.BooleanVar(value=False)
     remember = tk.BooleanVar(value=False)
+    confirmed = tk.BooleanVar(value=False)
 
     ttk.Label(
         dialog,
@@ -49,8 +50,13 @@ def ask_recovery_choice(key_id: str) -> tuple[bool, bool]:
 
     ttk.Button(
         dialog, text="确定",
-        command=dialog.destroy
+        command=lambda: _on_confirm(confirmed, dialog)
     ).pack(pady=(0, 20))
 
+    dialog.protocol("WM_DELETE_WINDOW", dialog.destroy)
     dialog.wait_window()
-    return choice.get(), remember.get()
+    return confirmed.get() and choice.get(), confirmed.get() and remember.get()
+
+def _on_confirm(confirmed: tk.BooleanVar, dialog: tk.Toplevel) -> None:
+    confirmed.set(True)
+    dialog.destroy()

@@ -8,7 +8,7 @@ from ._dialog import dialog_show
 from ._backup_ops.ops import create_backup, list_backups_with_integrity
 from ._restore import Restore
 from .._utils.enums import DirType
-from .._utils.tools import reload_current_key
+from .._gui.helpers import reload_current_key
 from .._utils.ui_state_manager import get_ui_state_manager
 
 if TYPE_CHECKING:
@@ -59,11 +59,10 @@ class BackUps:
             return
 
         dialog = Restore(
-            root=self.__root,
             refresh_key_callback=self.__refresh_callback,
             reload_key_callback=lambda: reload_current_key(self.__multi_km, self.__key_loader)
         )
-        dialog.show()
+        dialog.show(self.__root)
 
     def backup_manager_dialog(self) -> None:
         """统一备份管理对话框"""

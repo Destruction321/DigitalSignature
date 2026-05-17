@@ -1,18 +1,18 @@
-# package/_gui/_key_management_tab/_ui_creator.py
+# package/_gui/_key_management_tab/_creators/ui_creator.py
 """密钥管理标签页UI创建器"""
 import tkinter as tk
 from pathlib import Path
 from tkinter import ttk
 from typing import TYPE_CHECKING
 
-from ._controller import Controller
-from ..._core.keys import creator
-from ..._utils.enums import DirType
-from ..._utils.tools import get_path
+from . import _key_creator
+from .._controller import Controller
+from ...._utils.enums import DirType
+from ...._utils.tools import get_path
 
 if TYPE_CHECKING:
-    from ..._core.keys.loader import KeyLoader
-    from ..._core.keys.managers import MultiKeyManager
+    from ...._core.keys.loader import KeyLoader
+    from ...._core.keys.managers import MultiKeyManager
     
 
 class UICreator:
@@ -21,6 +21,10 @@ class UICreator:
                  parent: tk.Widget,
                  multi_key_manager: MultiKeyManager,
                  key_loader: KeyLoader) -> None:
+        self.__parent: tk.Widget = parent
+        self.__multi_km: MultiKeyManager = multi_key_manager
+        
+        # UI组件
         self.__key_id_entry: ttk.Entry | None = None
         self.__encryption_var: tk.BooleanVar | None = None
         self.__key_size_combo: ttk.Combobox | None = None
@@ -29,9 +33,7 @@ class UICreator:
         self.__key_status_label: ttk.Label | None = None
         self.__security_status_label: ttk.Label | None = None
 
-        self.__parent: tk.Widget = parent
-        self.__multi_km: MultiKeyManager = multi_key_manager
-
+        # 控制器
         self.__controller: Controller = Controller(
             km_protocol=self,
             multi_km=multi_key_manager,
@@ -85,12 +87,14 @@ class UICreator:
 
     """private methods"""
     def __setup_parent_layout(self) -> None:
+        """初始化整体框架"""
         self.__parent.columnconfigure(0, weight=1)
         self.__parent.rowconfigure(0, weight=0)
         self.__parent.rowconfigure(1, weight=0)
         self.__parent.rowconfigure(2, weight=1)
 
     def __create_directory_info(self) -> None:
+        """创建目录信息区域"""
         dir_frame = ttk.Frame(self.__parent)
         dir_frame.grid(row=0, column=0, sticky=tk.EW, pady=(0, 5))
 
@@ -103,6 +107,7 @@ class UICreator:
         ).pack(anchor=tk.W)
 
     def __create_key_creation_area(self) -> None:
+        """创建密钥创建区域"""
         create_frame = ttk.LabelFrame(self.__parent, text="创建新密钥对", padding="10")
         create_frame.grid(row=1, column=0, sticky=tk.EW, pady=5)
         create_frame.columnconfigure(1, weight=1)
@@ -113,11 +118,13 @@ class UICreator:
         self.__create_key_generation_button(create_frame)
 
     def __create_key_id_input(self, parent: tk.Widget) -> None:
+        """创建密钥ID输入框"""
         ttk.Label(parent, text="密钥ID:").grid(row=0, column=0, padx=5, pady=5, sticky=tk.W)
         self.__key_id_entry = ttk.Entry(parent, width=30)
         self.__key_id_entry.grid(row=0, column=1, padx=5, pady=5, sticky=tk.EW)
 
     def __create_key_size_selection(self, parent: tk.Widget) -> None:
+        """创建密钥长度选择框"""
         ttk.Label(parent, text="密钥长度:").grid(row=0, column=2, padx=5, pady=5, sticky=tk.W)
         self.__key_size_combo = ttk.Combobox(
             parent, values=["1024", "2048", "4096"], width=10, state="readonly"
@@ -126,6 +133,7 @@ class UICreator:
         self.__key_size_combo.grid(row=0, column=3, padx=5, pady=5)
 
     def __create_encryption_options(self, parent: tk.Widget) -> None:
+        """创建加密选项"""
         encryption_frame = ttk.Frame(parent)
         encryption_frame.grid(row=1, column=0, columnspan=3, sticky=tk.EW, padx=5, pady=2)
 
@@ -143,19 +151,20 @@ class UICreator:
         self.__password_entry.config(state=tk.DISABLED)
 
     def __create_key_generation_button(self, parent: tk.Widget) -> None:
+        """创建生成密钥对按钮"""
         assert self.__key_id_entry is not None, "密钥ID输入框未初始化"
         assert self.__key_size_combo is not None, "密钥长度下拉框未初始化"
         assert self.__encryption_var is not None, "加密选项变量未初始化"
         assert self.__password_entry is not None, "密码输入框未初始化"
 
-        key_setter = creator.KeySetter(
+        key_setter = _key_creator.KeySetter(
             key_id_entry=self.__key_id_entry,
             key_size_combo=self.__key_size_combo,
             encryption_var=self.__encryption_var,
             password_entry=self.__password_entry,
         )
 
-        callbacks = creator.CallBacks(
+        callbacks = _key_creator.CallBacks(
             refresh_callback=self.__controller.refresh_key_list,
             update_key_status_callback=self.__controller.update_key_status,
             toggle_password_callback=self.__toggle_password_entry,
@@ -164,7 +173,7 @@ class UICreator:
         ttk.Button(
             parent,
             text="创建密钥对",
-            command=lambda: creator.create_key_pair(
+            command=lambda: _key_creator.create_key_pair(
                 key_setter=key_setter,
                 multi_km=self.__multi_km,
                 callbacks=callbacks
@@ -172,6 +181,7 @@ class UICreator:
         ).grid(row=0, column=4, padx=5, pady=5)
 
     def __create_key_management_area(self) -> None:
+        """创建密钥管理区域"""
         manage_frame = ttk.LabelFrame(self.__parent, text="密钥对管理", padding="10")
         manage_frame.grid(row=2, column=0, sticky=tk.NSEW, pady=5)
 
@@ -184,6 +194,7 @@ class UICreator:
 
     @staticmethod
     def __setup_management_layout(parent: tk.Widget) -> None:
+        """设置密钥管理区域布局"""
         parent.columnconfigure(0, weight=1)
         for i in range(5):
             parent.rowconfigure(i, weight=0)
@@ -191,12 +202,14 @@ class UICreator:
 
     @staticmethod
     def __create_key_list_label(parent: tk.Widget) -> None:
+        """创建密钥列表标签"""
         list_label_frame = ttk.Frame(parent)
         list_label_frame.grid(row=0, column=0, sticky=tk.EW, pady=(0, 5))
         list_label_frame.columnconfigure(0, weight=1)
         ttk.Label(list_label_frame, text="可用密钥对:").grid(row=0, column=0, sticky=tk.W, padx=5)
 
     def __create_key_list_area(self, parent: tk.Widget) -> None:
+        """创建密钥列表区域"""
         list_container = ttk.Frame(parent)
         list_container.grid(row=1, column=0, sticky=tk.NSEW, pady=(0, 10))
         list_container.columnconfigure(0, weight=1)
@@ -222,6 +235,7 @@ class UICreator:
         self.__controller.refresh_key_list()
 
     def __create_operation_buttons(self, parent: tk.Widget) -> None:
+        """创建操作按钮"""
         btn_frame = ttk.Frame(parent)
         btn_frame.grid(row=2, column=0, sticky=tk.EW, pady=10)
         for i in range(3):
@@ -236,6 +250,7 @@ class UICreator:
             ttk.Button(btn_frame, text=text, command=command).grid(row=0, column=i, padx=5, sticky=tk.EW)
 
     def __create_advanced_operations(self, parent: tk.Widget) -> None:
+        """创建高级操作按钮"""
         advanced_btn_frame = ttk.Frame(parent)
         advanced_btn_frame.grid(row=3, column=0, sticky=tk.EW, pady=5)
         for i in range(3):
@@ -252,6 +267,7 @@ class UICreator:
             )
 
     def __create_status_display(self, parent: tk.Widget) -> None:
+        """创建状态显示区域"""
         status_frame = ttk.Frame(parent)
         status_frame.grid(row=4, column=0, sticky=tk.EW, pady=(10, 0))
 

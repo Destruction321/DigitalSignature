@@ -7,7 +7,14 @@ from typing import Any
 
 @unique
 class Status(Enum):
-    """系统状态枚举,包含状态码、描述和是否成功的标志"""
+    """
+    系统状态枚举
+    
+    Attributes:
+        code (str): 状态码
+        msg (str): 描述信息
+        is_success (bool): 是否成功
+    """
     # 通用状态
     SUCCESS = ("SUCCESS", "操作成功", True)
     FAILED = ("FAILED", "操作失败", False)
@@ -58,13 +65,21 @@ class Status(Enum):
 
     def __init__(self, code: str, desc: str, is_success: bool):
         self.code = code
-        self.desc = desc
+        self.msg = desc
         self.is_success = is_success
 
 
 @dataclass
 class Result:
-    """全系统通用操作结果结构体"""
+    """
+    全系统通用操作结果结构体
+    
+    Attributes:
+        status (Status): 操作状态
+        data (Any): 返回数据
+        msg (str): 提示信息，默认为status.msg
+        is_success (bool): 是否成功，由status自动设置
+    """
     status: Status
     data: Any = None
     msg: str = ""
@@ -72,6 +87,6 @@ class Result:
         
     def __post_init__(self):
         if self.msg == "":
-            self.msg = self.status.desc
+            self.msg = self.status.msg
         
         self.is_success = self.status.is_success

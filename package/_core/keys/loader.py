@@ -1,16 +1,12 @@
 # package/_core/keys/loader.py
 """密钥加载器"""
-from tkinter import messagebox
-from tkinter.simpledialog import askstring
 from typing import Any, Callable, cast, TYPE_CHECKING
 
 from .managers import SingleKeyManager
 from ..._utils.constants import MAX_PASSWORD_ATTEMPTS
 from ..._utils.result import Status, Result
-from ..._utils.ui_state_manager import get_ui_state_manager
 
 if TYPE_CHECKING:
-    from tkinter import Tk
     from .managers import MultiKeyManager
 
 
@@ -18,12 +14,11 @@ class KeyLoader:
     """密钥加载器"""
     def __init__(self, 
                  multi_key_manager: MultiKeyManager, 
-                 parent: Tk,
+                 password_provider: Callable[[str], str | None],
                  key_loaded_callback: Callable[[Any], None]) -> None:
         self.__multi_km: MultiKeyManager = multi_key_manager
-        self.__parent: Tk = parent
+        self.__password_provider: Callable[[str], str | None] = password_provider
         self.__key_loaded_callback: Callable[[Any], None] = key_loaded_callback
-        self.__update_status: Callable[[str], None] = get_ui_state_manager().update_status
 
 
     """public methods"""
@@ -79,16 +74,14 @@ class KeyLoader:
         """验证密码"""
         while True:
             prompt: str = self.__build_password_prompt(key_id, attempt, is_retry)
-            password: str | None = askstring("密码输入", prompt, show="*", parent=self.__parent)
+            password: str | None = self.__password_provider(prompt)
 
             if password is None:
                 return Result(status=Status.CANCEL_INPUT)
 
             if password.strip():
                 return Result(status=Status.SUCCESS, data=password)
-            
-            messagebox.showerror("错误", "密码不能为空")       
-
+               
     @staticmethod
     def __build_password_prompt(key_id: str, attempt: int, is_retry: bool) -> str:
         """构建密码提示信息"""
@@ -104,7 +97,7 @@ class KeyLoader:
             
             # 成功：回调并返回结果
             if load_result.is_success:
-                self.__handle_key_loading_success(key_id, cast(SingleKeyManager, load_result.data))
+                self.__key_loaded_callback(cast(SingleKeyManager, load_result.data))
                 return load_result
             
             # 其他业务错误：直接返回
@@ -112,22 +105,13 @@ class KeyLoader:
                 return load_result
             
             # 密码错误：重试
-            if attempt > MAX_PASSWORD_ATTEMPTS:
-                # 重试次数用尽
+            if attempt >= MAX_PASSWORD_ATTEMPTS:
                 break
 
             password = self.__validate_password(key_id, attempt + 1, True)
             if not password.is_success:  # 用户取消
                 return password
             
-        self.__update_status(f"密码错误次数过多，加载失败")
         self.__key_loaded_callback(None)
             
         return Result(status=Status.PASSWORD_ERROR, msg="密码错误次数过多，加载失败")
-        
-    def __handle_key_loading_success(self, key_id: str, key_manager: SingleKeyManager) -> None:
-        """处理加载成功"""
-        self.__update_status(f"已加载密钥对: {key_id}")
-        self.__key_loaded_callback(key_manager)
-            
-        messagebox.showinfo("成功", f"密钥对 '{key_id}' 加载成功")

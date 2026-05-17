@@ -20,6 +20,7 @@ class _SetNewPassword(TypedDict):
     mode: PassWord
     is_encrypted: bool
 
+
 class PasswordResetter:
     """密码重置器"""
     def __init__(self,
@@ -82,21 +83,23 @@ class PasswordResetter:
         
         while attempts_left > 0:
             # 构建提示信息
-            attempts_info = f"{attempts_left}" if attempts_left <= MAX_PASSWORD_ATTEMPTS else ""
-            prompt = f"正在进行{context_text}\n请输入密钥 '{key_id}' 的旧密码（剩余次数: {attempts_info}）"
-            
+            prompt = f"正在进行{context_text}\n请输入密钥 '{key_id}' 的旧密码（剩余次数: {attempts_left}）"
+
             # 请求输入旧密码
             old_password = simpledialog.askstring(
                 "验证旧密码", prompt, show="*", parent=self.__parent_window
             )
-            
+
             # 用户取消
             if old_password is None:
                 return Result(status=Status.CANCEL_INPUT, msg=f"取消{context_text}")
-                
+
             # 密码为空
             if not old_password.strip():
                 messagebox.showerror("错误", "密码不能为空", parent=self.__parent_window)
+                attempts_left -= 1
+                if attempts_left <= 0:
+                    break
                 continue
             
             # 尝试验证密码

@@ -134,6 +134,8 @@ def verify_backup_integrity(backup_dir: Path) -> Result:
         # 验证文件大小
         if total_size != current_total_size:
             message += f"\n文件大小不匹配（应有{total_size}字节，实有{current_total_size}字节）"
+
+        if message:
             return Result(status=Status.BACKUP_VERIFY_FAILED, data=checksum_data, msg=message)
 
         message = f"备份完整性验证通过（{backup_type}，{file_count}个文件，{format_size(total_size)}）"

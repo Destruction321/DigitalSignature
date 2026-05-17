@@ -9,9 +9,12 @@ from .enums import Level
 class UIStateManager:
     """UI状态管理器"""
     def __init__(self) -> None:
+        # 处理器列表
         self.__status_handlers: list[Callable[[str], None]] = []
         self.__result_handlers: list[Callable[[str, str], None]] = []
         self.__dir_handlers: list[Callable[[], None]] = []
+        
+        # 日志记录器
         self.__logger = getLogger(__name__)
 
     

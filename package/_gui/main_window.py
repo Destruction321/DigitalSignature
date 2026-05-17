@@ -1,17 +1,18 @@
-# package/_gui/_main_window.py
+# package/_gui/main_window.py
 """数字签名窗口UI创建模块"""
 import tkinter as tk
 from pathlib import Path
 from tkinter import ttk
 from typing import Callable, TYPE_CHECKING
 
+from .helpers import reload_current_key
 from ._key_management_tab import KeyManagementTab
 from ._signing_tabs import FileSigningTab, TextSigningTab
 from .._backups import BackUps
 from .._cleanups import CleanUps
-from .._utils.constants import BASE_DIR
+from .._utils.constants import BASE_DIR, DIRS
 from .._utils.enums import DirType
-from .._utils.tools import reload_current_key, update_directory_info
+from .._utils.tools import format_size
 from .._utils.ui_state_manager import get_ui_state_manager
 
 if TYPE_CHECKING:
@@ -29,14 +30,14 @@ class MainWindow:
         self.__ui_state_mgr = get_ui_state_manager()
         self.__cleanups: CleanUps | None = None
         self.__backups: BackUps | None = None
-        self.__status_label: ttk.Label | None = None  # 状态标签
-        
-        self.__dir_labels: dict[DirType, ttk.Label] = {}  # 目录标签
+        self.__status_label: ttk.Label | None = None
+        self.__dir_labels: dict[DirType, ttk.Label] = {}
         self.__key_tab: KeyManagementTab | None = None
         self.__text_tab: TextSigningTab | None = None
         self.__file_tab: FileSigningTab | None = None
         
     
+    """getters"""
     @property
     def dir_labels(self) -> dict[DirType, ttk.Label]:
         return self.__dir_labels
@@ -222,6 +223,29 @@ class MainWindow:
             self.__text_tab.result_text.delete("1.0", tk.END)
             self.__text_tab.result_text.insert("1.0", text)
             
+    def __update_directory_info(self) -> None:
+        """更新所有目录信息显示"""
+        for category, label in self.__dir_labels.items():
+            dir_path = DIRS.get(category)
+            if dir_path is None:
+                label.config(text=f"未知目录类别: {category}")
+                continue
+
+            dir_path = Path(dir_path)
+
+            if not dir_path.exists():
+                label.config(text="目录不存在")
+                continue
+
+            try:
+                files = [f for f in dir_path.iterdir() if f.is_file()]
+                file_count = len(files)
+                total_size = sum(f.stat().st_size for f in files)
+                size_str = format_size(total_size)
+                label.config(text=f"{file_count}文件/{size_str}")
+            except (PermissionError, OSError) as e:
+                label.config(text=f"访问错误: {e}")
+
     def __update_dir_labels(self) -> None:
         """封装目录更新函数以供注册调用"""
-        update_directory_info(self.__dir_labels)
+        self.__update_directory_info()

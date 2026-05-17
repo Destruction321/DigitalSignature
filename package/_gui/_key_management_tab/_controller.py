@@ -66,11 +66,16 @@ class Controller:
         Args:
             click_refresh_btn (bool): 是否由点击刷新按钮触发，默认为 False（非按钮触发）
         """
-        self.__multi_km.recovery_mgr.load_keys_with_recovery()
+        if not self.__multi_km.recovery_mgr.load_keys_with_recovery():
+            self.__ui_state_mgr.update_status("密钥配置恢复失败，请检查密钥文件", Level.ERROR, log=True)
+            if click_refresh_btn:
+                messagebox.showerror("错误", "密钥配置恢复失败，请检查密钥文件是否完整")
+            return
+
         keys = list(self.__multi_km.key_pairs.keys())
         if not keys:
             if click_refresh_btn:
-                messagebox.showerror("警告", "没有可用的密钥对")
+                messagebox.showinfo("提示", "没有可用的密钥对")
             return
 
         items: list[tuple[str, str]] = []
@@ -134,6 +139,7 @@ class Controller:
             load_result = self.__key_loader.load_key(key_id)
             if load_result.is_success:
                 self.update_key_status()
+                messagebox.showinfo("加载成功", f"密钥 {key_id} 加载成功")
                 return cast(SingleKeyManager, load_result.data)
             else:
                 messagebox.showerror("加载失败", load_result.msg)

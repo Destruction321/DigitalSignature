@@ -3,12 +3,16 @@
 import json
 from hashlib import sha256
 from hmac import compare_digest, new as hmac_new
-from os import environ
+from os import environ, urandom
 from pathlib import Path
 from shutil import move
 from typing import Any
 
+from ..._utils.constants import DIRS
+from ..._utils.enums import DirType
 from ..._utils.result import Status, Result
+
+_HMAC_KEY_FILE = ".hmac_key"
 
 
 """public methods"""
@@ -53,7 +57,7 @@ def load_config(config_file: str, verify_integrity: bool = True) -> Result:
 
 def save_config(config: dict[str, Any], config_file: str, sign: bool = True) -> Result:
     """
-    保存配置文件（可带签名）
+    保存配置文件
     
     Args:
         config (dict[str, Any]): 配置数据
@@ -170,14 +174,19 @@ def validate_config_structure(config_data: dict) -> Result:
 
 """private methods"""
 def _get_secret_key() -> bytes:
-    """获取密钥"""
-    secret_key = environ.get("CONFIG_SECRET_KEY", "").encode()
-    return secret_key if secret_key else _generate_default_key()
+    """获取签名密钥"""
+    secret_key = environ.get("CONFIG_SECRET_KEY", "")
+    if secret_key:
+        return secret_key.encode()
 
-def _generate_default_key() -> bytes:
-    """生成默认密钥（基于应用路径）"""
-    app_path = str(Path(__file__).resolve())
-    return sha256(app_path.encode()).digest()
+    key_file = Path(DIRS.get(DirType.KEYS, "."), _HMAC_KEY_FILE)
+    if key_file.exists():
+        return key_file.read_bytes()
+
+    new_key = urandom(32)
+    key_file.parent.mkdir(parents=True, exist_ok=True)
+    key_file.write_bytes(new_key)
+    return new_key
 
 def _sign_config(secret_key: bytes, config_data: dict) -> dict:
     """为配置数据添加数字签名"""

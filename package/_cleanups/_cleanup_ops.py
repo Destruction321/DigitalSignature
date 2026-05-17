@@ -1,7 +1,8 @@
 # package/_cleanups/_cleanup_ops.py
 """文件清理组件，统一管理所有清理操作"""
 from datetime import datetime
-from json import load, dump
+from json import load
+from .._core.keys._config import save_config
 from logging import error
 from pathlib import Path
 from typing import Callable
@@ -284,8 +285,9 @@ def _update_config(orphaned_key_ids: set[str], config_path: Path, config_data: d
         del config_data["key_pairs"][key_id]
         
     try:
-        with open(config_path, "w", encoding="utf-8") as f:
-            dump(config_data, f, ensure_ascii=False, indent=2)
-            
+        save_result = save_config(config_data, str(config_path))
+        if not save_result.is_success:
+            return save_result
+
     except Exception as e:
         return Result(status=Status.CONFIG_SAVE_FAILED, msg=f"更新配置文件失败: {e}")

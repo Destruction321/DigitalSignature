@@ -5,12 +5,13 @@ from glob import glob
 from logging import warning, error
 from pathlib import Path
 from tkinter import messagebox
+from tkinter.simpledialog import askstring
 from typing import TYPE_CHECKING
 from shutil import move
 
 from .._core.keys.loader import KeyLoader
 from .._core.keys.managers import SingleKeyManager, MultiKeyManager
-from .._gui import MainWindow
+from .._gui.main_window import MainWindow
 from .._utils.constants import BASE_DIR, KEYS_CONFIG_FILE
 from .._utils.enums import DirType, KeyType, FileType, Level
 from .._utils.result import Status
@@ -27,9 +28,10 @@ class Initializer:
     def __init__(self, root: Tk) -> None:
         self.__ui_state_mgr: UIStateManager = get_ui_state_manager()
         self.__multi_km: MultiKeyManager = MultiKeyManager()
-        self.__key_loader: KeyLoader = KeyLoader(
+        self.__root = root
+        self.__key_loader = KeyLoader(
             multi_key_manager=self.__multi_km,
-            parent=root,
+            password_provider=self.__password_provider,
             key_loaded_callback=self.__on_key_loaded
         )
         
@@ -51,7 +53,11 @@ class Initializer:
     def auto_load_current_key(self) -> None:
         """程序启动时自动加载当前密钥"""
         assert self.__tabs.key_tab is not None, "密钥管理标签页未初始化"
-        
+
+        if not self.__multi_km.config_secure:
+            self.__ui_state_mgr.update_status("密钥配置完整性验证未通过，请手动恢复配置", Level.WARNING)
+            return
+
         if self.__multi_km.current_key_id is None:
             self.__ui_state_mgr.update_status("请先在密钥管理标签页加载密钥对", Level.WARNING)
             return
@@ -81,6 +87,9 @@ class Initializer:
     
     
     """private methods"""
+    def __password_provider(self, prompt: str) -> str | None:
+        return askstring("密码输入", prompt, show="*", parent=self.__root)
+                     
     def __on_key_loaded(self, key_manager: SingleKeyManager | None) -> None:
         """密钥加载成功时的回调"""
         if self.__tabs.key_tab is None:

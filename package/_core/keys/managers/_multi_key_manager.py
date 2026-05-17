@@ -259,11 +259,11 @@ class MultiKeyManager:
             save_result = key_manager.save_keys(new_private_path, new_public_path, new_password)
             if not save_result.is_success:
                 return save_result
-            
+
             # 删除旧文件
-            if str(private_path) != new_private_path and private_path.exists():
+            if private_path.resolve() != Path(new_private_path).resolve() and private_path.exists():
                 private_path.unlink()
-            if str(public_path) != new_public_path and public_path.exists():
+            if public_path.resolve() != Path(new_public_path).resolve() and public_path.exists():
                 public_path.unlink()
                 
             # 更新配置

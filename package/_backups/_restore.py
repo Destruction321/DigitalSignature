@@ -15,38 +15,40 @@ if TYPE_CHECKING:
 class Restore:
     """备份恢复器"""
     def __init__(self,
-                 root: tk.Tk,
                  refresh_key_callback: Callable[[], None],
                  reload_key_callback: Callable[[], None]) -> None:
-        self.__root = root
-        self.__ui_state_mgr: UIStateManager = get_ui_state_manager()
+        # 回调函数
         self.__refresh_key = refresh_key_callback
         self.__reload_key = reload_key_callback
 
+        # UI组件
         self.__dialog: tk.Toplevel | None = None
         self.__listbox: tk.Listbox | None = None
         self.__overwrite_var: tk.BooleanVar | None = None
-        self.__backup_items: list[dict[str, Any]] = []
         self.__skip_verify_var: tk.BooleanVar | None = None
-
+        
+        # 信息组件
+        self.__backup_items: list[dict[str, Any]] = []  # 备份列表
+        self.__ui_state_mgr: UIStateManager = get_ui_state_manager()
+        
 
     """public methods"""
-    def show(self) -> None:
+    def show(self, root: tk.Tk) -> None:
         """显示对话框"""
         backups = ops.list_backups()
         if not backups.data:
             messagebox.showinfo("恢复备份", backups.msg)
             return
 
-        self.__dialog = tk.Toplevel(self.__root)
+        self.__dialog = tk.Toplevel(root)
         self.__dialog.title("恢复备份")
         self.__dialog.geometry("600x500")
-        self.__dialog.transient(self.__root)
+        self.__dialog.transient(root)
         self.__dialog.grab_set()
 
         self.__dialog.update_idletasks()
-        x = (self.__root.winfo_screenwidth() - self.__dialog.winfo_width()) // 2
-        y = (self.__root.winfo_screenheight() - self.__dialog.winfo_height()) // 2
+        x = (root.winfo_screenwidth() - self.__dialog.winfo_width()) // 2
+        y = (root.winfo_screenheight() - self.__dialog.winfo_height()) // 2
         self.__dialog.geometry(f"+{x}+{y}")
 
         self.__create_ui(backups.data)
@@ -127,7 +129,6 @@ class Restore:
         """填充备份列表"""
         assert self.__listbox is not None, "列表框未创建"
         
-        self.__backup_items = []
         for backup in backups:
             time_str = backup["created_time"].strftime("%Y-%m-%d %H:%M:%S")
             size_str = f"{backup["size"]:,} 字节"
@@ -149,10 +150,6 @@ class Restore:
         backup_path = Path(selected_backup["path"])
         
         if self.__skip_verify_var.get():
-            self.__restore(selected_backup)
-            return
-            
-        if not hasattr(ops, "verify_backup_integrity"):
             self.__restore(selected_backup)
             return
             
