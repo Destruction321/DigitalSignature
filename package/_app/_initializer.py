@@ -95,7 +95,7 @@ class Initializer:
         if self.__tabs.key_tab is None:
             raise RuntimeError("密钥管理标签页未初始化")
         
-        if key_manager is None or not hasattr(key_manager, "private_key"):
+        if key_manager is None or key_manager.private_key is None:
             self.__ui_state_mgr.update_status("密钥管理器无效，无法创建数字签名实例", Level.ERROR, log=True)
             self.__current_km = None
             self.__multi_km.current_key_id = None
@@ -133,7 +133,7 @@ class Initializer:
 
     def __set_current_key_manager(self, key_manager: SingleKeyManager) -> None:
         """设置当前密钥管理器"""
-        if not hasattr(key_manager, "private_key"):
+        if key_manager.private_key is None:
             self.__current_km = None
             return
 

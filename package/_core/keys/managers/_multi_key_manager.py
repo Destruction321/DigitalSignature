@@ -1,31 +1,25 @@
 # package/_core/keys/managers/_multi_key_manager.py
 """多密钥对管理模块"""
 from pathlib import Path
-from typing import cast, TypedDict
+from typing import cast, TYPE_CHECKING
 
 from ._single_key_manager import SingleKeyManager
 from .. import _encryption
-from .._config import save_config
+from ..config import save_config
 from .._recovery import KeyRecoveryManager
 from ...._utils.constants import ENCRYPTED, KEYS_CONFIG_FILE, UNENCRYPTED
 from ...._utils.enums import DirType, KeyType, FileType
 from ...._utils.result import Status, Result
 from ...._utils.tools import get_path
 
-
-class _KeyPairInfo(TypedDict):
-    """密钥对键值类型"""
-    private_key_path: str
-    public_key_path: str
-    key_size: int
-    created_time: str # ISO格式
-    is_encrypted: bool
+if TYPE_CHECKING:
+    from ..config import ConfigData, KeyPairInfo
 
 
 class MultiKeyManager:
     """多密钥对管理模块"""
     def __init__(self, config_file: str | None = None) -> None:
-        self.__key_pairs: dict[str, _KeyPairInfo] = {}
+        self.__key_pairs: dict[str, KeyPairInfo] = {}
         self.__current_key_id: str | None = None
 
         # 加载配置
@@ -61,7 +55,7 @@ class MultiKeyManager:
         return self.__config_secure
 
     @property
-    def key_pairs(self) -> dict[str, _KeyPairInfo]:
+    def key_pairs(self) -> dict[str, KeyPairInfo]:
         return self.__key_pairs
     
     @property
@@ -75,7 +69,7 @@ class MultiKeyManager:
         self.__config_secure = value
 
     @key_pairs.setter
-    def key_pairs(self, key_pairs: dict[str, _KeyPairInfo]) -> None:
+    def key_pairs(self, key_pairs: dict[str, KeyPairInfo]) -> None:
         self.__key_pairs = key_pairs
 
     @current_key_id.setter
@@ -100,7 +94,7 @@ class MultiKeyManager:
         Returns:
             save_result (Result): 保存结果
         """
-        config = {"key_pairs": self.__key_pairs, "current_key_id": self.__current_key_id}
+        config: ConfigData = {"key_pairs": self.__key_pairs, "current_key_id": self.__current_key_id}
         result = save_config(config, self.__config_file, sign=True)
         
         if result.is_success:

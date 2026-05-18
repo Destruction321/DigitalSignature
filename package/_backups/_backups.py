@@ -1,8 +1,8 @@
 # package/_backups/_backups.py
 """数字签名窗口备份方法模块"""
-from tkinter import Menu, messagebox, Widget
+from tkinter import Menu, messagebox
 from tkinter.ttk import Button
-from typing import cast, Callable, TYPE_CHECKING
+from typing import Callable, TYPE_CHECKING
 
 from ._dialog import dialog_show
 from ._backup_ops.ops import create_backup, list_backups_with_integrity
@@ -43,12 +43,12 @@ class BackUps:
         menu.add_command(label="仅备份文本", command=lambda: self.__backup_data(DirType.TEXTS, "文本"))
         menu.add_command(label="仅备份签名", command=lambda: self.__backup_data(DirType.SIGNATURES, "签名"))
 
-        try:
-            backup_button = self.__root.nametowidget(str(self.__backup_buttons.get("创建备份")))
-            x: int = backup_button.winfo_rootx()
-            y: int = backup_button.winfo_rooty() + backup_button.winfo_height()
+        backup_button = self.__backup_buttons.get("创建备份")
+        if backup_button is not None:
+            x = backup_button.winfo_rootx()
+            y = backup_button.winfo_rooty() + backup_button.winfo_height()
             menu.post(x, y)
-        except AttributeError:
+        else:
             menu.post(self.__root.winfo_pointerx(), self.__root.winfo_pointery())
 
     def restore_backup_dialog(self) -> None:
@@ -66,8 +66,7 @@ class BackUps:
 
     def backup_manager_dialog(self) -> None:
         """统一备份管理对话框"""
-        parent_window = cast(Widget, self.__root)
-        dialog_show(parent_window)
+        dialog_show(self.__root)
 
 
     """private methods"""

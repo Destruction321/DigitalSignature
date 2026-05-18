@@ -4,17 +4,20 @@ import tkinter as tk
 from pathlib import Path
 from tkinter import ttk, messagebox
 from tkinter.scrolledtext import ScrolledText
-from typing import Any, Callable
+from typing import Callable, TYPE_CHECKING
 
 from ._backup_ops.ops import verify_backup_integrity
 from .._utils.result import Status, Result
 from .._utils.tools import format_size
 
+if TYPE_CHECKING:
+    from ._backup_list_type import BackupItem, BackupList
+
 
 class Verifier:
     """备份验证器，负责处理备份完整性验证"""
-    def __init__(self, parent: tk.Widget) -> None:
-        self.__parent: tk.Widget = parent
+    def __init__(self, parent: tk.Misc) -> None:
+        self.__parent: tk.Misc = parent
         self.__verify_dialog: tk.Toplevel | None = None
         self.__progress_dialog: tk.Toplevel | None = None
         self.__result_label: ttk.Label | None = None
@@ -26,11 +29,10 @@ class Verifier:
 
 
     """public methods"""
-    def verify_single_backup(self,
-                             backup: dict[str, Any],
-                             callback: Callable[[dict[str, Any]], None]) -> None:
-        backup_path = backup.get("path", "")
-        if not backup_path or not Path(backup_path).exists():
+    def verify_single_backup(self, backup: BackupItem, callback: Callable[[BackupItem], None]) -> None:
+        raw_path = backup.get("path", "")
+        backup_path = Path(raw_path) if raw_path else Path(".")
+        if not backup_path.exists():
             messagebox.showerror("验证失败", "备份路径不存在")
             return
 
@@ -41,9 +43,7 @@ class Verifier:
             verify_result = Result(status=Status.BACKUP_VERIFY_FAILED, msg=f"验证失败: {str(e)}")
         self.__update_single_result(verify_result, backup, callback)
 
-    def verify_all_backups(self,
-                           backup_items: list[dict[str, Any]],
-                           callback: Callable[[list[dict[str, Any]]], None]) -> None:
+    def verify_all_backups(self, backup_items: BackupList, callback: Callable[[BackupList], None]) -> None:
         if not backup_items:
             messagebox.showinfo("验证备份", "没有找到备份文件")
             return
@@ -63,7 +63,7 @@ class Verifier:
             [len(backup_items), valid_count, invalid_count], callback, backup_items
         )
 
-    def __process_single_backup_in_batch(self, index: int, backup: dict[str, Any], total_count: int) -> None:
+    def __process_single_backup_in_batch(self, index: int, backup: BackupItem, total_count: int) -> None:
         """在批量验证中处理单个备份"""
         if self.__progress_dialog is None:
             return
@@ -111,7 +111,7 @@ class Verifier:
             result = f"{backup["name"]}: 验证失败 - {str(e)}\n"
             self.__progress_dialog.after(0, lambda r=result: self.__add_batch_result(r))
 
-    def __create_single_verify_dialog(self, backup: dict[str, Any]) -> None:
+    def __create_single_verify_dialog(self, backup: BackupItem) -> None:
         """创建单个验证对话框"""
         self.__verify_dialog = tk.Toplevel(self.__parent)
         self.__verify_dialog.title("验证备份完整性")
@@ -144,8 +144,8 @@ class Verifier:
 
     def __update_single_result(self,
                                verify_result: Result,
-                               backup: dict[str, Any],
-                               callback: Callable[[dict[str, Any]], None]) -> None:
+                               backup: BackupItem,
+                               callback: Callable[[BackupItem], None]) -> None:
         """更新单个验证结果"""
         assert self.__progress_label is not None, "进度标签未创建"
         assert self.__result_label is not None, "结果标签未创建"
@@ -245,8 +245,8 @@ class Verifier:
 
     def __finish_batch_verification(self,
                                     verification_result: list[int],
-                                    callback: Callable[[list[dict[str, Any]]], None],
-                                    backup_items: list[dict[str, Any]]) -> None:
+                                    callback: Callable[[BackupList], None],
+                                    backup_items: BackupList) -> None:
         """完成批量验证"""
         assert self.__status_label is not None, "状态标签未创建"
         assert self.__batch_close_button is not None, "关闭按钮未创建"

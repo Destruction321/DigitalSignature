@@ -10,7 +10,7 @@ from tkinter.ttk import LabelFrame
 from datetime import datetime
 from typing import Callable, TYPE_CHECKING
 
-from ._base_signing_tab import BaseSigningTab
+from ._base_signing_tab import BaseSigningTab, ButtonConfig
 from ..._core import signature
 from ..._utils.enums import DirType, FileType
 from ..._utils.tools import get_path
@@ -36,7 +36,7 @@ class TextSigningTab(BaseSigningTab):
         return 1
 
     @property
-    def _get_extra_buttons(self) -> list[dict]:
+    def _get_extra_buttons(self) -> list[ButtonConfig]:
         return [
             {"text": "清空文本", "command": self.__clear_content},
             {"text": "保存文本", "command": self.__save_content},
@@ -86,7 +86,7 @@ class TextSigningTab(BaseSigningTab):
             initial_dir=get_path(DirType.SIGNATURES),
             file_types=[("签名文件", f"*{FileType.SIGNATURE.value}"), ("所有文件", "*.*")],
         )
-        if signature_path is None:
+        if not signature_path:
             return
 
         try:

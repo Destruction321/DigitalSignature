@@ -8,15 +8,15 @@ from . import _dialog_creator
 from .._backup_ops.ops import list_backups_with_integrity
 
 if TYPE_CHECKING:
-    from tkinter import Widget
+    from tkinter import Misc
 
 
-def show(parent: Widget) -> None:
+def show(parent: Misc) -> None:
     """
     显示备份管理对话框
     
     Args:
-        parent (tk.Widget): 父窗口
+        parent (tk.Misc): 父窗口
         update_status_callback (Callable[[str], None]): 状态更新回调函数
     """
     backups = list_backups_with_integrity()

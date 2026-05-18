@@ -3,18 +3,20 @@
 import tkinter as tk
 from tkinter import ttk
 from tkinter.scrolledtext import ScrolledText
-from typing import Any
-
+from typing import TYPE_CHECKING
 from ._dialog_controller import Controller
 from ..._utils.tools import format_size
 
+if TYPE_CHECKING:
+    from .._backup_list_type import BackupList
 
-def center_dialog(parent: tk.Widget, dialog: tk.Toplevel) -> None:
+
+def center_dialog(parent: tk.Misc, dialog: tk.Toplevel) -> None:
     """
     居中显示对话框
     
     Args:
-        parent (tk.Widget): 父窗口
+        parent (tk.Misc): 父窗口
         dialog (tk.Toplevel): 对话框对象
     """
     dialog.update_idletasks()
@@ -22,13 +24,13 @@ def center_dialog(parent: tk.Widget, dialog: tk.Toplevel) -> None:
     y = (parent.winfo_screenheight() - dialog.winfo_height()) // 2
     dialog.geometry(f"+{x}+{y}")
 
-def create_ui(parent: tk.Widget, backups: list[dict[str, Any]], dialog: tk.Toplevel) -> None:
+def create_ui(parent: tk.Misc, backups: BackupList, dialog: tk.Toplevel) -> None:
     """
     创建UI界面
     
     Args:
-        parent (tk.Widget): 父窗口
-        backups (list[dict[str, Any]]): 备份列表
+        parent (tk.Misc): 父窗口
+        backups (BackupList): 备份列表
         dialog (tk.Toplevel): 对话框对象
     """
     main_frame: ttk.Frame = ttk.Frame(dialog, padding="15")
@@ -43,7 +45,7 @@ def create_ui(parent: tk.Widget, backups: list[dict[str, Any]], dialog: tk.Tople
 
 class Initializer:
     """对话框创建器"""
-    def __init__(self, parent: tk.Widget) -> None:
+    def __init__(self, parent: tk.Misc) -> None:
         self.__listbox: tk.Listbox | None = None
         self.__info_label: ttk.Label | None = None
         self.__details_text: ScrolledText | None = None
@@ -63,7 +65,7 @@ class Initializer:
         assert self.__integrity_label is not None, "完整性标签未初始化"
         self.__integrity_label.config(text=f"完整性状态：{text}", foreground=color)
 
-    def populate_list(self, items: list[dict]) -> None:
+    def populate_list(self, items: BackupList) -> None:
         assert self.__listbox is not None, "列表框未初始化"
 
         self.__listbox.delete(0, tk.END)
@@ -104,13 +106,13 @@ class Initializer:
 
 
     """public methods"""
-    def create_header(self, parent: ttk.Frame, backups: list[dict]) -> None:
+    def create_header(self, parent: ttk.Frame, backups: BackupList) -> None:
         """
         创建头部信息
         
         Args:
-            parent (tk.Widget): 父窗口
-            backups (list[dict[str, Any]]): 备份列表
+            parent (ttk.Frame): 父窗口
+            backups (BackupList): 备份列表
         """
         header_frame: ttk.Frame = ttk.Frame(parent)
         header_frame.pack(fill=tk.X, pady=(0, 10))
@@ -140,7 +142,7 @@ class Initializer:
         创建笔记本控件
         
         Args:
-            parent (tk.Widget): 父窗口
+            parent (ttk.Frame): 父窗口
         """
         self.__notebook = ttk.Notebook(parent)
         self.__notebook.pack(fill=tk.BOTH, expand=True, pady=10)
@@ -155,7 +157,7 @@ class Initializer:
         创建按钮区域
         
         Args:
-            parent (tk.Widget): 父窗口
+            parent (ttk.Frame): 父窗口
             dialog (tk.Toplevel): 对话框对象
             update_status_callback (Callable[[str], None]): 状态更新回调函数
         """

@@ -6,7 +6,7 @@ from pathlib import Path
 from tkinter import ttk
 from typing import TYPE_CHECKING
 
-from ._base_signing_tab import BaseSigningTab
+from ._base_signing_tab import BaseSigningTab, ButtonConfig
 from ..._core import signature
 from ..._gui.progress_dialog import ProgressDialog
 from ..._utils.enums import DirType, FileType
@@ -70,7 +70,7 @@ class FileSigningTab(BaseSigningTab):
         return 0
 
     @property
-    def _get_extra_buttons(self) -> list[dict]:
+    def _get_extra_buttons(self) -> list[ButtonConfig]:
         return [{"text": "显示哈希", "command": self.__show_hash}]
 
 

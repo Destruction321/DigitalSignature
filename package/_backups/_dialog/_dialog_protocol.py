@@ -1,6 +1,9 @@
 # package/_backups/_dialog/_dialog_protocol.py
 """备份对话框协议"""
-from typing import Protocol
+from typing import Protocol, TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from .._backup_list_type import BackupList
 
 
 class DialogProtocol(Protocol):
@@ -24,13 +27,8 @@ class DialogProtocol(Protocol):
         """
         ...
 
-    def populate_list(self, items: list[dict]) -> None:
-        """
-        填充备份列表
-
-        Args:
-            items (list[dict]): 要显示的备份项列表
-        """
+    def populate_list(self, items: BackupList) -> None:
+        """填充备份列表"""
         ...
 
     def get_selected_index(self) -> int | None:

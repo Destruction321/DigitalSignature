@@ -1,13 +1,13 @@
 # package/_core/keys/loader.py
 """密钥加载器"""
-from typing import Any, Callable, cast, TYPE_CHECKING
+from typing import Callable, cast, TYPE_CHECKING
 
 from .managers import SingleKeyManager
 from ..._utils.constants import MAX_PASSWORD_ATTEMPTS
 from ..._utils.result import Status, Result
 
 if TYPE_CHECKING:
-    from .managers import MultiKeyManager
+    from .managers import SingleKeyManager, MultiKeyManager
 
 
 class KeyLoader:
@@ -15,10 +15,10 @@ class KeyLoader:
     def __init__(self, 
                  multi_key_manager: MultiKeyManager, 
                  password_provider: Callable[[str], str | None],
-                 key_loaded_callback: Callable[[Any], None]) -> None:
+                 key_loaded_callback: Callable[[SingleKeyManager | None], None]) -> None:
         self.__multi_km: MultiKeyManager = multi_key_manager
         self.__password_provider: Callable[[str], str | None] = password_provider
-        self.__key_loaded_callback: Callable[[Any], None] = key_loaded_callback
+        self.__key_loaded_callback: Callable[[SingleKeyManager | None], None] = key_loaded_callback
 
 
     """public methods"""

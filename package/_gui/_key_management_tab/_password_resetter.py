@@ -102,14 +102,17 @@ class PasswordResetter:
                     break
                 continue
             
-            # 尝试验证密码
+            # 尝试验证密码（保存当前密钥ID，防止 load_key_pair 的副作用切换密钥）
+            saved_key_id = self.__multi_km.current_key_id
             load_result = self.__multi_km.load_key_pair(key_id, old_password)
-            if load_result.is_success:
-                # 验证成功（data为旧密码）
+            if load_result.status == Status.PASSWORD_ERROR:
+                self.__multi_km.current_key_id = saved_key_id
+            elif load_result.is_success:
+                self.__multi_km.current_key_id = saved_key_id
                 return Result(status=Status.SUCCESS, data=old_password)
             
             elif load_result.status == Status.SYSTEM_ERROR:
-                # 系统错误
+                self.__multi_km.current_key_id = saved_key_id
                 return load_result
                 
             # 密码错误

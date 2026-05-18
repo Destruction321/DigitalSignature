@@ -3,12 +3,13 @@
 import tkinter as tk
 from pathlib import Path
 from tkinter import messagebox, ttk
-from typing import Any, Callable, TYPE_CHECKING
+from typing import Callable, TYPE_CHECKING
 
 from ._backup_ops import ops
 from .._utils.ui_state_manager import get_ui_state_manager
 
 if TYPE_CHECKING:
+    from ._backup_list_type import BackupItem, BackupList
     from .._utils.ui_state_manager import UIStateManager
 
 
@@ -17,18 +18,15 @@ class Restore:
     def __init__(self,
                  refresh_key_callback: Callable[[], None],
                  reload_key_callback: Callable[[], None]) -> None:
-        # 回调函数
         self.__refresh_key = refresh_key_callback
         self.__reload_key = reload_key_callback
 
-        # UI组件
         self.__dialog: tk.Toplevel | None = None
         self.__listbox: tk.Listbox | None = None
         self.__overwrite_var: tk.BooleanVar | None = None
         self.__skip_verify_var: tk.BooleanVar | None = None
-        
-        # 信息组件
-        self.__backup_items: list[dict[str, Any]] = []  # 备份列表
+
+        self.__backup_items: BackupList = []
         self.__ui_state_mgr: UIStateManager = get_ui_state_manager()
         
 
@@ -58,7 +56,7 @@ class Restore:
 
 
     """private methods"""
-    def __create_ui(self, backups: list[dict[str, Any]]) -> None:
+    def __create_ui(self, backups: BackupList) -> None:
         """创建UI"""
         assert self.__dialog is not None, "对话框未创建"
         
@@ -125,7 +123,7 @@ class Restore:
         ttk.Button(button_frame, text="恢复选中备份", command=self.__on_restore).pack(side=tk.LEFT, padx=5)
         ttk.Button(button_frame, text="取消", command=self.__dialog.destroy).pack(side=tk.LEFT, padx=5)
 
-    def __populate_list(self, backups: list[dict[str, Any]]) -> None:
+    def __populate_list(self, backups: BackupList) -> None:
         """填充备份列表"""
         assert self.__listbox is not None, "列表框未创建"
         
@@ -169,7 +167,7 @@ class Restore:
 
         self.__restore(selected_backup)
 
-    def __restore(self, selected_backup: dict[str, Any]) -> None:
+    def __restore(self, selected_backup: BackupItem) -> None:
         """恢复确认"""
         assert self.__overwrite_var is not None, "覆盖选项未创建"
         assert self.__dialog is not None, "恢复对话框未创建"

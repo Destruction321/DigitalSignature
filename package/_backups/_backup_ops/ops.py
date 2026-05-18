@@ -6,6 +6,7 @@ from pathlib import Path
 from typing import Callable, Final
 
 from . import _internal
+from ..._utils.constants import BASE_DIR
 from ..._utils.enums import DirType
 from ..._utils.result import Status, Result
 from ..._utils.tools import format_size
@@ -152,7 +153,7 @@ def list_backups() -> Result:
         result (Result): 备份列表结果，成功时包含备份信息列表，每项包含名称、路径、创建时间和大小
     """
     backups = []
-    current_dir = Path.cwd()
+    current_dir = Path(BASE_DIR).parent
 
     try:
         _internal.get_backups(backups, current_dir)

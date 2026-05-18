@@ -5,12 +5,11 @@ from logging import error
 from pathlib import Path
 from typing import Callable, TYPE_CHECKING
 
-from . import _config
+from . import config
 from ..._utils.constants import KEYS_CONFIG_FILE
 from ..._utils.enums import DirType, FileType, KeyType, PassWord
 from ..._utils.result import Status, Result
 from ..._utils.tools import get_path
-
 
 if TYPE_CHECKING:
     from .managers import MultiKeyManager
@@ -92,19 +91,19 @@ class KeyRecoveryManager:
             # 检查配置文件是否存在
             if not config_file_path.exists():
                 # 尝试迁移旧配置
-                migrated = _config.migrate_config(KEYS_CONFIG_FILE, self.__multi_km.config_file)
+                migrated = config.migrate_config(KEYS_CONFIG_FILE, self.__multi_km.config_file)
                 if not migrated.is_success or not config_file_path.exists():
                     return Result(status=Status.FILE_NOT_FOUND, msg="配置文件不存在，迁移旧配置失败")
                     
             # 安全加载配置
-            load_config_result = _config.load_config(self.__multi_km.config_file, verify_integrity=True)
+            load_config_result = config.load_config(self.__multi_km.config_file, verify_integrity=True)
             if not load_config_result.is_success:
                 return load_config_result
             
             config_data = load_config_result.data
             
             # 验证配置结构
-            validate_result = _config.validate_config_structure(config_data)
+            validate_result = config.validate_config_structure(config_data)
             if not validate_result.is_success:
                 return validate_result
             
@@ -133,27 +132,18 @@ class KeyRecoveryManager:
             rebuilt_config = {}
             recovered_encrypted_keys = []
             for file_name in keys_dir.iterdir():
-                key_info = self.__parse_key_information(file_name.name, keys_dir)
-                if key_info is None:
+                result = self.__parse_key_information(file_name.name, keys_dir)
+                if result is None:
                     continue
-                
-                key_id, key_size, is_encrypted, private_path, public_path = key_info
-                
-                # 跳过无对应公钥的私钥文件
-                if not Path(public_path).exists():
+
+                key_id, key_info = result
+
+                if not Path(key_info["public_key_path"]).exists():
                     continue
-                
-                # 构建密钥配置信息
-                rebuilt_config[key_id] = {
-                    "private_key_path": private_path,
-                    "public_key_path": public_path,
-                    "key_size": key_size,
-                    "created_time": datetime.now().isoformat(),
-                    "is_encrypted": is_encrypted
-                }
-                
-                # 记录加密密钥（用于后续回调通知）
-                if is_encrypted:
+
+                rebuilt_config[key_id] = dict(key_info)
+
+                if key_info["is_encrypted"]:
                     recovered_encrypted_keys.append(key_id)
                     
             # 无可用密钥文件
@@ -204,43 +194,41 @@ class KeyRecoveryManager:
             
         return Result(status=Status.SUCCESS)
 
-    def __parse_key_information(self, file_name: str, keys_dir: Path) -> tuple[str, int, bool, str, str] | None:
-        """从文件名解析密钥信息"""
+    def __parse_key_information(self, file_name: str, keys_dir: Path) -> tuple[str, config.KeyPairInfo] | None:
+        """从文件名解析密钥信息，返回 (key_id, key_info)"""
         try:
             PRIVATE_, PUBLIC_, ENCRYPTED, _PEM = _get_constants()
-            # 仅处理私钥文件（公钥通过私钥名推导）
             if not file_name.startswith(PRIVATE_) or not file_name.endswith(_PEM):
                 return None
-            
-            # 移除前缀和后缀
+
             base_name = file_name.replace(PRIVATE_, "").replace(_PEM, "")
             parts = base_name.split("_")
-            
-            # 至少需要 key_id + key_size
+
             if len(parts) < 2:
                 return None
-            
-            # 解析加密状态和密钥信息
+
             if parts[-1] == ENCRYPTED:
                 is_encrypted = True
                 key_size = int(parts[-2])
                 key_id = "_".join(parts[:-2])
-                
             else:
                 is_encrypted = False
                 key_size = int(parts[-1])
                 key_id = "_".join(parts[:-1])
-                
-            # key_id不能为空
+
             if not key_id:
                 return None
-            
-            # 构建文件路径
-            private_path = (keys_dir / file_name).resolve().as_posix()
+
             public_file_name = f"{PUBLIC_}{key_id}_{key_size}{_PEM}"
-            public_path = (keys_dir / public_file_name).resolve().as_posix()
-            return key_id, key_size, is_encrypted, private_path, public_path
-        
+            key_info = config.KeyPairInfo(
+                private_key_path=(keys_dir / file_name).resolve().as_posix(),
+                public_key_path=(keys_dir / public_file_name).resolve().as_posix(),
+                key_size=key_size,
+                created_time=datetime.now().isoformat(),
+                is_encrypted=is_encrypted,
+            )
+            return key_id, key_info
+
         except Exception as e:
             error("密钥解析失败", f"{file_name}: {e}")
             return None

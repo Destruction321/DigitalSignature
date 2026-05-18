@@ -5,7 +5,7 @@ from abc import ABC, abstractmethod
 from tkinter import ttk, messagebox
 from tkinter.filedialog import askopenfilename
 from tkinter.scrolledtext import ScrolledText
-from typing import Callable, TYPE_CHECKING
+from typing import Callable, TypedDict, TYPE_CHECKING
 
 from ..._utils.constants import BASE_DIR
 from ..._utils.enums import Level
@@ -15,6 +15,17 @@ if TYPE_CHECKING:
     from ..._core.keys.managers import SingleKeyManager
     from ..._utils.ui_state_manager import UIStateManager
 
+
+class ButtonConfig(TypedDict):
+    """
+    操作按钮配置
+    
+    Attributes:
+        text (str): 按钮显示文本
+        command (Callable[[], None]): 按钮点击回调函数
+    """
+    text: str
+    command: Callable[[], None]
 
 class BaseSigningTab(ABC):
     """签名标签页基类"""
@@ -55,7 +66,7 @@ class BaseSigningTab(ABC):
 
     @property
     @abstractmethod
-    def _get_extra_buttons(self) -> list[dict]:
+    def _get_extra_buttons(self) -> list[ButtonConfig]:
         """子类注入自己的特有按钮"""
         ...
     
@@ -154,7 +165,7 @@ class BaseSigningTab(ABC):
             )
             return None
 
-        if not hasattr(self.__km, "private_key") or not hasattr(self.__km, "public_key"):
+        if self.__km.private_key is None or self.__km.public_key is None:
             self._show_warning(
                 "密钥管理器不完整！\n\n请确保密钥对正确加载，并且包含必要的公钥和私钥。"
             )

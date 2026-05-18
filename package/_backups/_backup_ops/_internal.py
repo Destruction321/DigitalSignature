@@ -7,11 +7,15 @@ from logging import warning, error
 from os import stat_result
 from pathlib import Path
 from shutil import copyfile, copytree, rmtree
-from typing import Callable, Final
+from typing import Callable, Final, TYPE_CHECKING
 
+from ..._utils.constants import BASE_DIR
 from ..._utils.enums import DirType, FileType
 from ..._utils.result import Status, Result
 from ..._utils.tools import get_path
+
+if TYPE_CHECKING:
+    from .._backup_list_type import BackupItem, BackupList
 
 
 """constants"""
@@ -43,7 +47,7 @@ def backup_data(data_type: DirType) -> Result:
     """
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     backup_type = DATA if data_type == DirType.FULL else data_type.value
-    backup_dir = Path(f"{backup_type}{BACKUP}{timestamp}").resolve().as_posix()
+    backup_dir = (Path(BASE_DIR).parent / f"{backup_type}{BACKUP}{timestamp}").resolve().as_posix()
         
     data_dir = get_path(DirType.FULL) if data_type == DirType.FULL else get_path(data_type)
     if not Path(data_dir).exists():
@@ -187,22 +191,20 @@ def calculate_backup_checksum(backup_dir: Path,
 
     return hash_sha256.hexdigest(), file_count, total_size
 
-def get_backups(backups: list[dict[str, str | Path | datetime | int]], current_dir: Path) -> None:
+def get_backups(backups: BackupList, current_dir: Path) -> None:
     """
     获取备份列表
-    
+
     Args:
-        backups (list[dict[str, str | Path | datetime | int]]):
-            用于存储备份信息的列表，函数会将备份信息添加到该列表中
-        
-        current_dir (Path): 当前目录路径，函数会在该目录下查找备份目录
+        backups (BackupList): 用于存储备份信息的列表
+        current_dir (Path): 当前目录路径
     """
     for item in current_dir.iterdir():
         if not item.is_dir() or not any(pattern in item.name for pattern in [BACKUP]):
             continue
 
         try:
-            backup_info = {
+            backup_info: BackupItem = {
                 "name": item.name,
                 "path": item,
                 "created_time": datetime.fromtimestamp(_get_creation_time(item.stat())),

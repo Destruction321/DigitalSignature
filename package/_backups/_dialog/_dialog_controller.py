@@ -2,7 +2,7 @@
 """备份管理对话框控制器"""
 from pathlib import Path
 from tkinter import messagebox
-from typing import Any, TYPE_CHECKING
+from typing import TYPE_CHECKING
 
 from .._backup_ops.ops import list_backups_with_integrity, delete_backup
 from .._verifier import Verifier
@@ -10,16 +10,17 @@ from ..._utils.tools import format_size
 from ..._utils.ui_state_manager import get_ui_state_manager
 
 if TYPE_CHECKING:
-    from tkinter import Widget
+    from tkinter import Misc
     from ._dialog_protocol import DialogProtocol
+    from .._backup_list_type import BackupItem, BackupList
 
 
 class Controller:
-    """备份管理对话框控制器。"""
-    def __init__(self, dialog_protocol: DialogProtocol, parent: Widget) -> None:
+    """备份管理对话框控制器"""
+    def __init__(self, dialog_protocol: DialogProtocol, parent: Misc) -> None:
         self.__dialog_protocol: DialogProtocol = dialog_protocol
         self.__verifier: Verifier = Verifier(parent)
-        self.__backup_items: list[dict] = []  # 备份列表
+        self.__backup_items: BackupList = []  # 备份列表
 
 
     """public methods"""
@@ -30,7 +31,7 @@ class Controller:
             messagebox.showerror("刷新备份", result.msg)
             return
 
-        backups: list[dict] = result.data
+        backups: BackupList = result.data
         self.__backup_items = backups
 
         self.__dialog_protocol.populate_list(backups)
@@ -52,7 +53,7 @@ class Controller:
             messagebox.showwarning("选择备份", "请先选择一个要删除的备份")
             return
 
-        selected_backup: dict = self.__backup_items[index]
+        selected_backup: BackupItem = self.__backup_items[index]
         confirm_msg = (
             f"确定要删除备份吗？\n\n"
             f"备份名称: {selected_backup["name"]}\n"
@@ -81,7 +82,7 @@ class Controller:
             messagebox.showwarning("选择备份", "请先选择一个备份")
             return
 
-        selected_backup: dict = self.__backup_items[index]
+        selected_backup: BackupItem = self.__backup_items[index]
         details = self.__build_details_text(selected_backup)
         self.__dialog_protocol.show_details(details)
         self.__dialog_protocol.select_tab(1)
@@ -93,7 +94,7 @@ class Controller:
             messagebox.showwarning("选择备份", "请先选择一个备份")
             return
 
-        selected_backup: dict = self.__backup_items[index]
+        selected_backup: BackupItem = self.__backup_items[index]
         self.__verifier.verify_single_backup(selected_backup, self.__on_single_verify_done)
 
     def verify_all_backups(self) -> None:
@@ -106,7 +107,7 @@ class Controller:
 
 
     """private methods"""
-    def __on_single_verify_done(self, backup: dict[str, Any]) -> None:
+    def __on_single_verify_done(self, backup: BackupItem) -> None:
         """单个备份验证完成后的回调：刷新列表，并同步更新详情区"""
         self.refresh_list()
 
@@ -119,14 +120,14 @@ class Controller:
             details = self.__build_details_text(current)
             self.__dialog_protocol.show_details(details)
 
-    def __on_all_verify_done(self, backup_items: list[dict[str, Any]]) -> None:
+    def __on_all_verify_done(self, backup_items: BackupList) -> None:
         """批量验证完成后的回调：用新数据更新列表"""
         self.__backup_items = backup_items
         self.refresh_list()
 
 
     @staticmethod
-    def __build_info_text(backups: list[dict]) -> str:
+    def __build_info_text(backups: BackupList) -> str:
         valid_backups = [b for b in backups if b.get("integrity_valid", False)]
         total_size = format_size(sum(b["size"] for b in backups))
         return (
@@ -136,7 +137,7 @@ class Controller:
         )
 
     @staticmethod
-    def __build_integrity_status(backups: list[dict]) -> tuple[str, str]:
+    def __build_integrity_status(backups: BackupList) -> tuple[str, str]:
         """返回 (状态文字, 颜色字符串)"""
         valid = [b for b in backups if b.get("integrity_valid", False)]
         ratio = len(valid) / len(backups) * 100
@@ -148,7 +149,7 @@ class Controller:
             return f"多数备份不完整 ({len(valid)}/{len(backups)})", "red"
 
     @staticmethod
-    def __build_details_text(backup: dict) -> str:
+    def __build_details_text(backup: BackupItem) -> str:
         """构建备份详情的纯文本内容"""
         back_up_path = Path(backup["path"])
         details = (
@@ -167,8 +168,8 @@ class Controller:
             if "integrity_message" in backup:
                 details += f"验证消息: {backup["integrity_message"]}\n"
 
-        if backup.get("checksum_data"):
-            checksum = backup["checksum_data"]
+        checksum = backup.get("checksum_data")
+        if checksum:
             details += (
                 f"\n校验和信息:\n"
                 f"  备份类型: {checksum.get("backup_type", "未知")}\n"

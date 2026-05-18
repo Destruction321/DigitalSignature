@@ -6,13 +6,30 @@ from hmac import compare_digest, new as hmac_new
 from os import environ, urandom
 from pathlib import Path
 from shutil import move
-from typing import Any
+from typing import NotRequired, TypedDict, cast
 
 from ..._utils.constants import DIRS
 from ..._utils.enums import DirType
 from ..._utils.result import Status, Result
 
 _HMAC_KEY_FILE = ".hmac_key"
+
+
+class KeyPairInfo(TypedDict):
+    """单个密钥对配置"""
+    private_key_path: str
+    public_key_path: str
+    key_size: int
+    created_time: str
+    is_encrypted: bool
+
+
+class ConfigData(TypedDict):
+    """配置文件顶层结构"""
+    key_pairs: dict[str, KeyPairInfo]
+    current_key_id: str | None
+    signature: NotRequired[str]
+    version: NotRequired[str]
 
 
 """public methods"""
@@ -40,7 +57,7 @@ def load_config(config_file: str, verify_integrity: bool = True) -> Result:
             
         # 验证完整性
         secret_key = _get_secret_key()
-        if not _verify_config(config_data, secret_key):
+        if not _verify_config(cast(ConfigData, config_data), secret_key):
             message = "配置文件完整性校验失败（可能被篡改）"
             return Result(status=Status.CONFIG_VERIFY_FAILED, msg=message)
             
@@ -55,31 +72,30 @@ def load_config(config_file: str, verify_integrity: bool = True) -> Result:
     except Exception as e:
         return Result(status=Status.SYSTEM_ERROR, msg=f"配置文件恢复出现意外错误：{e}")
 
-def save_config(config: dict[str, Any], config_file: str, sign: bool = True) -> Result:
+def save_config(config: ConfigData, config_file: str, sign: bool = True) -> Result:
     """
     保存配置文件
-    
+
     Args:
-        config (dict[str, Any]): 配置数据
-        config_file (str): 配置文件路径
-        sign (bool): 是否为配置添加数字签名（默认True）
+        config: 配置数据
+        config_file: 配置文件路径
+        sign: 是否为配置添加数字签名
 
     Returns:
-        save_result (Result): 保存结果
+        save_result: 保存结果
     """
     try:
         config_path = Path(config_file)
         config_path.parent.mkdir(parents=True, exist_ok=True)
         
         # 签名配置
-        config_to_save = config
         if sign:
             secret_key = _get_secret_key()
-            config_to_save = _sign_config(secret_key, config)
+            _sign_config(secret_key, config)
             
         # 写入文件
         with open(config_file, "w", encoding="utf-8") as f:
-            json.dump(config_to_save, f, ensure_ascii=False, indent=2)
+            json.dump(config, f, ensure_ascii=False, indent=2)
             
         return Result(status=Status.SUCCESS, msg=f"配置文件保存成功: {config_file}")
     
@@ -128,7 +144,7 @@ def migrate_config(old_path: str, new_path: str) -> Result:
         return Result(status=Status.CONFIG_SAVE_FAILED, msg=f"配置迁移失败: {str(e)}")
 
 
-def validate_config_structure(config_data: dict) -> Result:
+def validate_config_structure(config_data: ConfigData) -> Result:
     """
     验证配置结构完整性
     
@@ -188,34 +204,27 @@ def _get_secret_key() -> bytes:
     key_file.write_bytes(new_key)
     return new_key
 
-def _sign_config(secret_key: bytes, config_data: dict) -> dict:
+def _sign_config(secret_key: bytes, config_data: ConfigData) -> None:
     """为配置数据添加数字签名"""
     config_hash = _calculate_config_hash(secret_key, config_data)
+    config_data["signature"] = config_hash
+    config_data["version"] = "1.0"
 
-    signed_config = config_data.copy()
-    signed_config["signature"] = config_hash
-    signed_config["version"] = "1.0"  # 配置版本
-
-    return signed_config
-
-def _verify_config(config_data: dict, secret_key: bytes) -> bool:
-    """验证配置数据的完整性"""
+def _verify_config(config_data: ConfigData, secret_key: bytes) -> bool:
+    """验证配置数据的完整性（不修改原始 dict）"""
     if "signature" not in config_data:
         return False
 
-    # 提取签名并创建验证用的配置副本
     stored_signature = config_data["signature"]
-    config_to_verify = config_data.copy()
+    config_to_verify = config_data
     config_to_verify.pop("signature", None)
     config_to_verify.pop("version", None)
 
-    # 计算当前配置的哈希
     calculated_hash = _calculate_config_hash(secret_key, config_to_verify)
-
-    # 使用恒定时间比较来防止时序攻击
     return compare_digest(stored_signature, calculated_hash)
 
-def _calculate_config_hash(secret_key: bytes, config_data: dict) -> str:
+
+def _calculate_config_hash(secret_key: bytes, config_data: ConfigData) -> str:
     """计算配置数据的哈希值"""
     normalized_config = config_data.copy() # 规范化配置数据以确保一致的序列化
 

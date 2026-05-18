@@ -2,11 +2,11 @@
 """文件清理组件，统一管理所有清理操作"""
 from datetime import datetime
 from json import load
-from .._core.keys._config import save_config
 from logging import error
 from pathlib import Path
-from typing import Callable
+from typing import cast, Callable
 
+from .._core.keys.config import ConfigData, save_config
 from .._utils.constants import KEYS_CONFIG_FILE
 from .._utils.enums import DirType, FileType, KeyType
 from .._utils.result import Status, Result
@@ -156,7 +156,7 @@ def cleanup_orphaned_keys(valid_key_ids: list[str] | None = None) -> Result:
     if isinstance(orphaned_key_ids, Result):
         return orphaned_key_ids
     
-    result = _update_config(orphaned_key_ids, config_path, config_data)
+    result = _update_config(orphaned_key_ids, config_path, cast(ConfigData, config_data))
     if result is not None:
         return result
     
@@ -192,7 +192,9 @@ def _cleanup_directory_files(dir_path: Path, condition_func: Callable[[str], boo
     return deleted_count
 
 def _parse_key_id(file_name: str) -> tuple[str | None, bool]:
-    """从文件名解析 key_id 以及是否为私钥"""
+    """从文件名解析 key_id 以及是否为私钥
+    注意：如果修改此函数，请同步更新 _core/keys/_recovery.py 中的 __parse_key_information
+    """
     is_private = file_name.startswith(f"{_PRIVATE}_")
     is_public = file_name.startswith(f"{_PUBLIC}_")
 
@@ -270,7 +272,7 @@ def _del_orphaned_keys(key_files: dict, valid_key_ids: list[str]) -> tuple[Resul
                 
     return orphaned_key_ids, deleted_count
 
-def _update_config(orphaned_key_ids: set[str], config_path: Path, config_data: dict) -> Result | None:
+def _update_config(orphaned_key_ids: set[str], config_path: Path, config_data: ConfigData) -> Result | None:
     """更新配置"""
     if not orphaned_key_ids or "key_pairs" not in config_data:
         return
