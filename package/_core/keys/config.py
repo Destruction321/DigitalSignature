@@ -16,7 +16,16 @@ _HMAC_KEY_FILE = ".hmac_key"
 
 
 class KeyPairInfo(TypedDict):
-    """单个密钥对配置"""
+    """
+    单个密钥对配置
+    
+    Attributes:
+        private_key_path (str): 私钥文件路径
+        public_key_path (str): 公钥文件路径
+        key_size (int): 密钥大小
+        created_time (str): 创建时间
+        is_encrypted (bool): 是否已加密
+    """
     private_key_path: str
     public_key_path: str
     key_size: int
@@ -25,7 +34,15 @@ class KeyPairInfo(TypedDict):
 
 
 class ConfigData(TypedDict):
-    """配置文件顶层结构"""
+    """
+    配置文件顶层结构
+    
+    Attributes:
+        key_pairs (dict[str, KeyPairInfo]): 密钥对信息字典，键为密钥ID
+        current_key_id (str | None): 当前使用的密钥ID，若无则为None
+        signature (str, optional): 配置文件的数字签名
+        version (str, optional): 配置文件版本号
+    """
     key_pairs: dict[str, KeyPairInfo]
     current_key_id: str | None
     signature: NotRequired[str]
