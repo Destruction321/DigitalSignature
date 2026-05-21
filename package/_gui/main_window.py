@@ -58,8 +58,8 @@ class MainWindow:
     def setup_main_window(self) -> None:
         """设置主窗口"""
         self.__root.title("数字签名系统 - 哈尔滨工程大学")
-        self.__root.geometry("1000x700")
-        self.__root.minsize(900, 600)
+        self.__root.geometry("1000x850")
+        self.__root.minsize(900, 775)
         self.__root.columnconfigure(0, weight=1)
         self.__root.rowconfigure(0, weight=1)
         

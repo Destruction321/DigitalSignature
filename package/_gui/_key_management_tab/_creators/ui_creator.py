@@ -83,7 +83,6 @@ class UICreator:
         self.__create_directory_info()
         self.__create_key_creation_area()
         self.__create_key_management_area()
-        self.__parent.winfo_toplevel().minsize(800, 800)
 
 
     """private methods"""
@@ -97,10 +96,7 @@ class UICreator:
     def __create_directory_info(self) -> None:
         """创建目录信息区域"""
         dir_frame = ttk.Frame(self.__parent)
-        dir_frame.grid_columnconfigure(0, weight=1)
-        dir_frame.grid_columnconfigure(1, weight=0)
-        dir_frame.grid(row=0, column=0, sticky=tk.EW, pady=(0, 5))
-
+        dir_frame.grid(row=0, column=0, sticky=tk.EW, pady=5)
         keys_dir = Path(get_path(DirType.KEYS)).as_posix()
         ttk.Label(
             dir_frame,
@@ -114,7 +110,7 @@ class UICreator:
             text=f"日志存储目录: {LOG_DIR}",
             font=("微软雅黑", 9),
             foreground="red",
-        ).grid(row=0, column=1, sticky=tk.E)
+        ).grid(row=1, column=0, sticky=tk.W)
 
     def __create_key_creation_area(self) -> None:
         """创建密钥创建区域"""
