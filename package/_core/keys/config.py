@@ -9,10 +9,8 @@ from shutil import move
 from typing import NotRequired, TypedDict, cast
 
 from ..._utils.constants import DIRS
-from ..._utils.enums import DirType
+from ..._utils.enums import DirType, FileType, KeyType
 from ..._utils.result import Status, Result
-
-_HMAC_KEY_FILE = ".hmac_key"
 
 
 class KeyPairInfo(TypedDict):
@@ -204,10 +202,52 @@ def validate_config_structure(config_data: ConfigData) -> Result:
             
     return Result(status=Status.SUCCESS, msg="配置结构验证通过")
 
+def parse_key_filename(file_name: str) -> tuple[str, int, bool, bool] | None:
+    """
+    从密钥文件名解析 (key_id, key_size, is_encrypted, is_private)
+    
+    Args:
+        file_name (str): 密钥文件名
+
+    Returns:
+        tuple[str, int, bool, bool] | None: 解析结果，非密钥文件返回 None
+    """
+    PRIVATE_ = f"{KeyType.PRIVATE.value}_"
+    PUBLIC_ = f"{KeyType.PUBLIC.value}_"
+    _ENCRYPTED = KeyType.ENCRYPTED.value
+    _KEY = FileType.KEY.value
+    
+    if not file_name.endswith(_KEY):
+        return None
+
+    is_private = file_name.startswith(PRIVATE_)
+    is_public = file_name.startswith(PUBLIC_)
+    if not is_private and not is_public:
+        return None
+
+    base = file_name.replace(PRIVATE_, "").replace(PUBLIC_, "").replace(_KEY, "")
+    parts = base.split("_")
+    if len(parts) < 2:
+        return None
+
+    if parts[-1] == _ENCRYPTED:
+        is_encrypted = True
+        key_size = int(parts[-2])
+        key_id = "_".join(parts[:-2])
+    else:
+        is_encrypted = False
+        key_size = int(parts[-1])
+        key_id = "_".join(parts[:-1])
+
+    if not key_id:
+        return None
+    return key_id, key_size, is_encrypted, is_private
+
 
 """private methods"""
 def _get_secret_key() -> bytes:
     """获取签名密钥"""
+    _HMAC_KEY_FILE = ".hmac_key"
     secret_key = environ.get("CONFIG_SECRET_KEY", "")
     if secret_key:
         return secret_key.encode()

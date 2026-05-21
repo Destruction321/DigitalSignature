@@ -1,8 +1,8 @@
 # package/_gui/_key_management_tab/_creators/_key_creator.py
 """密钥创建模块"""
+import tkinter as tk
 from dataclasses import dataclass
 from datetime import datetime
-import tkinter as tk
 from tkinter import END, messagebox
 from typing import Callable, TYPE_CHECKING
 

@@ -8,7 +8,7 @@ from ._dialog import dialog_show
 from ._backup_ops.ops import create_backup, list_backups_with_integrity
 from ._restore import Restore
 from .._utils.enums import DirType
-from .._gui.helpers import reload_current_key
+from .._utils.result import Status
 from .._utils.ui_state_manager import get_ui_state_manager
 
 if TYPE_CHECKING:
@@ -60,13 +60,39 @@ class BackUps:
 
         dialog = Restore(
             refresh_key_callback=self.__refresh_callback,
-            reload_key_callback=lambda: reload_current_key(self.__multi_km, self.__key_loader)
+            reload_key_callback=self.reload_current_key
         )
         dialog.show(self.__root)
 
     def backup_manager_dialog(self) -> None:
         """统一备份管理对话框"""
         dialog_show(self.__root)
+
+    def reload_current_key(self, click_reload_btn: bool = False) -> None:
+        """
+        重新加载当前密钥
+
+        Args:
+            multi_km (MultiKeyManager): 当前的多密钥对管理器
+            key_loader (KeyLoader): 当前的密钥加载器
+            click_reload_btn (bool): 是否由按钮触发，默认为False（非按钮触发）
+        """
+        if self.__multi_km.current_key_id is None:
+            if click_reload_btn:
+                messagebox.showwarning("警告", "没有加载的密钥对")
+            return
+
+        reload_result = self.__key_loader.load_key(self.__multi_km.current_key_id)
+
+        if reload_result.is_success:
+            messagebox.showinfo("成功", reload_result.msg)
+            return
+
+        if reload_result.status == Status.CANCEL_INPUT:
+            messagebox.showinfo("取消加载", reload_result.msg)
+            return
+
+        messagebox.showerror("加载失败", f"重新加载密钥失败:\n\n{reload_result.msg}")
 
 
     """private methods"""

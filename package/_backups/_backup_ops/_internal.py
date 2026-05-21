@@ -20,11 +20,8 @@ if TYPE_CHECKING:
 
 """constants"""
 BACKUP: Final[str] = DirType.BACKUP.value
-
 DATA: Final[str] = "data"
-
 CHECKSUM_FILE: Final[str] = "backup_checksum.json"
-
 DATA_TYPE: Final[dict[DirType, str]] = {
     DirType.FULL: "数据",
     DirType.KEYS: "密钥",

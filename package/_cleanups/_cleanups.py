@@ -2,7 +2,7 @@
 """数字签名窗口清理模块"""
 import tkinter as tk
 from tkinter import messagebox, ttk
-from typing import TYPE_CHECKING
+from typing import Callable, TYPE_CHECKING
 
 from . import _cleanup_ops
 from .._utils.enums import DirType, Level
@@ -14,11 +14,12 @@ if TYPE_CHECKING:
 
 class CleanUps:
     """数字签名窗口清理模块"""
-    def __init__(self, root: tk.Tk) -> None:
+    def __init__(self, root: tk.Tk, refresh_key_list: Callable[[], None]) -> None:
         self.__cleanup_days_threshold: int = 30
         self.__root: tk.Tk = root
         self.__ui_state_mgr: UIStateManager = get_ui_state_manager()
-    
+        self.__refresh_key_list: Callable[[], None] = refresh_key_list
+
     
     """public methods -- bind to buttons"""
     def cleanup_all_files(self) -> None:
@@ -30,6 +31,7 @@ class CleanUps:
         if selected_days is not None:
             self.__cleanup_days_threshold = selected_days
             cleanup_result = _cleanup_ops.cleanup_all_files(selected_days)
+            self.__refresh_key_list()
             self.__handle_cleanup_result(cleanup_result)
 
     def cleanup_temp_files(self) -> None:
@@ -40,10 +42,11 @@ class CleanUps:
     def cleanup_orphaned_keys(self) -> None:
         """清理孤立的密钥文件"""
         cleanup_result = _cleanup_ops.cleanup_orphaned_keys()
+        self.__refresh_key_list()
         self.__handle_cleanup_result(cleanup_result)
 
     def cleanup_old_files(self) -> None:
-        """清理旧文件"""
+        """清理旧文件，不包括密钥文件"""
         # 弹出对话框让用户选择阈值天数
         selected_days = self.__show_days_selection_dialog()
 

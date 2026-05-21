@@ -6,8 +6,8 @@ from pathlib import Path
 from typing import Callable, TYPE_CHECKING
 
 from . import config
+from ..._utils import enums
 from ..._utils.constants import KEYS_CONFIG_FILE
-from ..._utils.enums import DirType, FileType, KeyType, PassWord
 from ..._utils.result import Status, Result
 from ..._utils.tools import get_path
 
@@ -19,15 +19,15 @@ class KeyRecoveryManager:
     """密钥恢复管理器"""
     def __init__(self, multi_key_manager: MultiKeyManager):
         self.__multi_km: MultiKeyManager = multi_key_manager
-        self.__recovery_callback: Callable[[str, PassWord], None] | None = None
+        self.__recovery_callback: Callable[[str, enums.PassWord], None] | None = None
 
 
     @property
-    def recovery_callback(self) -> Callable[[str, PassWord], None] | None:
+    def recovery_callback(self) -> Callable[[str, enums.PassWord], None] | None:
         return self.__recovery_callback
 
     @recovery_callback.setter
-    def recovery_callback(self, callback: Callable[[str, PassWord], None]) -> None:
+    def recovery_callback(self, callback: Callable[[str, enums.PassWord], None]) -> None:
         self.__recovery_callback = callback
 
 
@@ -122,7 +122,7 @@ class KeyRecoveryManager:
     def __try_rebuild_from_files(self, click_btn: bool = False) -> Result:
         """第二层：从本地密钥文件重建配置"""
         try:
-            keys_dir = Path(get_path(DirType.KEYS))
+            keys_dir = Path(get_path(enums.DirType.KEYS))
 
             # 检查密钥目录是否存在
             if not keys_dir.exists():
@@ -160,7 +160,7 @@ class KeyRecoveryManager:
             # 通知UI加密密钥已恢复
             if click_btn and recovered_encrypted_keys and self.__recovery_callback:
                 for key_id in recovered_encrypted_keys:
-                    self.__recovery_callback(key_id, PassWord.RECOVERY)
+                    self.__recovery_callback(key_id, enums.PassWord.RECOVERY)
                     
             # 恢复成功
             message = f"从本地文件重建配置成功，恢复 {len(rebuilt_config)} 个密钥对"
@@ -197,29 +197,14 @@ class KeyRecoveryManager:
     def __parse_key_information(self, file_name: str, keys_dir: Path) -> tuple[str, config.KeyPairInfo] | None:
         """从文件名解析密钥信息，返回 (key_id, key_info)"""
         try:
-            PRIVATE_, PUBLIC_, ENCRYPTED, _PEM = _get_constants()
-            if not file_name.startswith(PRIVATE_) or not file_name.endswith(_PEM):
+            PUBLIC = enums.KeyType.PUBLIC.value
+            KEY = enums.FileType.KEY.value
+            result = config.parse_key_filename(file_name)
+            if result is None or not result[3]:
                 return None
 
-            base_name = file_name.replace(PRIVATE_, "").replace(_PEM, "")
-            parts = base_name.split("_")
-
-            if len(parts) < 2:
-                return None
-
-            if parts[-1] == ENCRYPTED:
-                is_encrypted = True
-                key_size = int(parts[-2])
-                key_id = "_".join(parts[:-2])
-            else:
-                is_encrypted = False
-                key_size = int(parts[-1])
-                key_id = "_".join(parts[:-1])
-
-            if not key_id:
-                return None
-
-            public_file_name = f"{PUBLIC_}{key_id}_{key_size}{_PEM}"
+            key_id, key_size, is_encrypted, _ = result
+            public_file_name = f"{PUBLIC}_{key_id}_{key_size}{KEY}"
             key_info = config.KeyPairInfo(
                 private_key_path=(keys_dir / file_name).resolve().as_posix(),
                 public_key_path=(keys_dir / public_file_name).resolve().as_posix(),
@@ -232,13 +217,3 @@ class KeyRecoveryManager:
         except Exception as e:
             error("密钥解析失败", f"{file_name}: {e}")
             return None
-       
-        
-def _get_constants() -> tuple[str, str, str, str]:
-    """字符串导出"""
-    return (
-        f"{KeyType.PRIVATE.value}_",
-        f"{KeyType.PUBLIC.value}_",
-        KeyType.ENCRYPTED.value,
-        FileType.KEY.value
-    )

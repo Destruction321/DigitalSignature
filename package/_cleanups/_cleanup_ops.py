@@ -6,7 +6,7 @@ from logging import error
 from pathlib import Path
 from typing import cast, Callable
 
-from .._core.keys.config import ConfigData, save_config
+from .._core.keys import config
 from .._utils.constants import KEYS_CONFIG_FILE
 from .._utils.enums import DirType, FileType, KeyType
 from .._utils.result import Status, Result
@@ -15,8 +15,6 @@ from .._utils.ui_state_manager import get_ui_state_manager
 
 
 """文件类型导出"""
-_PEM = FileType.KEY.value
-_ENCRYPTED = f"_{KeyType.ENCRYPTED.value}"
 _PRIVATE = KeyType.PRIVATE.value
 _PUBLIC = KeyType.PUBLIC.value
 
@@ -156,7 +154,7 @@ def cleanup_orphaned_keys(valid_key_ids: list[str] | None = None) -> Result:
     if isinstance(orphaned_key_ids, Result):
         return orphaned_key_ids
     
-    result = _update_config(orphaned_key_ids, config_path, cast(ConfigData, config_data))
+    result = _update_config(orphaned_key_ids, config_path, cast(config.ConfigData, config_data))
     if result is not None:
         return result
     
@@ -192,36 +190,18 @@ def _cleanup_directory_files(dir_path: Path, condition_func: Callable[[str], boo
     return deleted_count
 
 def _parse_key_id(file_name: str) -> tuple[str | None, bool]:
-    """从文件名解析 key_id 以及是否为私钥
-    注意：如果修改此函数，请同步更新 _core/keys/_recovery.py 中的 __parse_key_information
-    """
-    is_private = file_name.startswith(f"{_PRIVATE}_")
-    is_public = file_name.startswith(f"{_PUBLIC}_")
-
-    if not is_private and not is_public:
-        return None, is_private
-
-    # 移除扩展名
-    base_name = file_name.replace(_PEM, "")
-
-    # 处理加密私钥
-    if is_private and base_name.endswith(_ENCRYPTED):
-        base_name = base_name.replace(_ENCRYPTED, "")
-
-    # 解析格式：{prefix}_{key_id}_{key_size}
-    parts = base_name.split("_")
-    if len(parts) < 3:
-        return None, is_private
-
-    # key_id 是 parts[1:-1] 的组合（因为 key_id 可能包含下划线）
-    key_id = "_".join(parts[1:-1])  # 中间部分是 key_id
-
+    """从文件名解析 key_id 以及是否为私钥"""
+    result = config.parse_key_filename(file_name)
+    if result is None:
+        return None, False
+    key_id, _, _, is_private = result
     return key_id, is_private
 
 
 """Auxiliary methods for 'cleanup_orphaned_keys'"""
 def _get_orphaned_keys(keys_dir: Path) -> dict:
     """获取孤立密钥列表"""
+    _PEM = FileType.KEY.value
     key_files = {}
     for file_path in keys_dir.iterdir():
         if file_path.suffix != _PEM:
@@ -272,7 +252,7 @@ def _del_orphaned_keys(key_files: dict, valid_key_ids: list[str]) -> tuple[Resul
                 
     return orphaned_key_ids, deleted_count
 
-def _update_config(orphaned_key_ids: set[str], config_path: Path, config_data: ConfigData) -> Result | None:
+def _update_config(orphaned_key_ids: set[str], config_path: Path, config_data: config.ConfigData) -> Result | None:
     """更新配置"""
     if not orphaned_key_ids or "key_pairs" not in config_data:
         return
@@ -287,7 +267,7 @@ def _update_config(orphaned_key_ids: set[str], config_path: Path, config_data: C
         del config_data["key_pairs"][key_id]
         
     try:
-        save_result = save_config(config_data, str(config_path))
+        save_result = config.save_config(config_data, str(config_path))
         if not save_result.is_success:
             return save_result
 

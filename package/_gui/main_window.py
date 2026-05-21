@@ -3,9 +3,8 @@
 import tkinter as tk
 from pathlib import Path
 from tkinter import ttk
-from typing import Callable, TYPE_CHECKING
+from typing import Callable, cast, TYPE_CHECKING
 
-from .helpers import reload_current_key
 from ._key_management_tab import KeyManagementTab
 from ._signing_tabs import FileSigningTab, TextSigningTab
 from .._backups import BackUps
@@ -123,7 +122,7 @@ class MainWindow:
         self.__text_tab = TextSigningTab(text_tab)
         self.__file_tab = FileSigningTab(file_tab)
         
-        self.__cleanups = CleanUps(self.__root)
+        self.__cleanups = CleanUps(self.__root, self.__key_tab.refresh_key_list)
         self.__backups = BackUps(
             root=self.__root,
             backup_buttons=self.__backup_buttons,
@@ -146,13 +145,9 @@ class MainWindow:
         button_row1: ttk.Frame = ttk.Frame(tools_container)
         button_row1.pack(fill=tk.X, expand=True, pady=2)
 
-        buttons_row1: list[tuple[str, Callable[[], None]]] = [(
-            "重新加载密钥",
-            lambda: reload_current_key(
-                multi_km=self.__multi_km,
-                key_loader=self.__key_loader,
-                click_reload_btn=True
-            )),
+        backups = cast(BackUps, self.__backups)
+        buttons_row1: list[tuple[str, Callable[[], None]]] = [
+            ("重新加载密钥", lambda: backups.reload_current_key(click_reload_btn=True)),
             ("刷新目录信息", self.__ui_state_mgr.update_dir_labels)
         ]
 
