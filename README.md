@@ -5,10 +5,10 @@
 用 AI 两个星期速成 lj 代码这一块，仅供娱乐
 
 1. 编写环境：`Window 11`，`AMD64`，`Python 3.14`
-2. 安装依赖：
+2. 安装环境与依赖：
 
    ```bash
-   pip install -r requirements.txt
+   uv sync
    ```
 
 3. 程序入口：`main.py`

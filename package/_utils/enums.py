@@ -6,12 +6,12 @@ from enum import Enum, unique
 @unique
 class DirType(Enum):
     """目录类型枚举"""
-    FULL = "full"
+    DATA = "data"
     KEYS = "keys"
-    TEXTS = "texts"
-    SIGNATURES = "signatures"
+    TEXTS = "txts"
+    SIGNATURES = "sigs"
     TEMP = "temp"
-    BACKUP = "_backup_"
+    BACKUPS = "backups"
     UNKNOWN = "unknown"
     
 @unique

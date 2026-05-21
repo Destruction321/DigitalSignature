@@ -6,11 +6,11 @@ from json import dump
 from logging import warning, error
 from os import stat_result
 from pathlib import Path
-from shutil import copyfile, copytree, rmtree
+from shutil import copyfile, copytree, ignore_patterns, rmtree
 from typing import Callable, Final, TYPE_CHECKING
 
 from ..._utils.constants import BASE_DIR
-from ..._utils.enums import DirType, FileType
+from ..._utils.enums import DirType
 from ..._utils.result import Status, Result
 from ..._utils.tools import get_path
 
@@ -19,11 +19,11 @@ if TYPE_CHECKING:
 
 
 """constants"""
-BACKUP: Final[str] = DirType.BACKUP.value
-DATA: Final[str] = "data"
+BACKUP: Final[str] = "_backup_"
 CHECKSUM_FILE: Final[str] = "backup_checksum.json"
+_BACKUP_IGNORE = ignore_patterns("*log*")
 DATA_TYPE: Final[dict[DirType, str]] = {
-    DirType.FULL: "数据",
+    DirType.DATA: "数据",
     DirType.KEYS: "密钥",
     DirType.TEXTS: "文本",
     DirType.SIGNATURES: "签名"
@@ -36,22 +36,24 @@ def backup_data(data_type: DirType) -> Result:
     通用备份方法
     
     Args:
-        data_type (DirType): 备份类型（full=完整备份，keys=密钥备份，texts=文本备份，signatures=签名备份）
+        data_type (DirType): 备份类型（data=完整备份，keys=密钥备份，texts=文本备份，signatures=签名备份）
         backup_dir (str | None): 备份目录路径（None=自动生成目录）
     
     Returns:
         result (Result): 备份结果，成功时包含备份路径和结果消息
     """
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    backup_type = DATA if data_type == DirType.FULL else data_type.value
-    backup_dir = (Path(BASE_DIR).parent / f"{backup_type}{BACKUP}{timestamp}").resolve().as_posix()
+    backup_type = data_type.value
+    backup_dir = (
+        Path(BASE_DIR).parent / DirType.BACKUPS.value / backup_type / f"{backup_type}{BACKUP}{timestamp}"
+    ).resolve().as_posix()
         
-    data_dir = get_path(DirType.FULL) if data_type == DirType.FULL else get_path(data_type)
+    data_dir = get_path(data_type)
     if not Path(data_dir).exists():
         return Result(status=Status.DIR_NOT_FOUND, msg=f"数据目录不存在: {data_dir}")
     
     try:
-        copytree(data_dir, backup_dir)
+        copytree(data_dir, backup_dir, ignore=_BACKUP_IGNORE)
         return Result(
             status=Status.SUCCESS,
             data=backup_dir,
@@ -66,7 +68,7 @@ def backup_data(data_type: DirType) -> Result:
 
 def restore_full_backup(backup_dir: Path, _data_type: DirType, overwrite: bool) -> Result:
     """恢复完整备份"""
-    data_dir = Path(get_path(DirType.FULL))
+    data_dir = Path(get_path(DirType.DATA))
     if overwrite and data_dir.exists():
         rmtree(data_dir)
 
@@ -188,55 +190,44 @@ def calculate_backup_checksum(backup_dir: Path,
 
     return hash_sha256.hexdigest(), file_count, total_size
 
-def get_backups(backups: BackupList, current_dir: Path) -> None:
+def get_backups(backups: BackupList, backups_dir: Path) -> None:
     """
-    获取备份列表
+    获取备份列表，扫描 backups/ 下各类型子目录中的备份
 
     Args:
-        backups (BackupList): 用于存储备份信息的列表
-        current_dir (Path): 当前目录路径
+        backups: 用于存储备份信息的列表
+        backups_dir: 备份根目录路径
     """
-    for item in current_dir.iterdir():
-        if not item.is_dir() or not any(pattern in item.name for pattern in [BACKUP]):
+    if not backups_dir.exists():
+        return
+
+    for type_dir in backups_dir.iterdir():
+        if not type_dir.is_dir():
             continue
 
-        try:
-            backup_info: BackupItem = {
-                "name": item.name,
-                "path": item,
-                "created_time": datetime.fromtimestamp(_get_creation_time(item.stat())),
-                "size": _get_directory_size(item)
-            }
-            backups.append(backup_info)
-        except Exception as e:
-            error(f"无法访问备份目录 {item.as_posix()}: {e}")
-            continue
+        for item in type_dir.iterdir():
+            if not item.is_dir() or BACKUP not in item.name:
+                continue
+
+            try:
+                backup_info: BackupItem = {
+                    "name": f"{item.name}",
+                    "path": item,
+                    "created_time": datetime.fromtimestamp(_get_creation_time(item.stat())),
+                    "size": _get_directory_size(item),
+                }
+                backups.append(backup_info)
+            except Exception as e:
+                error(f"无法访问备份目录 {item.as_posix()}: {e}")
+                continue
+    
+    backups.sort(key=lambda x: (x["name"], x["created_time"], x["size"]))
 
 def detect_backup_type(backup_dir: Path) -> DirType:
-    """
-    检测备份类型
-    
-    Args:
-        backup_dir (Path): 备份目录路径
-        
-    Returns:
-        dir_type (DirType): 备份类型
-    """
-    backup_name = backup_dir.name
-    KEYS, TEXTS, SIGNATURES = _get_dir_type()
-    if backup_name.startswith(f"{DATA}{BACKUP}"):
-        return DirType.FULL
-    
-    if backup_name.startswith(f"{KEYS}{BACKUP}"):
-        return DirType.KEYS
-    
-    if backup_name.startswith(f"{TEXTS}{BACKUP}"):
-        return DirType.TEXTS
-    
-    if backup_name.startswith(f"{SIGNATURES}{BACKUP}"):
-        return DirType.SIGNATURES
-    
-    return _inferred_type(backup_dir)
+    """通过父目录名检测备份类型"""
+    parent_name = backup_dir.parent.name
+    type_map = {d.value: d for d in (DirType.DATA, DirType.KEYS, DirType.TEXTS, DirType.SIGNATURES)}
+    return type_map.get(parent_name, DirType.UNKNOWN)
 
 
 """private methods"""
@@ -250,28 +241,6 @@ def _rm_dir(dir: Path, data_type: DirType) -> Result | None:
         except Exception as e:
             message = f"清理{DATA_TYPE[data_type]}目录失败: {e}"
             return Result(status=Status.CLEANUP_FAILED, msg=message)
-
-def _get_dir_type() -> tuple[str, str, str]:
-    """导出目录类型"""
-    return (
-        DirType.KEYS.value,
-        DirType.TEXTS.value,
-        DirType.SIGNATURES.value
-    )
-
-def _inferred_type(backup_dir: Path) -> DirType:
-    """通过目录内容推断类型"""
-    _PEM, _TXT, _SIG = _get_file_type()
-    if (backup_dir / DirType.KEYS.value).exists():
-        return DirType.FULL
-    if _extension_exists(backup_dir, _PEM):
-        return DirType.KEYS
-    if _extension_exists(backup_dir, _TXT):
-        return DirType.TEXTS
-    if _extension_exists(backup_dir, _SIG):
-        return DirType.SIGNATURES
-
-    return DirType.UNKNOWN
 
 def _copy_tree_excluding_checksum(src_dir: Path, dst_dir: Path) -> None:
     """递归复制目录树，排除校验和文件"""
@@ -309,27 +278,3 @@ def _get_creation_time(stat: stat_result) -> float:
         return birthtime
     
     return getattr(stat, "st_ctime", getattr(stat, "st_mtime", 0.0))
-
-def _get_file_type() -> tuple[str, str, str]:
-    """导出文件类型"""
-    return (
-        FileType.KEY.value,
-        FileType.TEXT.value,
-        FileType.SIGNATURE.value
-    )
-
-def _extension_exists(backup_dir: Path, extension: str) -> bool:
-    """通过扩展名判断"""
-    for file_name in backup_dir.iterdir():
-        # 构建完整路径
-        full_path = backup_dir / file_name
-        
-        # 检查是否为文件
-        if not full_path.is_file():
-            continue  # 跳过目录
-        
-        # 检查文件扩展名
-        if str(file_name).endswith(extension):
-            return True  # 找到就立即返回
-    
-    return False  # 遍历完没找到

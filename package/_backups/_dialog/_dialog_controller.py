@@ -154,7 +154,7 @@ class Controller:
         back_up_path = Path(backup["path"])
         details = (
             f"备份名称: {backup["name"]}\n"
-            f"完整路径: {backup["path"]}\n"
+            f"完整路径: {back_up_path.as_posix()}\n"
             f"创建时间: {backup["created_time"].strftime("%Y-%m-%d %H:%M:%S")}\n"
             f"备份大小: {format_size(backup["size"])}\n"
             f"目录存在: {"是" if back_up_path.exists() else "否"}\n"

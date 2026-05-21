@@ -76,26 +76,27 @@ def sign_file(key_manager: SingleKeyManager,
         return Result(status=Status.SIGN_FAILED, msg=f"签名失败: {str(e)}")
 
 
-def verify_signature(key_manager: SingleKeyManager, file_path: str, signature_path: Path,
+def verify_signature(key_manager: SingleKeyManager,
+                     file_path: Path,
+                     signature_path: Path,
                      progress_callback: Callable[[float, str], None] | None = None) -> Result:
     """
     验证文件签名
 
     Args:
         key_manager (SingleKeyManager): 密钥管理器
-        file_path (str): 待验证文件路径
+        file_path (Path): 待验证文件路径
         signature_path (Path): 签名文件路径
         progress_callback: 可选进度回调 (fraction, message)
 
     Returns:
         verify_result (Result): 验证结果
     """
-    file_path_obj = Path(file_path)
-    if not file_path_obj.exists() or not file_path_obj.is_file():
+    if not file_path.exists() or not file_path.is_file():
         return Result(status=Status.FILE_NOT_FOUND, msg=f"待验证文件不存在: {file_path}")
 
     if not signature_path.exists() or not signature_path.is_file():
-        found_path = Path(get_path(DirType.SIGNATURES), f"{file_path_obj.name}.sig")
+        found_path = Path(get_path(DirType.SIGNATURES), f"{file_path.name}.sig")
         if not found_path.exists():
             message = f"签名文件不存在: {signature_path}（自动查找也失败）"
             return Result(status=Status.SIGNATURE_FILE_MISSING, msg=message)
@@ -105,7 +106,7 @@ def verify_signature(key_manager: SingleKeyManager, file_path: str, signature_pa
         return Result(status=Status.KEY_FILE_CORRUPT, msg="缺少公钥")
 
     try:
-        v_data = _read_with_progress(file_path_obj, progress_callback, 0.0, 0.8)
+        v_data = _read_with_progress(file_path, progress_callback, 0.0, 0.8)
 
         if progress_callback:
             progress_callback(0.85, "正在读取签名...")

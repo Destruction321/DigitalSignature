@@ -7,6 +7,7 @@ from typing import TYPE_CHECKING
 
 from . import _key_creator
 from .._controller import Controller
+from ...._utils.constants import LOG_DIR
 from ...._utils.enums import DirType
 from ...._utils.tools import get_path
 
@@ -96,6 +97,8 @@ class UICreator:
     def __create_directory_info(self) -> None:
         """创建目录信息区域"""
         dir_frame = ttk.Frame(self.__parent)
+        dir_frame.grid_columnconfigure(0, weight=1)
+        dir_frame.grid_columnconfigure(1, weight=0)
         dir_frame.grid(row=0, column=0, sticky=tk.EW, pady=(0, 5))
 
         keys_dir = Path(get_path(DirType.KEYS)).as_posix()
@@ -104,7 +107,14 @@ class UICreator:
             text=f"密钥存储目录: {keys_dir}",
             font=("微软雅黑", 9),
             foreground="blue",
-        ).pack(anchor=tk.W)
+        ).grid(row=0, column=0, sticky=tk.W)
+        
+        ttk.Label(
+            dir_frame,
+            text=f"日志存储目录: {LOG_DIR}",
+            font=("微软雅黑", 9),
+            foreground="red",
+        ).grid(row=0, column=1, sticky=tk.E)
 
     def __create_key_creation_area(self) -> None:
         """创建密钥创建区域"""

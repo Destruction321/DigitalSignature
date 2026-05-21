@@ -7,7 +7,7 @@ from tkinter import Tk, messagebox
 import package
 
 
-log_dir = Path("logs")
+log_dir = Path(package.LOG_DIR)
 
 def _initialize_loggers() -> None:
     """初始化日志记录器"""

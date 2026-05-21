@@ -92,7 +92,7 @@ class MainWindow:
         dir_grid: ttk.Frame = ttk.Frame(dir_info_frame)
         dir_grid.pack(fill=tk.X)
 
-        base_info: str = f"数据目录: {Path(BASE_DIR).resolve().as_posix()}"
+        base_info: str = f"数据目录: {BASE_DIR}"
         base_label: ttk.Label = ttk.Label(dir_grid, text=base_info, font=("微软雅黑", 9, "bold"))
         base_label.grid(row=0, column=0, columnspan=6, sticky=tk.W, pady=(0, 5))
 

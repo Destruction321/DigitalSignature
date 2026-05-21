@@ -70,9 +70,9 @@ class TextSigningTab(BaseSigningTab):
 
     def _sign_content(self, km: SingleKeyManager, content: str) -> None:
         try:
-            temp_file = Path(self.__create_temp_file(content, "text"))
+            temp_file = self.__create_temp_file(content, "text")
             signature_file = signature.sign_file(km, temp_file)
-            text_hash = sha256(Path(temp_file).read_bytes()).hexdigest()
+            text_hash = sha256(temp_file.read_bytes()).hexdigest()
 
             self._handle_sign_success(signature_file.data, "当前编辑文本", text_hash)
             temp_file.unlink()
@@ -92,10 +92,10 @@ class TextSigningTab(BaseSigningTab):
         try:
             temp_file = self.__create_temp_file(content, "verify")
             is_valid = signature.verify_signature(km, temp_file, Path(signature_path))
-            text_hash = sha256(Path(temp_file).read_bytes()).hexdigest()
+            text_hash = sha256(temp_file.read_bytes()).hexdigest()
 
             self._handle_verify_success(is_valid.is_success, signature_path, "当前编辑文本", text_hash)
-            Path(temp_file).unlink()
+            temp_file.unlink()
 
         except Exception as e:
             self._handle_operation_error("验证", str(e))
@@ -127,7 +127,7 @@ class TextSigningTab(BaseSigningTab):
         """保存文本成功回调"""
         self._ui_state_mgr.update_status(f"文本已保存: {file_path}")
 
-    def __create_temp_file(self, content: str, prefix: str | None = None) -> str:
+    def __create_temp_file(self, content: str, prefix: str | None = None) -> Path:
         """临时文件创建"""
         temp = DirType.TEMP.value
         timestamp = datetime.now().strftime("%H%M%S_%f")
@@ -138,7 +138,7 @@ class TextSigningTab(BaseSigningTab):
         with open(file_path, "w", encoding="utf-8") as f:
             f.write(content)
 
-        return file_path
+        return Path(file_path)
 
     @staticmethod
     def __save_text_file(content: str,

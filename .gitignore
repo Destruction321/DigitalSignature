@@ -3,7 +3,7 @@
 /.vscode
 /build*
 /data*
-/dist
-/*_backup_*
+/backups
+**/*_backup_*
 **/__pycache__
 **/logs

@@ -34,8 +34,7 @@ class _FileSignWorker(Worker):
 
 class _FileVerifyWorker(Worker):
     """在后台线程验证文件签名，分块读取时报告进度"""
-    def __init__(self, km: SingleKeyManager, file_path: str,
-                 signature_path: Path) -> None:
+    def __init__(self, km: SingleKeyManager, file_path: Path, signature_path: Path) -> None:
         super().__init__()
         self.__km = km
         self.__file_path = file_path
@@ -113,7 +112,7 @@ class FileSigningTab(BaseSigningTab):
 
     def _get_content(self) -> str:
         assert self.__file_path_entry is not None, "文件选择区未初始化"
-        return self.__file_path_entry.get().strip()
+        return Path(self.__file_path_entry.get().strip()).as_posix()
 
     def _sign_content(self, km: SingleKeyManager, content: str) -> None:
         if not self.__validate_file_exists(content):
@@ -130,8 +129,9 @@ class FileSigningTab(BaseSigningTab):
 
         if result.is_success:
             file_hash = sha256(file_path.read_bytes()).hexdigest()
-            self.__update_signature_path(result.data)
-            self._handle_sign_success(result.data, content, file_hash)
+            signature_path = Path(result.data).as_posix()
+            self.__update_signature_path(signature_path)
+            self._handle_sign_success(signature_path, content, file_hash)
             return
 
         if result.status != Status.CANCEL_INPUT:
@@ -143,7 +143,7 @@ class FileSigningTab(BaseSigningTab):
         if not self.__validate_file_exists(content):
             return
 
-        signature_path = self.__signature_path_entry.get().strip()
+        signature_path = Path(self.__signature_path_entry.get().strip()).as_posix()
         if not self.__validate_file_exists(signature_path, "签名"):
             return
 
@@ -153,7 +153,7 @@ class FileSigningTab(BaseSigningTab):
             title="签名验证",
             message="正在验证文件签名...",
         )
-        worker = _FileVerifyWorker(km, content, Path(signature_path))
+        worker = _FileVerifyWorker(km, file_path, Path(signature_path))
         result = dialog.run(worker)
 
         if result.is_success:
@@ -219,7 +219,7 @@ class FileSigningTab(BaseSigningTab):
         assert self.__signature_path_entry is not None, "签名路径输入框未初始化"
 
         self.__signature_path_entry.delete(0, tk.END)
-        self.__signature_path_entry.insert(0, file_path)
+        self.__signature_path_entry.insert(0, str(Path(file_path).as_posix()))
 
     def __validate_file_exists(self, file_path: str, file_type = "") -> bool:
         """验证文件是否存在"""

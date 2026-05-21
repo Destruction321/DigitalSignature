@@ -38,7 +38,7 @@ class BackUps:
     def show_backup_options(self) -> None:
         """显示备份选项菜单"""
         menu = Menu(self.__root, tearoff=0)
-        menu.add_command(label="完整备份", command=lambda: self.__backup_data(DirType.FULL, "完整"))
+        menu.add_command(label="完整备份", command=lambda: self.__backup_data(DirType.DATA, "完整"))
         menu.add_command(label="仅备份密钥", command=lambda: self.__backup_data(DirType.KEYS, "密钥"))
         menu.add_command(label="仅备份文本", command=lambda: self.__backup_data(DirType.TEXTS, "文本"))
         menu.add_command(label="仅备份签名", command=lambda: self.__backup_data(DirType.SIGNATURES, "签名"))

@@ -21,7 +21,7 @@ def get_path(category: DirType, file_name: str | None = None) -> str:
     if category not in DIRS:
         raise KeyError(
             f"目录类型 '{category.value}' 不存在。可用的类型:"
-            f"{DirType.FULL.value}, "
+            f"{DirType.DATA.value}, "
             f"{DirType.KEYS.value}, "
             f"{DirType.TEXTS.value}, "
             f"{DirType.SIGNATURES.value}, "
@@ -47,4 +47,4 @@ def format_size(size: int) -> str:
     elif size >= 1024:
         return f"{size / 1024:.2f} KB"
     else:
-        return f"{size} 字节"
+        return f"{size} B"

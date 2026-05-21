@@ -14,14 +14,14 @@ from ..._utils.tools import format_size
 
 """操作映射"""
 _BACKUP_OPERATIONS: Final[dict[DirType, Callable[[], Result]]] = {
-    DirType.FULL: lambda: _internal.backup_data(DirType.FULL),
+    DirType.DATA: lambda: _internal.backup_data(DirType.DATA),
     DirType.KEYS: lambda: _internal.backup_data(DirType.KEYS),
     DirType.TEXTS: lambda: _internal.backup_data(DirType.TEXTS),
     DirType.SIGNATURES: lambda: _internal.backup_data(DirType.SIGNATURES)
 }
 
 _RESTORE_OPERATIONS: Final[dict[DirType, Callable[[Path, DirType, bool], Result]]] = {
-    DirType.FULL: _internal.restore_full_backup,
+    DirType.DATA: _internal.restore_full_backup,
     DirType.KEYS: _internal.restore_partial_backup,
     DirType.TEXTS: _internal.restore_partial_backup,
     DirType.SIGNATURES: _internal.restore_partial_backup
@@ -29,7 +29,7 @@ _RESTORE_OPERATIONS: Final[dict[DirType, Callable[[Path, DirType, bool], Result]
 
 
 """methods"""
-def create_backup(backup_type: DirType = DirType.FULL) -> Result:
+def create_backup(backup_type: DirType = DirType.DATA) -> Result:
     """
     创建备份
     
@@ -121,20 +121,20 @@ def verify_backup_integrity(backup_dir: Path) -> Result:
         total_size = checksum_data.get("total_size", 0)
 
         # 计算当前备份的校验和
-        current_checksum, current_file_count, current_total_size = _internal.calculate_backup_checksum(backup_dir)
+        checksum, file_count, total_size = _internal.calculate_backup_checksum(backup_dir)
         message: str = ""
 
         # 验证校验和
-        if stored_checksum != current_checksum:
+        if stored_checksum != checksum:
             message += "备份完整性验证失败：\n校验和不匹配"
 
         # 验证文件数量
-        if file_count != current_file_count:
-            message += f"\n文件数量不匹配（应有{file_count}个，实有{current_file_count}个）"
+        if file_count != file_count:
+            message += f"\n文件数量不匹配（应有{file_count}个，实有{file_count}个）"
 
         # 验证文件大小
-        if total_size != current_total_size:
-            message += f"\n文件大小不匹配（应有{total_size}字节，实有{current_total_size}字节）"
+        if total_size != total_size:
+            message += f"\n文件大小不匹配（应有{total_size}字节，实有{total_size}字节）"
 
         if message:
             return Result(status=Status.BACKUP_VERIFY_FAILED, data=checksum_data, msg=message)
@@ -153,11 +153,10 @@ def list_backups() -> Result:
         result (Result): 备份列表结果，成功时包含备份信息列表，每项包含名称、路径、创建时间和大小
     """
     backups = []
-    current_dir = Path(BASE_DIR).parent
+    current_dir = Path(BASE_DIR).parent / DirType.BACKUPS.value
 
     try:
         _internal.get_backups(backups, current_dir)
-        backups.sort(key=lambda x: x["created_time"], reverse=True)
         return Result(status=Status.SUCCESS, data=backups)
 
     except FileNotFoundError:
@@ -205,11 +204,11 @@ def delete_backup(backup_name: str) -> Result:
         delete_result (Result): 删除结果
     """
     try:
-        backup_path = Path.cwd() / backup_name
+        backup_path = Path(BASE_DIR).parent / DirType.BACKUPS.value / backup_name
         if not backup_path.exists():
             return Result(status=Status.DIR_NOT_FOUND, msg=f"备份 '{backup_name}' 不存在")
-            
-        if not backup_path.is_dir() or not any(pattern in backup_name for pattern in [_internal.BACKUP]):
+
+        if not backup_path.is_dir() or _internal.BACKUP not in backup_name:
             return Result(status=Status.PARAM_EMPTY, msg=f"'{backup_name}' 不是有效的备份目录")
             
         rmtree(backup_path)

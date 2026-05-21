@@ -13,11 +13,14 @@ UNENCRYPTED = "未加密"
 _BASE_DIR: Final[Path] = (Path.cwd() / "data").resolve()
 
 # 对外暴露的数据文件夹路径
-BASE_DIR: Final[str] = str(_BASE_DIR)
-    
+BASE_DIR: Final[str] = _BASE_DIR.as_posix()
+
+# 日志文件夹
+LOG_DIR = (_BASE_DIR / "logs").as_posix()
+
 # 目录类型
 DIRS: Final[dict[DirType, Path]] = {
-    DirType.FULL: _BASE_DIR,
+    DirType.DATA: _BASE_DIR,
     DirType.KEYS: _BASE_DIR / DirType.KEYS.value,
     DirType.TEXTS: _BASE_DIR / DirType.TEXTS.value,
     DirType.SIGNATURES: _BASE_DIR / DirType.SIGNATURES.value,
@@ -29,3 +32,4 @@ KEYS_CONFIG_FILE: Final[str] = "keys_config.json"
 
 # 密码最大验证次数
 MAX_PASSWORD_ATTEMPTS: Final[int] = 3
+

@@ -2,6 +2,7 @@
 """签名标签页基类"""
 import tkinter as tk
 from abc import ABC, abstractmethod
+from pathlib import Path
 from tkinter import ttk, messagebox
 from tkinter.filedialog import askopenfilename
 from tkinter.scrolledtext import ScrolledText
@@ -128,13 +129,17 @@ class BaseSigningTab(ABC):
         result_text = (
             f"{self.__tab_type.capitalize()}签名成功！\n\n"
             f"{self._content_label[0]}路径: {content_path}\n"
-            f"签名文件: {signature_file}\n"
+            f"签名文件: {str(Path(signature_file).as_posix())}\n"
             f"{self._content_label[1]}哈希: {content_hash}"
         )
         self._show_result(result_text)
         self.__show_info(f"{self.__tab_type.capitalize()}签名成功！")
 
-    def _handle_verify_success(self, is_valid: bool, signature_path: str, content_path: str, content_hash: str) -> None:
+    def _handle_verify_success(self,
+                               is_valid: bool,
+                               signature_path: str,
+                               content_path: str,
+                               content_hash: str) -> None:
         """
         处理验证结果
         
@@ -258,7 +263,7 @@ class BaseSigningTab(ABC):
         if file_path and callback:
             callback(file_path)
         
-        return file_path
+        return Path(file_path).as_posix()
 
 
     """private methods"""

@@ -6,6 +6,7 @@ from tkinter import messagebox, ttk
 from typing import Callable, TYPE_CHECKING
 
 from ._backup_ops import ops
+from .._utils.tools import format_size
 from .._utils.ui_state_manager import get_ui_state_manager
 
 if TYPE_CHECKING:
@@ -129,7 +130,7 @@ class Restore:
         
         for backup in backups:
             time_str = backup["created_time"].strftime("%Y-%m-%d %H:%M:%S")
-            size_str = f"{backup["size"]:,} 字节"
+            size_str = format_size(backup["size"])
             display_text = f"{str(backup["name"]):30} | {time_str} | {size_str:>12}"
             self.__listbox.insert(tk.END, display_text)
             self.__backup_items.append(backup)
