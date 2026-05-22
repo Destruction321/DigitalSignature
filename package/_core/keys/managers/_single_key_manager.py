@@ -147,6 +147,9 @@ class SingleKeyManager:
         
         except _encryption.InvalidKeyError as e:
             return Result(status=Status.KEY_FILE_CORRUPT, msg=str(e))
+        
+        except _encryption.PrivateKeyError as e:
+            return Result(status=Status.KEY_FILE_CORRUPT, msg=str(e))
             
         except _encryption.DecryptError as e:
             return Result(status=Status.KEY_FILE_CORRUPT, msg=str(e))

@@ -18,6 +18,18 @@ if TYPE_CHECKING:
     from ..._core.keys.managers import SingleKeyManager
 
 
+_CHUNK_SIZE = 1024 * 1024  # 1 MB
+
+
+def _compute_file_hash(file_path: Path) -> str:
+    """分块计算文件 SHA-256，避免一次性读入大文件"""
+    h = sha256()
+    with open(file_path, "rb") as f:
+        while chunk := f.read(_CHUNK_SIZE):
+            h.update(chunk)
+    return h.hexdigest()
+
+
 class _FileSignWorker(Worker):
     """在后台线程对文件签名，分块读取时报告进度"""
     def __init__(self, km: SingleKeyManager, file_path: Path) -> None:
@@ -26,27 +38,50 @@ class _FileSignWorker(Worker):
         self.__file_path = file_path
 
     def do_work(self) -> Result:
-        return signature.sign_file(
-            self.__km,
-            self.__file_path,
+        result = signature.sign_file(
+            key_manager=self.__km,
+            file_path=self.__file_path,
             progress_callback=self._report_progress
         )
+        if result.is_success and not self.is_cancelled:
+            self._report_progress(0.95, "正在计算文件哈希...")
+            file_hash = _compute_file_hash(self.__file_path)
+            self._report_progress(1.0, "签名完成")
+            return Result(
+                status=result.status,
+                data={"path": result.data, "hash": file_hash},
+                msg=result.msg
+            )
+        return result
+
 
 class _FileVerifyWorker(Worker):
     """在后台线程验证文件签名，分块读取时报告进度"""
-    def __init__(self, km: SingleKeyManager, file_path: Path, signature_path: Path) -> None:
+    def __init__(self, km: SingleKeyManager, file_path: Path,
+                 signature_path: Path) -> None:
         super().__init__()
         self.__km = km
         self.__file_path = file_path
         self.__signature_path = signature_path
 
     def do_work(self) -> Result:
-        return signature.verify_signature(
-            self.__km,
-            self.__file_path,
-            self.__signature_path,
+        result = signature.verify_signature(
+            key_manager=self.__km,
+            file_path=self.__file_path,
+            signature_path=self.__signature_path,
             progress_callback=self._report_progress
         )
+        if result.is_success or result.status == Status.VERIFY_FAILED and not self.is_cancelled:
+            self._report_progress(0.95, "正在计算文件哈希...")
+            file_hash = _compute_file_hash(self.__file_path)
+            self._report_progress(1.0, "验证完成")
+            return Result(
+                status=result.status,
+                data={"hash": file_hash},
+                msg=result.msg
+            )
+            
+        return result
 
 
 class FileSigningTab(BaseSigningTab):
@@ -128,10 +163,10 @@ class FileSigningTab(BaseSigningTab):
         result = dialog.run(worker)
 
         if result.is_success:
-            file_hash = sha256(file_path.read_bytes()).hexdigest()
-            signature_path = Path(result.data).as_posix()
+            data = result.data
+            signature_path = Path(data["path"]).as_posix()
             self.__update_signature_path(signature_path)
-            self._handle_sign_success(signature_path, content, file_hash)
+            self._handle_sign_success(signature_path, content, data["hash"])
             return
 
         if result.status != Status.CANCEL_INPUT:
@@ -157,13 +192,11 @@ class FileSigningTab(BaseSigningTab):
         result = dialog.run(worker)
 
         if result.is_success:
-            file_hash = sha256(file_path.read_bytes()).hexdigest()
-            self._handle_verify_success(True, signature_path, content, file_hash)
+            self._handle_verify_success(True, signature_path, content, result.data["hash"])
             return
 
         if result.status == Status.VERIFY_FAILED:
-            file_hash = sha256(file_path.read_bytes()).hexdigest()
-            self._handle_verify_success(False, signature_path, content, file_hash)
+            self._handle_verify_success(False, signature_path, content, result.data["hash"])
             return
 
         if result.status != Status.CANCEL_INPUT:

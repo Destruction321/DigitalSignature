@@ -126,6 +126,7 @@ class TextSigningTab(BaseSigningTab):
     def __on_save_success(self, file_path: str) -> None:
         """保存文本成功回调"""
         self._ui_state_mgr.update_status(f"文本已保存: {file_path}")
+        messagebox.showinfo("保存成功", f"文本已成功保存到:\n{file_path}")
 
     def __create_temp_file(self, content: str, prefix: str | None = None) -> Path:
         """临时文件创建"""

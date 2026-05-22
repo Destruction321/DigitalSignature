@@ -28,7 +28,9 @@ class ProgressDialog:
         main = ttk.Frame(self.__dialog, padding="20")
         main.pack(fill=tk.BOTH, expand=True)
 
-        self.__label = ttk.Label(main, text=message, font=("微软雅黑", 10))
+        self.__label = ttk.Label(
+            main, text=message, font=("微软雅黑", 10), anchor=tk.CENTER, width=42, wraplength=350
+        )
         self.__label.pack(pady=(0, 15))
 
         mode = "indeterminate" if indeterminate else "determinate"
