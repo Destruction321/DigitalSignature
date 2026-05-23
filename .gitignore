@@ -1,9 +1,7 @@
 /.claude
 /.venv
 /.vscode
-/build*
-/data*
+/build
+/data
 /backups
-**/*_backup_*
 **/__pycache__
-**/logs
