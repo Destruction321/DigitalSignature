@@ -40,7 +40,7 @@ def create_ui(parent: tk.Misc, backups: BackupList, dialog: tk.Toplevel) -> None
 
     initializer.create_header(main_frame, backups)
     initializer.create_notebook(main_frame)
-    initializer.create_button_area(main_frame, dialog)
+    initializer.create_buttons(main_frame, dialog)
 
 
 class Initializer:
@@ -152,7 +152,7 @@ class Initializer:
         self.__create_details_tab()
         self.__create_verify_tab()
 
-    def create_button_area(self, parent: ttk.Frame, dialog: tk.Toplevel) -> None:
+    def create_buttons(self, parent: ttk.Frame, dialog: tk.Toplevel) -> None:
         """
         创建按钮区域
         

@@ -6,12 +6,13 @@ from typing import Callable
 
 from .result import Result, Status
 
+type ProgressCallback = Callable[[float, str], None]
 
 class Worker(ABC):
     """在后台线程执行耗时操作，通过回调报告进度和结果"""
     def __init__(self) -> None:
         self.__cancel_event = Event()
-        self.__on_progress: Callable[[float, str], None] | None = None
+        self.__on_progress: ProgressCallback | None = None
 
     
     """Interfaces for subclasses to implement"""
@@ -26,11 +27,11 @@ class Worker(ABC):
         return self.__cancel_event.is_set()
     
     @property
-    def on_progress(self) -> Callable[[float, str], None] | None:
+    def on_progress(self) -> ProgressCallback | None:
         return self.__on_progress
 
     @on_progress.setter
-    def on_progress(self, callback: Callable[[float, str], None]) -> None:
+    def on_progress(self, callback: ProgressCallback) -> None:
         self.__on_progress = callback
 
     

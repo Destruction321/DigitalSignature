@@ -54,7 +54,7 @@ def create_backup(backup_type: DirType = DirType.DATA) -> Result:
     backup_path = backup_result.data
     if backup_path and Path(backup_path).exists():
         try:
-            _internal.create_backup_checksum(Path(backup_path), backup_type.value)
+            _internal.create_checksum(Path(backup_path), backup_type.value)
             message = f"{backup_result.msg}\n已生成完整性校验信息"
             return Result(status=Status.BACKUP_SUCCESS, data=backup_path, msg=message)
         
@@ -64,14 +64,14 @@ def create_backup(backup_type: DirType = DirType.DATA) -> Result:
             
     return Result(status=Status.BACKUP_SUCCESS, data=backup_path, msg=backup_result.msg)
 
-def list_backups_with_integrity() -> Result:
+def list_backups() -> Result:
     """
     列出所有备份目录，包含完整性验证信息
     
     Returns:
         result (Result): 备份列表结果，成功时添加完整性验证结果
     """
-    backups = list_backups()
+    backups = get_backups()
     if not backups.is_success:
         return backups
 
@@ -121,7 +121,7 @@ def verify_backup_integrity(backup_dir: Path) -> Result:
         total_size = checksum_data.get("total_size", 0)
 
         # 计算当前备份的校验和
-        checksum, file_count, total_size = _internal.calculate_backup_checksum(backup_dir)
+        checksum, file_count, total_size = _internal.calculate_checksum(backup_dir)
         message: str = ""
 
         # 验证校验和
@@ -145,18 +145,17 @@ def verify_backup_integrity(backup_dir: Path) -> Result:
     except Exception as e:
         return Result(status=Status.BACKUP_VERIFY_FAILED, data={}, msg=f"备份完整性验证失败：{e}")
 
-def list_backups() -> Result:
+def get_backups() -> Result:
     """
     列出所有备份目录
     
     Returns:
         result (Result): 备份列表结果，成功时包含备份信息列表，每项包含名称、路径、创建时间和大小
     """
-    backups = []
     current_dir = Path(BASE_DIR).parent / DirType.BACKUPS.value
 
     try:
-        _internal.get_backups(backups, current_dir)
+        backups = _internal.scan_backups(current_dir)
         return Result(status=Status.SUCCESS, data=backups)
 
     except FileNotFoundError:
@@ -219,8 +218,3 @@ def delete_backup(backup_name: str) -> Result:
         
     except Exception as e:
         return Result(status=Status.SYSTEM_ERROR, msg=f"删除备份系统错误: {e}")
-
-def calculate_backup_checksum(backup_dir: Path,
-                              progress_callback: Callable[[float, str], None] | None = None) -> tuple[str, int, int]:
-    """对外的计算备份校验和的接口"""
-    return _internal.calculate_backup_checksum(backup_dir, progress_callback)

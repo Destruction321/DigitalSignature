@@ -79,7 +79,7 @@ class MainWindow:
 
         self.__ui_state_mgr.register_status_handler(self.__handle_status_update)
         self.__ui_state_mgr.register_result_handler(self.__handle_result_show)
-        self.__ui_state_mgr.register_dir_labels_handler(self.__update_dir_labels)
+        self.__ui_state_mgr.register_dir_labels_handler(self.__update_directory_info)
 
 
     """private UI creator"""
@@ -240,7 +240,3 @@ class MainWindow:
                 label.config(text=f"{file_count}文件/{size_str}")
             except (PermissionError, OSError) as e:
                 label.config(text=f"访问错误: {e}")
-
-    def __update_dir_labels(self) -> None:
-        """封装目录更新函数以供注册调用"""
-        self.__update_directory_info()

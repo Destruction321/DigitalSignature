@@ -1,6 +1,5 @@
 # package/_gui/_key_management_tab/_creators/_key_creator.py
 """密钥创建模块"""
-import tkinter as tk
 from dataclasses import dataclass
 from datetime import datetime
 from tkinter import END, messagebox
@@ -18,14 +17,22 @@ from ...._utils.ui_state_manager import get_ui_state_manager
 from ...._utils.worker import Worker
 
 if TYPE_CHECKING:
-    from tkinter import BooleanVar, Entry
+    from tkinter import BooleanVar, Entry, Widget
     from tkinter.ttk import Combobox
     from ...._core.keys.managers import MultiKeyManager
 
 
 @dataclass
 class KeySetter:
-    """密钥设置组件"""
+    """
+    密钥设置组件
+    
+    Attributes:
+        key_id_entry (Entry): 密钥ID输入框
+        key_size_combo (Combobox): 密钥长度选择框
+        encryption_var (BooleanVar): 是否加密选择变量
+        password_entry (Entry): 密码输入框
+    """
     key_id_entry: Entry
     key_size_combo: Combobox
     encryption_var: BooleanVar
@@ -33,7 +40,14 @@ class KeySetter:
 
 @dataclass
 class CallBacks:
-    """回调列表"""
+    """
+    回调列表
+    
+    Attributes:
+        refresh_callback (Callable[[], None]): 刷新密钥列表回调
+        update_key_status_callback (Callable[[], None]): 更新密钥状态回调
+        toggle_password_callback (Callable[[], None]): 切换密码输入框显示回调
+    """
     refresh_callback: Callable[[], None]
     update_key_status_callback: Callable[[], None]
     toggle_password_callback: Callable[[], None]
@@ -65,10 +79,7 @@ class _KeyCreationWorker(Worker):
 
 
 """public methods"""
-def create_key_pair(key_setter: KeySetter,
-                    multi_km: MultiKeyManager,
-                    callbacks: CallBacks,
-                    parent: tk.Widget) -> None:
+def create_key_pair(key_setter: KeySetter, multi_km: MultiKeyManager, callbacks: CallBacks, parent: Widget) -> None:
     """
     创建新的密钥对
 
@@ -78,7 +89,7 @@ def create_key_pair(key_setter: KeySetter,
         callbacks (CallBacks): 回调列表
         parent (tk.Widget): 父窗口
     """
-    # 验证输入（必须在主线程，访问 tkinter 控件）
+    # 验证输入
     validate_result = _validate_inputs(key_setter)
     if validate_result is None:
         return

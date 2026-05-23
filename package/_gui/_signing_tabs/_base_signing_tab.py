@@ -179,11 +179,7 @@ class BaseSigningTab(ABC):
         # 验证内容
         content = self._get_content()
 
-        valid, message = (
-            (False, f"{self.__tab_type.capitalize()}内容为空")
-            if not content or not content.strip()
-            else (True, "")
-        )
+        valid, message = self.__get_validation_result(content)
 
         if not valid:
             self._show_warning(str(message))
@@ -267,11 +263,6 @@ class BaseSigningTab(ABC):
 
 
     """private methods"""
-    def __show_info(self, message: str) -> None:
-        """显示信息 - 统一状态管理"""
-        messagebox.showinfo("信息", message)
-        self._ui_state_mgr.update_status(message)
-
     def __dynamically_adjust_layout(self) -> None:
         """动态布局调整"""
         self._parent.rowconfigure(0, weight=self._editor_row_weight)
@@ -305,6 +296,11 @@ class BaseSigningTab(ABC):
         self.__result_text = ScrolledText(result_frame, height=8, font=("Consolas", 9), wrap=tk.WORD)
         self.__result_text.grid(row=0, column=0, sticky=tk.NSEW)
 
+    def __show_info(self, message: str) -> None:
+        """显示信息 - 统一状态管理"""
+        messagebox.showinfo("信息", message)
+        self._ui_state_mgr.update_status(message)
+    
     def __show_result_text(self, is_valid: bool, content_path: str, signature_path: str, content_hash: str) -> None:
         """返回结果字符串"""
         msg: list[str] = ["成功", "完整且未被篡改"] if is_valid else ["失败", "可能已被篡改"]
@@ -322,6 +318,13 @@ class BaseSigningTab(ABC):
         )
 
         self._show_result(result_text, level, log=log)
+
+    def __get_validation_result(self, content: str) -> tuple[bool, str]:
+        """获取验证结果"""
+        if not content or not content.strip():
+            return False, f"{self.__tab_type.capitalize()}内容为空"
+        else:
+            return True, ""
 
     def __get_operation_buttons(self, title: str) -> list:
         """获取操作按钮配置"""

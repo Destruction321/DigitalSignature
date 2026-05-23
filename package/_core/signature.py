@@ -1,7 +1,7 @@
 # package/_core/signature.py
 """数字签名核心算法"""
 from pathlib import Path
-from typing import Callable, TYPE_CHECKING
+from typing import TYPE_CHECKING
 
 from cryptography.exceptions import InvalidSignature
 from cryptography.hazmat.primitives.asymmetric import padding
@@ -13,6 +13,7 @@ from .._utils.tools import format_size, get_path
 
 if TYPE_CHECKING:
     from .keys.managers import SingleKeyManager
+    from .._utils.worker import ProgressCallback
 
 _CHUNK_SIZE = 1024 * 1024  # 1 MB
 
@@ -20,7 +21,7 @@ _CHUNK_SIZE = 1024 * 1024  # 1 MB
 def sign_file(key_manager: SingleKeyManager,
               file_path: Path,
               signature_path: str | None = None,
-              progress_callback: Callable[[float, str], None] | None = None) -> Result:
+              progress_callback: ProgressCallback | None = None) -> Result:
     """
     对文件进行数字签名
 
@@ -79,7 +80,7 @@ def sign_file(key_manager: SingleKeyManager,
 def verify_signature(key_manager: SingleKeyManager,
                      file_path: Path,
                      signature_path: Path,
-                     progress_callback: Callable[[float, str], None] | None = None) -> Result:
+                     progress_callback: ProgressCallback | None = None) -> Result:
     """
     验证文件签名
 
@@ -141,7 +142,7 @@ def verify_signature(key_manager: SingleKeyManager,
 
 """private methods"""
 def _read_with_progress(file_path: Path,
-                        progress_callback: Callable[[float, str], None] | None,
+                        progress_callback: ProgressCallback | None,
                         start: float,
                         end: float) -> bytes:
     """分块读取文件并报告进度"""

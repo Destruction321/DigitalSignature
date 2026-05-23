@@ -1,7 +1,8 @@
 # main.py
 """数字签名系统主程序入口"""
-import logging, sys
+import logging
 from pathlib import Path
+from sys import __excepthook__
 from tkinter import Tk, messagebox
 
 import package
@@ -46,7 +47,7 @@ def _initialize_loggers() -> None:
 def _handler(exc_type, exc_value, exc_tb):
     """全局错误捕获钩子"""
     if issubclass(exc_type, KeyboardInterrupt):
-        sys.__excepthook__(exc_type, exc_value, exc_tb)
+        __excepthook__(exc_type, exc_value, exc_tb)
         return
 
     # 记录完整堆栈
@@ -70,7 +71,7 @@ if __name__ == "__main__":
         _initialize_loggers()
 
         # 设置全局异常钩子
-        sys.excepthook = _handler
+        excepthook = _handler
 
         # 启动应用程序
         root = Tk()

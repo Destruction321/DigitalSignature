@@ -31,7 +31,7 @@ class Initializer:
         self.__root = root
         self.__key_loader = KeyLoader(
             multi_key_manager=self.__multi_km,
-            password_provider=self.__password_provider,
+            password_setter=self.__password_setter,
             key_loaded_callback=self.__on_key_loaded
         )
         
@@ -70,7 +70,7 @@ class Initializer:
             
             if success and isinstance(result, SingleKeyManager):
                 # 设置密钥管理器
-                self.__set_current_key_manager(result)
+                self.__set_key_manager(result)
                 self.__tabs.key_tab.loaded_key_id = self.__multi_km.current_key_id
                 self.__ui_state_mgr.update_status(f"自动加载密钥成功: {self.__multi_km.current_key_id}")
             elif not success and loading_result.status == Status.NEED_PASSWORD:
@@ -87,7 +87,7 @@ class Initializer:
     
     
     """private methods"""
-    def __password_provider(self, prompt: str) -> str | None:
+    def __password_setter(self, prompt: str) -> str | None:
         return askstring("密码输入", prompt, show="*", parent=self.__root)
                      
     def __on_key_loaded(self, key_manager: SingleKeyManager | None) -> None:
@@ -131,7 +131,7 @@ class Initializer:
             # 通知KeyManagementTab加载失败
             self.__tabs.key_tab.loaded_key_id = None
 
-    def __set_current_key_manager(self, key_manager: SingleKeyManager) -> None:
+    def __set_key_manager(self, key_manager: SingleKeyManager) -> None:
         """设置当前密钥管理器"""
         if key_manager.private_key is None:
             self.__current_km = None

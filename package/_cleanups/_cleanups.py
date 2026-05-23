@@ -24,10 +24,8 @@ class CleanUps:
     """public methods -- bind to buttons"""
     def cleanup_all_files(self) -> None:
         """执行完整清理所有文件"""
-        # 弹出对话框让用户选择阈值天数
         selected_days = self.__show_days_selection_dialog()
 
-        # 如果用户选择了天数（点击了确定），则执行完整清理
         if selected_days is not None:
             self.__cleanup_days_threshold = selected_days
             cleanup_result = _cleanup_ops.cleanup_all_files(selected_days)
@@ -47,10 +45,8 @@ class CleanUps:
 
     def cleanup_old_files(self) -> None:
         """清理旧文件，不包括密钥文件"""
-        # 弹出对话框让用户选择阈值天数
         selected_days = self.__show_days_selection_dialog()
 
-        # 如果用户选择了天数（点击了确定），则执行清理
         if selected_days is not None:
             self.__cleanup_days_threshold = selected_days
             cleanup_result = _cleanup_ops.cleanup_old_files(

@@ -283,14 +283,7 @@ def _verify_config(config_data: ConfigData, secret_key: bytes) -> bool:
 
 def _calculate_config_hash(secret_key: bytes, config_data: ConfigData) -> str:
     """计算配置数据的哈希值"""
-    normalized_config = config_data.copy() # 规范化配置数据以确保一致的序列化
-
-    # 移除可能变化的字段（如备份信息、临时数据等）
-    fields_to_remove = ["backup_info", "_emp_data", "last_modified"]
-    for field in fields_to_remove:
-        normalized_config.pop(field, None)
-        
-    config_json = json.dumps(normalized_config, sort_keys=True, separators=(",", ":"))
+    config_json = json.dumps(config_data.copy(), sort_keys=True, separators=(",", ":"))
 
     # 使用HMAC计算哈希
     hmac_obj = hmac_new(secret_key, config_json.encode("utf-8"), sha256)

@@ -4,7 +4,7 @@ from pathlib import Path
 from tkinter import messagebox
 from typing import TYPE_CHECKING
 
-from .._backup_ops.ops import list_backups_with_integrity, delete_backup
+from .._backup_ops.ops import list_backups, delete_backup
 from .._verifier import Verifier
 from ..._utils.tools import format_size
 from ..._utils.ui_state_manager import get_ui_state_manager
@@ -17,43 +17,48 @@ if TYPE_CHECKING:
 
 class Controller:
     """备份管理对话框控制器"""
-    def __init__(self, dialog_protocol: DialogProtocol, parent: Misc) -> None:
-        self.__dialog_protocol: DialogProtocol = dialog_protocol
+    def __init__(self, dialog: DialogProtocol, parent: Misc) -> None:
+        self.__dialog: DialogProtocol = dialog
         self.__verifier: Verifier = Verifier(parent)
-        self.__backup_items: BackupList = []  # 备份列表
+        self.__backup_list: BackupList = []  # 备份列表
 
 
     """public methods"""
     def refresh_list(self, click_btn: bool = False) -> None:
-        """刷新备份列表并更新所有统计信息"""
-        result = list_backups_with_integrity()
+        """
+        刷新备份列表并更新所有统计信息
+        
+        Args:
+            click_btn (bool): 是否由点击刷新按钮触发（默认为 False，表示自动刷新）
+        """
+        result = list_backups()
         if not result.is_success:
             messagebox.showerror("刷新备份", result.msg)
             return
 
         backups: BackupList = result.data
-        self.__backup_items = backups
+        self.__backup_list = backups
 
-        self.__dialog_protocol.populate_list(backups)
-        self.__dialog_protocol.set_info_text(self.__build_info_text(backups))
+        self.__dialog.populate_list(backups)
+        self.__dialog.set_info_text(self.__build_info_text(backups))
 
         if backups:
             status_text, color = self.__build_integrity_status(backups)
-            self.__dialog_protocol.set_integrity_status(status_text, color)
+            self.__dialog.set_integrity_status(status_text, color)
 
-        self.__dialog_protocol.select_tab(0)
+        self.__dialog.select_tab(0)
 
         if click_btn:
             messagebox.showinfo("成功", "刷新成功")
 
     def delete_selected_backup(self) -> None:
         """删除选中的备份"""
-        index = self.__dialog_protocol.get_selected_index()
+        index = self.__dialog.get_selected_index()
         if index is None:
             messagebox.showwarning("选择备份", "请先选择一个要删除的备份")
             return
 
-        selected_backup: BackupItem = self.__backup_items[index]
+        selected_backup: BackupItem = self.__backup_list[index]
         confirm_msg = (
             f"确定要删除备份吗？\n\n"
             f"备份名称: {selected_backup["name"]}\n"
@@ -77,33 +82,33 @@ class Controller:
 
     def show_selected_details(self) -> None:
         """显示选中备份的详情"""
-        index = self.__dialog_protocol.get_selected_index()
+        index = self.__dialog.get_selected_index()
         if index is None:
             messagebox.showwarning("选择备份", "请先选择一个备份")
             return
 
-        selected_backup: BackupItem = self.__backup_items[index]
+        selected_backup: BackupItem = self.__backup_list[index]
         details = self.__build_details_text(selected_backup)
-        self.__dialog_protocol.show_details(details)
-        self.__dialog_protocol.select_tab(1)
+        self.__dialog.show_details(details)
+        self.__dialog.select_tab(1)
 
     def verify_selected_backup(self) -> None:
         """验证选中的备份"""
-        index = self.__dialog_protocol.get_selected_index()
+        index = self.__dialog.get_selected_index()
         if index is None:
             messagebox.showwarning("选择备份", "请先选择一个备份")
             return
 
-        selected_backup: BackupItem = self.__backup_items[index]
+        selected_backup: BackupItem = self.__backup_list[index]
         self.__verifier.verify_single_backup(selected_backup, self.__on_single_verify_done)
 
     def verify_all_backups(self) -> None:
         """验证所有备份"""
-        if not self.__backup_items:
+        if not self.__backup_list:
             messagebox.showinfo("验证备份", "没有找到备份文件")
             return
 
-        self.__verifier.verify_all_backups(self.__backup_items, self.__on_all_verify_done)
+        self.__verifier.verify_all_backups(self.__backup_list, self.__on_all_verify_done)
 
 
     """private methods"""
@@ -111,18 +116,18 @@ class Controller:
         """单个备份验证完成后的回调：刷新列表，并同步更新详情区"""
         self.refresh_list()
 
-        index = self.__dialog_protocol.get_selected_index()
+        index = self.__dialog.get_selected_index()
         if index is None:
             return
 
-        current = self.__backup_items[index]
+        current = self.__backup_list[index]
         if current.get("path") == backup.get("path"):
             details = self.__build_details_text(current)
-            self.__dialog_protocol.show_details(details)
+            self.__dialog.show_details(details)
 
-    def __on_all_verify_done(self, backup_items: BackupList) -> None:
+    def __on_all_verify_done(self, backup_list: BackupList) -> None:
         """批量验证完成后的回调：用新数据更新列表"""
-        self.__backup_items = backup_items
+        self.__backup_list = backup_list
         self.refresh_list()
 
 
@@ -182,7 +187,7 @@ class Controller:
         details += "\n目录结构:\n--------\n"
         if back_up_path.exists():
             try:
-                details += _get_directory_structure(back_up_path, max_depth=2)
+                details += _list_dir(back_up_path, max_depth=2)
             except Exception as e:
                 details += f"无法读取目录结构: {str(e)}\n"
         else:
@@ -191,7 +196,7 @@ class Controller:
         return details
     
 
-def _get_directory_structure(path: Path, max_depth: int = 2, current_depth: int = 0) -> str:
+def _list_dir(path: Path, max_depth: int = 2, current_depth: int = 0) -> str:
     """获取目录结构"""
     if current_depth >= max_depth:
         return ""
@@ -207,7 +212,6 @@ def _get_directory_structure(path: Path, max_depth: int = 2, current_depth: int 
 
             # 检查是否为目录
             if not item_path.is_dir():
-                # 文件项
                 structure += f"{prefix}{item}\n"
                 continue
 
@@ -218,17 +222,11 @@ def _get_directory_structure(path: Path, max_depth: int = 2, current_depth: int 
             except (PermissionError, Exception):
                 has_subitems = False
 
-            # 显示当前目录
-            structure += f"{prefix}{item}/"  # 目录后加斜杠
+            structure += f"{prefix}{item}/\n"
 
             # 如果有子项且未达到最大深度，递归处理
             if has_subitems and current_depth + 1 < max_depth:
-                structure += "\n"
-                structure += _get_directory_structure(
-                    item_path, max_depth, current_depth + 1
-                )
-            else:
-                structure += "\n"
+                structure += _list_dir(item_path, max_depth, current_depth + 1)
 
     except PermissionError:
         prefix = "    " * current_depth

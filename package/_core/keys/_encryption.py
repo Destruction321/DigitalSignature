@@ -3,10 +3,10 @@
 from base64 import b64encode, b64decode
 from secrets import token_bytes
 
+from cryptography.exceptions import InvalidTag
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric.rsa import RSAPrivateKey
-from cryptography.exceptions import InvalidTag
 from cryptography.hazmat.primitives.ciphers import Cipher
 from cryptography.hazmat.primitives.ciphers.algorithms import AES
 from cryptography.hazmat.primitives.ciphers.modes import GCM
@@ -34,6 +34,9 @@ class PrivateKeyError(DecryptError):
 class InvalidKeyError(DecryptError):
     """解密后数据不是有效的RSA私钥"""
     ...
+
+# 解密中出现的意外异常
+unexpected_decrypt_errors = (PrivateKeyError, InvalidKeyError, DecryptError)
 
 
 def encrypt_private_key(private_key: RSAPrivateKey, password: str) -> str:

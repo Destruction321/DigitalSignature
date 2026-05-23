@@ -5,7 +5,7 @@ from tkinter.ttk import Button
 from typing import Callable, TYPE_CHECKING
 
 from ._dialog import dialog_show
-from ._backup_ops.ops import create_backup, list_backups_with_integrity
+from ._backup_ops.ops import create_backup, list_backups
 from ._restore import Restore
 from .._utils.enums import DirType
 from .._utils.result import Status
@@ -53,7 +53,7 @@ class BackUps:
 
     def restore_backup_dialog(self) -> None:
         """恢复备份对话框"""
-        backups = list_backups_with_integrity()
+        backups = list_backups()
         if not backups.is_success:
             messagebox.showinfo("恢复备份", "没有找到可用的备份文件")
             return

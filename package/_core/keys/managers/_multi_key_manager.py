@@ -29,7 +29,7 @@ class MultiKeyManager:
         self.__recovery_mgr: KeyRecoveryManager = KeyRecoveryManager(self)
 
         # 使用恢复策略加载配置
-        self.__config_secure = self.__recovery_mgr.load_keys_with_recovery()
+        self.__config_secure = self.__recovery_mgr.recover_keys()
 
     def __str__(self) -> str:
         """提供有意义的字符串表示"""

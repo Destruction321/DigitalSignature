@@ -27,7 +27,7 @@ class Restore:
         self.__overwrite_var: tk.BooleanVar | None = None
         self.__skip_verify_var: tk.BooleanVar | None = None
 
-        self.__backup_items: BackupList = []
+        self.__backup_list: BackupList = []
         self.__ui_state_mgr: UIStateManager = get_ui_state_manager()
         
 
@@ -133,7 +133,7 @@ class Restore:
             size_str = format_size(backup["size"])
             display_text = f"{str(backup["name"]):30} | {time_str} | {size_str:>12}"
             self.__listbox.insert(tk.END, display_text)
-            self.__backup_items.append(backup)
+            self.__backup_list.append(backup)
 
     def __on_restore(self) -> None:
         """执行恢复"""
@@ -145,7 +145,7 @@ class Restore:
             messagebox.showwarning("选择备份", "请先选择一个备份")
             return
         
-        selected_backup = self.__backup_items[int(selection[0])]
+        selected_backup = self.__backup_list[int(selection[0])]
         backup_path = Path(selected_backup["path"])
         
         assert self.__dialog is not None, "恢复对话框未创建"

@@ -75,7 +75,7 @@ def cleanup_temp_files() -> Result:
     """
     try:
         temp_dir = Path(get_path(DirType.TEMP))
-        deleted_count = _cleanup_directory_files(temp_dir)
+        deleted_count = _cleanup_files(temp_dir)
         if deleted_count == 0:
             return Result(status=Status.CLEANUP_SUCCESS, data=0, msg="无临时文件需要清理")
             
@@ -105,7 +105,7 @@ def cleanup_old_files(days_old: int = 30, categories: list[DirType] | None = Non
     try:
         for category in categories:
             dir_path = Path(get_path(category))
-            deleted_count = _cleanup_directory_files(
+            deleted_count = _cleanup_files(
                 dir_path, lambda file_path: Path(file_path).stat().st_mtime < cutoff_time
             )
             total_deleted += deleted_count
@@ -166,7 +166,7 @@ def cleanup_orphaned_keys(valid_key_ids: list[str] | None = None) -> Result:
 
 
 """private methods"""
-def _cleanup_directory_files(dir_path: Path, condition_func: Callable[[str], bool] | None = None) -> int:
+def _cleanup_files(dir_path: Path, condition_func: Callable[[str], bool] | None = None) -> int:
     """清理目录中的文件"""
     if not dir_path.exists():
         return 0

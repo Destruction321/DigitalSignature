@@ -23,11 +23,11 @@ if TYPE_CHECKING:
 class Controller:
     """密钥管理标签页控制器"""
     def __init__(self,
-                 km_protocol: KeyManagerProtocol,
+                 km_tab: KeyManagerProtocol,
                  multi_km: MultiKeyManager,
                  key_loader: KeyLoader,
                  parent: Widget) -> None:
-        self.__km_protocol: KeyManagerProtocol = km_protocol
+        self.__km_tab: KeyManagerProtocol = km_tab
         self.__multi_km: MultiKeyManager = multi_km
         self.__key_loader: KeyLoader = key_loader
         self.__parent: Widget = parent
@@ -66,7 +66,7 @@ class Controller:
         Args:
             click_refresh_btn (bool): 是否由点击刷新按钮触发，默认为 False（非按钮触发）
         """
-        if not self.__multi_km.recovery_mgr.load_keys_with_recovery():
+        if not self.__multi_km.recovery_mgr.recover_keys():
             self.__ui_state_mgr.update_status("密钥配置恢复失败，请检查密钥文件", Level.ERROR, log=True)
             if click_refresh_btn:
                 messagebox.showerror("错误", "密钥配置恢复失败，请检查密钥文件是否完整")
@@ -93,7 +93,7 @@ class Controller:
 
         # 同步更新内部映射，供后续解析选中项使用
         self.__key_id_map = {display: key_id for display, key_id in items}
-        self.__km_protocol.populate_key_list(items)
+        self.__km_tab.populate_key_list(items)
 
         if click_refresh_btn:
             messagebox.showinfo("成功", "刷新成功")
@@ -102,12 +102,12 @@ class Controller:
         """更新密钥状态显示"""
         current_key_id = self.__multi_km.current_key_id
         if current_key_id is None:
-            self.__km_protocol.set_key_status("未选择密钥", "gray")
+            self.__km_tab.set_key_status("未选择密钥", "gray")
             return
 
         status_result = self.__multi_km.get_key_encryption_status(current_key_id)
         if not status_result.is_success:
-            self.__km_protocol.set_key_status("未找到密钥对", "red")
+            self.__km_tab.set_key_status("未找到密钥对", "red")
             return
 
         status = status_result.msg
@@ -119,15 +119,15 @@ class Controller:
             text = f"当前密钥: {current_key_id} ({label}, {status})"
             color = "orange"
 
-        self.__km_protocol.set_key_status(text, color)
+        self.__km_tab.set_key_status(text, color)
 
     def update_security_status(self, is_secure: bool) -> None:
         """更新配置安全状态显示"""
         self.__multi_km.config_secure = is_secure
         if is_secure:
-            self.__km_protocol.set_security_status("配置完整性: 已验证", "green")
+            self.__km_tab.set_security_status("配置完整性: 已验证", "green")
         else:
-            self.__km_protocol.set_security_status("配置完整性: 未验证/已损坏", "orange")
+            self.__km_tab.set_security_status("配置完整性: 未验证/已损坏", "orange")
 
     def load_selected_key(self) -> SingleKeyManager | None:
         """加载选中的密钥"""
@@ -235,7 +235,7 @@ class Controller:
     """private methods"""
     def __get_selected_key_id(self) -> str | None:
         """从视图获取选中项并解析出 key_id，无选中时弹出警告并返回 None"""
-        display_text = self.__km_protocol.get_selected_display_text()
+        display_text = self.__km_tab.get_selected_display_text()
         if display_text is None:
             messagebox.showwarning("警告", "请选择一个密钥对")
             return None

@@ -102,9 +102,6 @@ class SingleKeyManager:
         except PermissionError as e:
             return Result(status=Status.PERMISSION_DENIED, msg=f"权限不足: {e}")
         
-        except OSError as e:
-            return Result(status=Status.SYSTEM_ERROR, msg=f"文件写入失败: {e}")
-        
         except Exception as e:
             exception("保存密钥对失败")
             return Result(status=Status.SYSTEM_ERROR, msg=str(e))
@@ -145,13 +142,7 @@ class SingleKeyManager:
         except _encryption.PasswordError as e:
             return Result(status=Status.PASSWORD_ERROR)
         
-        except _encryption.InvalidKeyError as e:
-            return Result(status=Status.KEY_FILE_CORRUPT, msg=str(e))
-        
-        except _encryption.PrivateKeyError as e:
-            return Result(status=Status.KEY_FILE_CORRUPT, msg=str(e))
-            
-        except _encryption.DecryptError as e:
+        except _encryption.unexpected_decrypt_errors as e:
             return Result(status=Status.KEY_FILE_CORRUPT, msg=str(e))
         
         except Exception as e:

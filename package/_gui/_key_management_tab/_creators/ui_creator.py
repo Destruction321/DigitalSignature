@@ -36,7 +36,7 @@ class UICreator:
 
         # 控制器
         self.__controller: Controller = Controller(
-            km_protocol=self,
+            km_tab=self,
             multi_km=multi_key_manager,
             key_loader=key_loader,
             parent=parent
@@ -269,9 +269,7 @@ class UICreator:
             ("恢复配置", self.__controller.recover_config),
         ]
         for i, (text, command) in enumerate(advanced_buttons):
-            ttk.Button(advanced_btn_frame, text=text, command=command).grid(
-                row=0, column=i, padx=5, sticky=tk.EW
-            )
+            ttk.Button(advanced_btn_frame, text=text, command=command).grid(row=0, column=i, padx=5, sticky=tk.EW)
 
     def __create_status_display(self, parent: tk.Widget) -> None:
         """创建状态显示区域"""

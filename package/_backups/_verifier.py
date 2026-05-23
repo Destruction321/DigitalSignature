@@ -43,24 +43,24 @@ class Verifier:
             verify_result = Result(status=Status.BACKUP_VERIFY_FAILED, msg=f"验证失败: {str(e)}")
         self.__update_single_result(verify_result, backup, callback)
 
-    def verify_all_backups(self, backup_items: BackupList, callback: Callable[[BackupList], None]) -> None:
-        if not backup_items:
+    def verify_all_backups(self, backup_list: BackupList, callback: Callable[[BackupList], None]) -> None:
+        if not backup_list:
             messagebox.showinfo("验证备份", "没有找到备份文件")
             return
 
-        self.__create_batch_verify_dialog(len(backup_items))
+        self.__create_batch_verify_dialog(len(backup_list))
         valid_count = 0
         invalid_count = 0
 
-        for i, backup in enumerate(backup_items):
-            self.__process_single_backup_in_batch(i, backup, len(backup_items))
+        for i, backup in enumerate(backup_list):
+            self.__process_single_backup_in_batch(i, backup, len(backup_list))
             if backup.get("integrity_valid", False):
                 valid_count += 1
             else:
                 invalid_count += 1
 
         self.__finish_batch_verification(
-            [len(backup_items), valid_count, invalid_count], callback, backup_items
+            [len(backup_list), valid_count, invalid_count], callback, backup_list
         )
 
     def __process_single_backup_in_batch(self, index: int, backup: BackupItem, total_count: int) -> None:
@@ -246,7 +246,7 @@ class Verifier:
     def __finish_batch_verification(self,
                                     verification_result: list[int],
                                     callback: Callable[[BackupList], None],
-                                    backup_items: BackupList) -> None:
+                                    backup_list: BackupList) -> None:
         """完成批量验证"""
         assert self.__status_label is not None, "状态标签未创建"
         assert self.__batch_close_button is not None, "关闭按钮未创建"
@@ -269,7 +269,7 @@ class Verifier:
         self.__batch_close_button.config(state=tk.NORMAL)
         self.__progress_dialog.protocol("WM_DELETE_WINDOW", self.__close_batch_dialog)
 
-        callback(backup_items)
+        callback(backup_list)
 
     def __close_batch_dialog(self) -> None:
         """关闭批量验证对话框"""

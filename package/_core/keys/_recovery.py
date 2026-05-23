@@ -6,8 +6,8 @@ from pathlib import Path
 from typing import Callable, TYPE_CHECKING
 
 from . import config
-from ..._utils import enums
 from ..._utils.constants import KEYS_CONFIG_FILE
+from ..._utils.enums import DirType, FileType, KeyType, PassWord
 from ..._utils.result import Status, Result
 from ..._utils.tools import get_path
 
@@ -19,15 +19,15 @@ class KeyRecoveryManager:
     """密钥恢复管理器"""
     def __init__(self, multi_key_manager: MultiKeyManager):
         self.__multi_km: MultiKeyManager = multi_key_manager
-        self.__recovery_callback: Callable[[str, enums.PassWord], None] | None = None
+        self.__recovery_callback: Callable[[str, PassWord], None] | None = None
 
 
     @property
-    def recovery_callback(self) -> Callable[[str, enums.PassWord], None] | None:
+    def recovery_callback(self) -> Callable[[str, PassWord], None] | None:
         return self.__recovery_callback
 
     @recovery_callback.setter
-    def recovery_callback(self, callback: Callable[[str, enums.PassWord], None]) -> None:
+    def recovery_callback(self, callback: Callable[[str, PassWord], None]) -> None:
         self.__recovery_callback = callback
 
 
@@ -59,7 +59,7 @@ class KeyRecoveryManager:
         except Exception as e:
             return Result(status=Status.SYSTEM_ERROR, msg=f"重建配置失败: {str(e)}")
 
-    def load_keys_with_recovery(self) -> bool:
+    def recover_keys(self) -> bool:
         """
         二重恢复策略
         
@@ -122,7 +122,7 @@ class KeyRecoveryManager:
     def __try_rebuild_from_files(self, click_btn: bool = False) -> Result:
         """第二层：从本地密钥文件重建配置"""
         try:
-            keys_dir = Path(get_path(enums.DirType.KEYS))
+            keys_dir = Path(get_path(DirType.KEYS))
 
             # 检查密钥目录是否存在
             if not keys_dir.exists():
@@ -160,7 +160,7 @@ class KeyRecoveryManager:
             # 通知UI加密密钥已恢复
             if click_btn and recovered_encrypted_keys and self.__recovery_callback:
                 for key_id in recovered_encrypted_keys:
-                    self.__recovery_callback(key_id, enums.PassWord.RECOVERY)
+                    self.__recovery_callback(key_id, PassWord.RECOVERY)
                     
             # 恢复成功
             message = f"从本地文件重建配置成功，恢复 {len(rebuilt_config)} 个密钥对"
@@ -197,8 +197,8 @@ class KeyRecoveryManager:
     def __parse_key_information(self, file_name: str, keys_dir: Path) -> tuple[str, config.KeyPairInfo] | None:
         """从文件名解析密钥信息，返回 (key_id, key_info)"""
         try:
-            PUBLIC = enums.KeyType.PUBLIC.value
-            KEY = enums.FileType.KEY.value
+            PUBLIC = KeyType.PUBLIC.value
+            KEY = FileType.KEY.value
             result = config.parse_key_filename(file_name)
             if result is None or not result[3]:
                 return None

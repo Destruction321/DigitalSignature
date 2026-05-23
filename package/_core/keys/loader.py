@@ -14,10 +14,10 @@ class KeyLoader:
     """密钥加载器"""
     def __init__(self, 
                  multi_key_manager: MultiKeyManager, 
-                 password_provider: Callable[[str], str | None],
+                 password_setter: Callable[[str], str | None],
                  key_loaded_callback: Callable[[SingleKeyManager | None], None]) -> None:
         self.__multi_km: MultiKeyManager = multi_key_manager
-        self.__password_provider: Callable[[str], str | None] = password_provider
+        self.__password_setter: Callable[[str], str | None] = password_setter
         self.__key_loaded_callback: Callable[[SingleKeyManager | None], None] = key_loaded_callback
 
 
@@ -74,7 +74,7 @@ class KeyLoader:
         """验证密码"""
         while True:
             prompt: str = self.__build_password_prompt(key_id, attempt, is_retry)
-            password: str | None = self.__password_provider(prompt)
+            password: str | None = self.__password_setter(prompt)
 
             if password is None:
                 return Result(status=Status.CANCEL_INPUT)

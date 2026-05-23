@@ -18,14 +18,12 @@ if TYPE_CHECKING:
     from ..._core.keys.managers import SingleKeyManager
 
 
-_CHUNK_SIZE = 1024 * 1024  # 1 MB
-
-
 def _compute_file_hash(file_path: Path) -> str:
     """分块计算文件 SHA-256，避免一次性读入大文件"""
     h = sha256()
+    ONE_MB = 1024 * 1024  # 1 MB
     with open(file_path, "rb") as f:
-        while chunk := f.read(_CHUNK_SIZE):
+        while chunk := f.read(ONE_MB):
             h.update(chunk)
     return h.hexdigest()
 
@@ -52,13 +50,13 @@ class _FileSignWorker(Worker):
                 data={"path": result.data, "hash": file_hash},
                 msg=result.msg
             )
+        
         return result
 
 
 class _FileVerifyWorker(Worker):
     """在后台线程验证文件签名，分块读取时报告进度"""
-    def __init__(self, km: SingleKeyManager, file_path: Path,
-                 signature_path: Path) -> None:
+    def __init__(self, km: SingleKeyManager, file_path: Path, signature_path: Path) -> None:
         super().__init__()
         self.__km = km
         self.__file_path = file_path

@@ -41,7 +41,7 @@ class PasswordResetter:
         
         Args:
             key_id (str): 密钥ID
-            context (PassWord): 操作上下文（PassWord.CHANGE=更改密码, PassWord.RECOVERY=恢复配置）
+            mode (PassWord): 操作上下文（PassWord.CHANGE=更改密码, PassWord.RECOVERY=恢复配置）
             
         Returns:
             reset_result (Result): 重置结果
