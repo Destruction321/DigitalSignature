@@ -54,7 +54,7 @@ class KeyRecoveryManager:
             rebuild_result (Result): 恢复结果
         """
         try:
-            return self.__try_rebuild_from_files(click_btn=click_btn)
+            return self.__try_rebuild_from_files(click_btn)
         
         except Exception as e:
             return Result(status=Status.SYSTEM_ERROR, msg=f"重建配置失败: {str(e)}")
@@ -91,7 +91,7 @@ class KeyRecoveryManager:
             # 检查配置文件是否存在
             if not config_file_path.exists():
                 # 尝试迁移旧配置
-                migrated = config.migrate_config(KEYS_CONFIG_FILE, self.__multi_km.config_file)
+                migrated = config.migrate_config(old_path=KEYS_CONFIG_FILE, new_path=self.__multi_km.config_file)
                 if not migrated.is_success or not config_file_path.exists():
                     return Result(status=Status.FILE_NOT_FOUND, msg="配置文件不存在，迁移旧配置失败")
                     

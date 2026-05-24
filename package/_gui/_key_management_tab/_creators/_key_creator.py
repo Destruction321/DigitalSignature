@@ -163,7 +163,11 @@ def _create_key_pair(multi_km: MultiKeyManager, key_id: str, key_size: int, pass
         private_key_path, public_key_path = multi_km.get_key_paths(key_id, key_size, password is not None)
         
         # 保存密钥文件
-        save_result = new_keys.save_keys(private_key_path, public_key_path, password)
+        save_result = new_keys.save_keys(
+            private_key_path=private_key_path,
+            public_key_path=public_key_path,
+            password=password
+        )
         if not save_result.is_success:
             return save_result
         

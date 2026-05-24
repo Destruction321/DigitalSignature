@@ -83,12 +83,6 @@ def list_backups() -> Result:
         backup["integrity_message"] = verify_result.msg
         backup["checksum_data"] = verify_result.data
 
-        # 在备份名称中添加完整性标记
-        if verify_result.is_success:
-            backup["display_name"] = f"✓ {backup["name"]}"
-        else:
-            backup["display_name"] = f"⚠ {backup["name"]}"
-
     return backups
 
 def verify_backup_integrity(backup_dir: Path) -> Result:
@@ -168,7 +162,16 @@ def get_backups() -> Result:
         return Result(status=Status.FAILED, data=[], msg=f"列出备份时发生错误: {e}")
 
 def restore_backup(backup_dir: Path, overwrite: bool = False) -> Result:
-    """从备份恢复数据"""
+    """
+    从备份恢复数据
+    
+    Args:
+        backup_dir (Path): 备份目录路径
+        overwrite (bool): 是否覆盖现有数据
+        
+    Returns:
+        result (Result): 恢复结果，包含状态和消息
+    """
     if not backup_dir.exists():
         return Result(status=Status.DIR_NOT_FOUND, msg=f"备份目录不存在: {backup_dir}")
 
@@ -195,9 +198,6 @@ def delete_backup(backup_name: str) -> Result:
 
     Args:
         backup_name (str): 备份目录名称
-        
-    Raises:
-        system_error (Exception): 系统错误
         
     Returns:
         delete_result (Result): 删除结果

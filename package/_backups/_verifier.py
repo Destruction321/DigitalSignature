@@ -86,20 +86,18 @@ class Verifier:
                 backup["integrity_valid"] = is_valid
                 backup["integrity_message"] = message
                 backup["checksum_data"] = verify_result.data
-                backup["display_name"] = f"✓ {backup["name"]}" if is_valid else f"⚠ {backup["name"]}"
 
                 # 记录结果
                 if is_valid:
-                    result = f"✓ {backup["name"]}: 验证通过\n"
+                    result = f"OK! {backup["name"]}: 验证通过\n"
                 else:
-                    result = f"⚠ {backup["name"]}: {message}\n"
+                    result = f"WARNING!!! {backup["name"]}: {message}\n"
 
                 self.__progress_dialog.after(0, lambda r=result: self.__add_batch_result(r))
             else:
                 # 备份路径不存在
                 backup["integrity_valid"] = False
                 backup["integrity_message"] = "备份路径不存在"
-                backup["display_name"] = f"{backup["name"]}"
                 result = f"{backup["name"]}: 备份路径不存在\n"
                 self.__progress_dialog.after(0, lambda r=result: self.__add_batch_result(r))
 
@@ -107,7 +105,6 @@ class Verifier:
             # 验证失败
             backup["integrity_valid"] = False
             backup["integrity_message"] = f"验证失败: {str(e)}"
-            backup["display_name"] = f"{backup["name"]}"
             result = f"{backup["name"]}: 验证失败 - {str(e)}\n"
             self.__progress_dialog.after(0, lambda r=result: self.__add_batch_result(r))
 
@@ -154,9 +151,9 @@ class Verifier:
 
         self.__progress_label.config(text="验证完成")
         if verify_result.is_success:
-            self.__result_label.config(text=f"✓ {verify_result.msg}", foreground="green")
+            self.__result_label.config(text=f"OK! {verify_result.msg}", foreground="green")
         else:
-            self.__result_label.config(text=f"⚠ {verify_result.msg}", foreground="red")
+            self.__result_label.config(text=f"WARNING!!! {verify_result.msg}", foreground="red")
             
         if verify_result.data:
             details = (
@@ -172,7 +169,6 @@ class Verifier:
         backup["integrity_valid"] = verify_result.is_success
         backup["integrity_message"] = verify_result.msg
         backup["checksum_data"] = verify_result.data
-        backup["display_name"] = f"✓ {backup["name"]}" if verify_result.is_success else f"⚠ {backup["name"]}"
         
         callback(backup)
 

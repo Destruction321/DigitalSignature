@@ -133,6 +133,8 @@ class Restore:
             size_str = format_size(backup["size"])
             display_text = f"{str(backup["name"]):30} | {time_str} | {size_str:>12}"
             self.__listbox.insert(tk.END, display_text)
+            color = "green" if backup.get("integrity_valid", False) else "red"
+            self.__listbox.itemconfig(self.__listbox.size() - 1, {"fg": color})
             self.__backup_list.append(backup)
 
     def __on_restore(self) -> None:

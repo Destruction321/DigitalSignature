@@ -102,12 +102,12 @@ class Controller:
         """更新密钥状态显示"""
         current_key_id = self.__multi_km.current_key_id
         if current_key_id is None:
-            self.__km_tab.set_key_status("未选择密钥", "gray")
+            self.__km_tab.set_key_status(text="未选择密钥", color="gray")
             return
 
         status_result = self.__multi_km.get_key_encryption_status(current_key_id)
         if not status_result.is_success:
-            self.__km_tab.set_key_status("未找到密钥对", "red")
+            self.__km_tab.set_key_status(text="未找到密钥对", color="red")
             return
 
         status = status_result.msg
@@ -125,9 +125,9 @@ class Controller:
         """更新配置安全状态显示"""
         self.__multi_km.config_secure = is_secure
         if is_secure:
-            self.__km_tab.set_security_status("配置完整性: 已验证", "green")
+            self.__km_tab.set_security_status(text="配置完整性: 已验证", color="green")
         else:
-            self.__km_tab.set_security_status("配置完整性: 未验证/已损坏", "orange")
+            self.__km_tab.set_security_status(text="配置完整性: 未验证/已损坏", color="orange")
 
     def load_selected_key(self) -> SingleKeyManager | None:
         """加载选中的密钥"""
@@ -277,7 +277,7 @@ class Controller:
 
     def __handle_change_result(self, key_id: str, mode: PassWord) -> None:
         """处理密码修改结果"""
-        change_result = self.__password_validator.reset_password(key_id=key_id, mode=mode)
+        change_result = self.__password_validator.reset_password(key_id, mode)
         if change_result.is_success:
             messagebox.showinfo("成功", f"密钥 '{key_id}' 密码修改成功：{change_result.msg}")
         elif change_result.status == Status.CANCEL_INPUT:

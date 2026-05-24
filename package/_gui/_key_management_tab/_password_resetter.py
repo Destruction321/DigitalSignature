@@ -163,7 +163,11 @@ class PasswordResetter:
             return Result(status=Status.PASSWORD_TOO_SHORT)
         
         # 执行密码更改
-        change_result = self.__multi_km.change_key_password(key_id, old_password, new_password)
+        change_result = self.__multi_km.change_key_password(
+            key_id=key_id,
+            old_password=old_password,
+            new_password=new_password
+        )
         if not change_result.is_success:
             return change_result  # 传递更改失败状态
         

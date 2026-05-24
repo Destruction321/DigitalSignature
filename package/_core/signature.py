@@ -47,7 +47,7 @@ def sign_file(key_manager: SingleKeyManager,
             signature_path = get_path(DirType.SIGNATURES, f"{file_path.name}.sig")
 
     try:
-        s_data = _read_with_progress(file_path, progress_callback, 0.0, 0.8)
+        s_data = _read_with_progress(file_path, progress_callback, start=0.0, end=0.8)
 
         if progress_callback:
             progress_callback(0.85, "正在签名...")
@@ -107,7 +107,7 @@ def verify_signature(key_manager: SingleKeyManager,
         return Result(status=Status.KEY_FILE_CORRUPT, msg="缺少公钥")
 
     try:
-        v_data = _read_with_progress(file_path, progress_callback, 0.0, 0.8)
+        v_data = _read_with_progress(file_path, progress_callback, start=0.0, end=0.8)
 
         if progress_callback:
             progress_callback(0.85, "正在读取签名...")
@@ -142,7 +142,7 @@ def verify_signature(key_manager: SingleKeyManager,
 
 """private methods"""
 def _read_with_progress(file_path: Path,
-                        progress_callback: ProgressCallback | None,
+                        progress_callback: ProgressCallback | None,*,
                         start: float,
                         end: float) -> bytes:
     """分块读取文件并报告进度"""

@@ -121,7 +121,7 @@ def save_config(config: ConfigData, config_file: str, sign: bool = True) -> Resu
         return Result(status=Status.CONFIG_SAVE_FAILED, msg=f"保存配置失败: {str(e)}")
 
 
-def migrate_config(old_path: str, new_path: str) -> Result:
+def migrate_config(*, old_path: str, new_path: str) -> Result:
     """
     迁移配置文件（带完整性检查）
     

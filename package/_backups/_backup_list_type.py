@@ -29,7 +29,6 @@ class BackupItem(TypedDict):
         integrity_valid (bool, optional): 完整性验证结果
         integrity_message (str, optional): 完整性验证消息
         checksum_data (_ChecksumData, optional): 校验和数据
-        display_name (str, optional): 显示名称
     """
     name: str
     path: Path
@@ -38,6 +37,5 @@ class BackupItem(TypedDict):
     integrity_valid: NotRequired[bool]
     integrity_message: NotRequired[str]
     checksum_data: NotRequired[_ChecksumData]
-    display_name: NotRequired[str]
     
 type BackupList = list[BackupItem]

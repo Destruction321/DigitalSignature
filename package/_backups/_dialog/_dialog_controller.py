@@ -44,7 +44,7 @@ class Controller:
 
         if backups:
             status_text, color = self.__build_integrity_status(backups)
-            self.__dialog.set_integrity_status(status_text, color)
+            self.__dialog.set_integrity_status(text=status_text, color=color)
 
         self.__dialog.select_tab(0)
 
@@ -167,9 +167,9 @@ class Controller:
 
         if "integrity_valid" in backup:
             if backup["integrity_valid"]:
-                details += "完整性状态: ✓ 已验证通过\n"
+                details += "完整性状态: OK! 已验证通过\n"
             else:
-                details += "完整性状态: ⚠ 验证失败\n"
+                details += "完整性状态: WARNING!!! 验证失败\n"
             if "integrity_message" in backup:
                 details += f"验证消息: {backup["integrity_message"]}\n"
 

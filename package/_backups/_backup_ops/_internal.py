@@ -68,7 +68,17 @@ def backup_data(data_type: DirType) -> Result:
         return Result(status=Status.BACKUP_FAILED, msg=f"备份失败: {e}")
 
 def restore_full_backup(backup_dir: Path, _data_type: DirType, overwrite: bool) -> Result:
-    """恢复完整备份"""
+    """
+    恢复完整备份
+    
+    Args:
+        backup_dir (Path): 备份目录路径
+        _data_type (DirType): 备份类型（此函数中用于做操作映射参数适配，无实际作用）
+        overwrite (bool): 是否覆盖现有数据
+    
+    Returns:
+        result (Result): 恢复结果，包含状态和消息
+    """
     data_dir = Path(get_path(DirType.DATA))
     if overwrite and data_dir.exists():
         shutil.rmtree(data_dir)
@@ -87,7 +97,17 @@ def restore_full_backup(backup_dir: Path, _data_type: DirType, overwrite: bool) 
 
 
 def restore_partial_backup(backup_dir: Path, data_type: DirType, overwrite: bool) -> Result:
-    """恢复部分备份（密钥、文本、签名）"""
+    """
+    恢复部分备份（密钥、文本、签名）
+    
+    Args:
+        backup_dir (Path): 备份目录路径
+        data_type (DirType): 备份类型（keys=密钥备份，texts=文本备份，signatures=签名备份）
+        overwrite (bool): 是否覆盖现有数据
+        
+    Returns:
+        result (Result): 恢复结果，包含状态和消息
+    """
     dir = Path(get_path(data_type))
     dir.mkdir(parents=True, exist_ok=True)
 

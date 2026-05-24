@@ -36,7 +36,11 @@ class Initializer:
         )
         
         self.__current_km: SingleKeyManager | None = None
-        self.__tabs: MainWindow = MainWindow(root, self.__multi_km, self.__key_loader)
+        self.__tabs: MainWindow = MainWindow(
+            root=self.__root,
+            multi_km=self.__multi_km,
+            key_loader=self.__key_loader
+        )
         
         
     """getters"""

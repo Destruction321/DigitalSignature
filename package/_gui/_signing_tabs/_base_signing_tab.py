@@ -115,7 +115,7 @@ class BaseSigningTab(ABC):
         self.__create_operation_panel(1, self._content_label[1])
         self.__create_result_area(2)
 
-    def _handle_sign_success(self, signature_file: str, content_path: str, content_hash: str) -> None:
+    def _handle_sign_success(self, *, signature_file: str, content_path: str, content_hash: str) -> None:
         """
         处理签名成功
         
@@ -135,7 +135,7 @@ class BaseSigningTab(ABC):
         self._show_result(result_text)
         self.__show_info(f"{self.__tab_type.capitalize()}签名成功！")
 
-    def _handle_verify_success(self,
+    def _handle_verify_success(self,*,
                                is_valid: bool,
                                signature_path: str,
                                content_path: str,
@@ -199,7 +199,7 @@ class BaseSigningTab(ABC):
         self.__result_text.delete("1.0", tk.END)
         self.__result_text.insert("1.0", text)
 
-        self._ui_state_mgr.show_result(text, self.__tab_type, level, log=log)
+        self._ui_state_mgr.show_result(text=text, tab_type=self.__tab_type, level=level, log=log)
 
     def _show_warning(self, message: str) -> None:
         """

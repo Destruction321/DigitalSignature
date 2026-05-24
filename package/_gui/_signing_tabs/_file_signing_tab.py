@@ -157,14 +157,14 @@ class FileSigningTab(BaseSigningTab):
             title="文件签名",
             message="正在对文件进行数字签名...",
         )
-        worker = _FileSignWorker(km, file_path)
+        worker = _FileSignWorker(km=km, file_path=file_path)
         result = dialog.run(worker)
 
         if result.is_success:
             data = result.data
             signature_path = Path(data["path"]).as_posix()
             self.__update_signature_path(signature_path)
-            self._handle_sign_success(signature_path, content, data["hash"])
+            self._handle_sign_success(signature_file=signature_path, content_path=content, content_hash=data["hash"])
             return
 
         if result.status != Status.CANCEL_INPUT:
@@ -186,15 +186,25 @@ class FileSigningTab(BaseSigningTab):
             title="签名验证",
             message="正在验证文件签名...",
         )
-        worker = _FileVerifyWorker(km, file_path, Path(signature_path))
+        worker = _FileVerifyWorker(km=km, file_path=file_path, signature_path=Path(signature_path))
         result = dialog.run(worker)
 
         if result.is_success:
-            self._handle_verify_success(True, signature_path, content, result.data["hash"])
+            self._handle_verify_success(
+                is_valid=True,
+                signature_path=signature_path,
+                content_path=content,
+                content_hash=result.data["hash"]
+            )
             return
 
         if result.status == Status.VERIFY_FAILED:
-            self._handle_verify_success(False, signature_path, content, result.data["hash"])
+            self._handle_verify_success(
+                is_valid=False,
+                signature_path=signature_path,
+                content_path=content,
+                content_hash=result.data["hash"]
+            )
             return
 
         if result.status != Status.CANCEL_INPUT:

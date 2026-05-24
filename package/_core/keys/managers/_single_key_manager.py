@@ -58,7 +58,7 @@ class SingleKeyManager:
 
 
     """public methods"""
-    def save_keys(self, private_key_path: str, public_key_path: str, password: str | None = None) -> Result:
+    def save_keys(self, *, private_key_path: str, public_key_path: str, password: str | None = None) -> Result:
         """
         保存密钥对
 

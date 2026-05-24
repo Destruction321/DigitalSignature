@@ -212,7 +212,7 @@ class MultiKeyManager:
         except Exception as e:
             return Result(status=Status.KEY_FILE_CORRUPT, msg=f"删除密钥失败: {str(e)}")
             
-    def change_key_password(self, key_id: str, old_password: str | None, new_password: str | None) -> Result:
+    def change_key_password(self, key_id: str, *, old_password: str | None, new_password: str | None) -> Result:
         """
         更改密钥的加密密码
 
@@ -250,7 +250,11 @@ class MultiKeyManager:
             )
             
             # 重新保存密钥
-            save_result = key_manager.save_keys(new_private_path, new_public_path, new_password)
+            save_result = key_manager.save_keys(
+                private_key_path=new_private_path,
+                public_key_path=new_public_path,
+                password=new_password
+            )
             if not save_result.is_success:
                 return save_result
 

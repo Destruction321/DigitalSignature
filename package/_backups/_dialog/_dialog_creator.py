@@ -77,8 +77,7 @@ class Initializer:
         for backup in items:
             time_str = backup["created_time"].strftime("%Y-%m-%d %H:%M")
             size_str = format_size(backup["size"])
-            display_name = backup.get("display_name", backup["name"])
-            display_text = f"{display_name:40} | {time_str} | {size_str:>12}"
+            display_text = f"{backup["name"]:40} | {time_str} | {size_str:>12}"
 
             self.__listbox.insert(tk.END, display_text)
 
@@ -279,8 +278,8 @@ class Initializer:
             "2. 文件数量：验证备份中的文件数量是否与创建时一致\n"
             "3. 文件大小：验证每个文件的大小是否与创建时一致\n\n"
             "验证结果：\n"
-            "• ✓ 表示备份完整且有效\n"
-            "• ⚠ 表示备份可能损坏或缺少验证信息\n"
+            "• OK! 表示备份完整且有效\n"
+            "• WARNING!!! 表示备份可能损坏或缺少验证信息\n"
             "• 无标记表示旧格式备份（无验证信息）"
         )
 
