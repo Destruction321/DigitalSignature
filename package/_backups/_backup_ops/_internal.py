@@ -8,7 +8,7 @@ from logging import warning, error
 from pathlib import Path
 from typing import Final, TYPE_CHECKING
 
-from ..._utils.constants import BASE_DIR
+from ..._utils.constants import BACKUP_DIR
 from ..._utils.enums import DirType
 from ..._utils.result import Status, Result
 from ..._utils.tools import get_path
@@ -46,7 +46,7 @@ def backup_data(data_type: DirType) -> Result:
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     backup_type = data_type.value
     backup_dir = (
-        Path(BASE_DIR).parent / DirType.BACKUPS.value / backup_type / f"{backup_type}{BACKUP}{timestamp}"
+        BACKUP_DIR / backup_type / f"{backup_type}{BACKUP}{timestamp}"
     ).resolve().as_posix()
         
     data_dir = get_path(data_type)

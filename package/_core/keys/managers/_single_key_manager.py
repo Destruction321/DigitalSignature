@@ -1,6 +1,7 @@
 # package/_core/keys/managers/_single_key_manager.py
 """单个密钥对管理器"""
 from logging import exception
+from typing import TYPE_CHECKING
 
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import serialization
@@ -8,6 +9,9 @@ from cryptography.hazmat.primitives.asymmetric.rsa import RSAPrivateKey, RSAPubl
 
 from .. import _encryption
 from ...._utils.result import Status, Result
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 
 class SingleKeyManager:
@@ -58,13 +62,13 @@ class SingleKeyManager:
 
 
     """public methods"""
-    def save_keys(self, *, private_key_path: str, public_key_path: str, password: str | None = None) -> Result:
+    def save_keys(self, *, private_key_path: Path, public_key_path: Path, password: str | None = None) -> Result:
         """
         保存密钥对
 
         Args:
-            private_key_path (str): 私钥文件路径
-            public_key_path (str): 公钥文件路径
+            private_key_path (Path): 私钥文件路径
+            public_key_path (Path): 公钥文件路径
             password (str | None): 用于加密私钥的密码。Defaults to None.
 
         Returns:
@@ -106,12 +110,12 @@ class SingleKeyManager:
             exception("保存密钥对失败")
             return Result(status=Status.SYSTEM_ERROR, msg=str(e))
         
-    def load_private_key(self, key_path: str, is_encrypted: bool, password: str | None = None) -> Result:
+    def load_private_key(self, key_path: Path, is_encrypted: bool, password: str | None = None) -> Result:
         """
         从文件加载私钥
         
         Args:
-            key_path (str): 私钥文件路径
+            key_path (Path): 私钥文件路径
             password (str | None): 用于解密私钥的密码（如果私钥已加密）
 
         Returns:
@@ -149,12 +153,12 @@ class SingleKeyManager:
             exception("加载密钥对失败")
             return Result(status=Status.SYSTEM_ERROR, msg=str(e))
 
-    def load_public_key(self, key_path: str) -> Result:
+    def load_public_key(self, key_path: Path) -> Result:
         """
         从文件加载公钥
         
         Args:
-            key_path (str): 公钥文件路径
+            key_path (Path): 公钥文件路径
             
         Returns:
             load_result (Result): 加载结果，成功时更新当前的公钥

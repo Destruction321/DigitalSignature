@@ -173,8 +173,8 @@ def _create_key_pair(multi_km: MultiKeyManager, key_id: str, key_size: int, pass
         
         # 记录密钥信息到配置
         multi_km.key_pairs[key_id] = {
-            "private_key_path": private_key_path,
-            "public_key_path": public_key_path,
+            "private_key_path": str(private_key_path),
+            "public_key_path": str(public_key_path),
             "key_size": key_size,
             "created_time": datetime.now().isoformat(),
             "is_encrypted": password is not None

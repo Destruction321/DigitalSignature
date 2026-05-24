@@ -204,10 +204,12 @@ class KeyRecoveryManager:
                 return None
 
             key_id, key_size, is_encrypted, _ = result
-            public_file_name = f"{PUBLIC}_{key_id}_{key_size}{KEY}"
+            private_path = (keys_dir / file_name).resolve().as_posix()
+            public_path = (keys_dir / f"{PUBLIC}_{key_id}_{key_size}{KEY}").resolve().as_posix()
+            
             key_info = config.KeyPairInfo(
-                private_key_path=(keys_dir / file_name).resolve().as_posix(),
-                public_key_path=(keys_dir / public_file_name).resolve().as_posix(),
+                private_key_path=private_path,
+                public_key_path=public_path,
                 key_size=key_size,
                 created_time=datetime.now().isoformat(),
                 is_encrypted=is_encrypted,

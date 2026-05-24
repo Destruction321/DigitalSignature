@@ -6,7 +6,7 @@ from pathlib import Path
 from typing import Callable, Final
 
 from . import _internal
-from ..._utils.constants import BASE_DIR
+from ..._utils.constants import BACKUP_DIR
 from ..._utils.enums import DirType
 from ..._utils.result import Status, Result
 from ..._utils.tools import format_size
@@ -146,10 +146,8 @@ def get_backups() -> Result:
     Returns:
         result (Result): 备份列表结果，成功时包含备份信息列表，每项包含名称、路径、创建时间和大小
     """
-    current_dir = Path(BASE_DIR).parent / DirType.BACKUPS.value
-
     try:
-        backups = _internal.scan_backups(current_dir)
+        backups = _internal.scan_backups(BACKUP_DIR)
         return Result(status=Status.SUCCESS, data=backups)
 
     except FileNotFoundError:
@@ -203,7 +201,7 @@ def delete_backup(backup_name: str) -> Result:
         delete_result (Result): 删除结果
     """
     try:
-        backup_path = Path(BASE_DIR).parent / DirType.BACKUPS.value / backup_name
+        backup_path = BACKUP_DIR / backup_name
         if not backup_path.exists():
             return Result(status=Status.DIR_NOT_FOUND, msg=f"备份 '{backup_name}' 不存在")
 

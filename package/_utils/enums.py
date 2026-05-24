@@ -11,7 +11,6 @@ class DirType(Enum):
     TEXTS = "txts"
     SIGNATURES = "sigs"
     TEMP = "temp"
-    BACKUPS = "backups"
     UNKNOWN = "unknown"
     
 @unique

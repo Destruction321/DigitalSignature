@@ -119,25 +119,27 @@ class MultiKeyManager:
         
         try:
             key_info = self.__key_pairs[key_id]
-            l_km = SingleKeyManager(key_info["key_size"], key_id)
+            single_km = SingleKeyManager(key_info["key_size"], key_id)
+            private_key_path = Path(key_info["private_key_path"])
+            public_key_path = Path(key_info["public_key_path"])
             
-            if not Path(key_info["private_key_path"]).exists():
-                message = f"私钥文件缺失: {key_info["private_key_path"]}"
+            if not private_key_path.exists():
+                message = f"私钥文件缺失: {private_key_path}"
                 return Result(status=Status.KEY_FILE_MISSING, msg=message)
                 
-            if not Path(key_info["public_key_path"]).exists():
-                message = f"公钥文件缺失: {key_info["public_key_path"]}"
+            if not public_key_path.exists():
+                message = f"公钥文件缺失: {public_key_path}"
                 return Result(status=Status.KEY_FILE_MISSING, msg=message)
                 
             is_encrypted = key_info.get("is_encrypted", False)
             if is_encrypted and password is None:
                 return Result(status=Status.NEED_PASSWORD)
             
-            load_private_result = l_km.load_private_key(key_info["private_key_path"], is_encrypted, password)
+            load_private_result = single_km.load_private_key(private_key_path, is_encrypted, password)
             if not load_private_result.is_success:
                 return load_private_result
             
-            load_public_result = l_km.load_public_key(key_info["public_key_path"])
+            load_public_result = single_km.load_public_key(public_key_path)
             if not load_public_result.is_success:
                 return load_public_result
             
@@ -147,7 +149,7 @@ class MultiKeyManager:
                 if not config_result.is_success:
                     return config_result
                 
-            return Result(status=Status.SUCCESS, data=l_km, msg=f"密钥对 '{key_id}' 加载成功")
+            return Result(status=Status.SUCCESS, data=single_km, msg=f"密钥对 '{key_id}' 加载成功")
 
         except _encryption.PasswordError:
             return Result(status=Status.PASSWORD_ERROR)
@@ -184,7 +186,7 @@ class MultiKeyManager:
             key_info = self.__key_pairs[key_id]
             private_key_path = Path(key_info["private_key_path"])
             public_key_path = Path(key_info["public_key_path"])
-            
+
             if key_info["is_encrypted"]:
                 validate_result = self.__validate_password(password)
                 if not validate_result.is_success:
@@ -192,7 +194,7 @@ class MultiKeyManager:
                 
                 single_km = SingleKeyManager(key_info["key_size"], key_id)
                 password = cast(str, validate_result.data)
-                validate_result = single_km.load_private_key(str(private_key_path), True, password)
+                validate_result = single_km.load_private_key(private_key_path, True, password)
                 if not validate_result.is_success:
                     return Result(status=Status.PASSWORD_ERROR, msg="密码错误，无法删除密钥")
             
@@ -259,14 +261,14 @@ class MultiKeyManager:
                 return save_result
 
             # 删除旧文件
-            if private_path.resolve() != Path(new_private_path).resolve() and private_path.exists():
+            if new_private_path != new_private_path and private_path.exists():
                 private_path.unlink()
-            if public_path.resolve() != Path(new_public_path).resolve() and public_path.exists():
+            if public_path != new_public_path and public_path.exists():
                 public_path.unlink()
                 
             # 更新配置
-            self.__key_pairs[key_id]["private_key_path"] = new_private_path
-            self.__key_pairs[key_id]["public_key_path"] = new_public_path
+            self.__key_pairs[key_id]["private_key_path"] = str(new_private_path)
+            self.__key_pairs[key_id]["public_key_path"] = str(new_public_path)
             self.__key_pairs[key_id]["is_encrypted"] = new_password is not None
             
             # 重新加载当前密钥
@@ -320,7 +322,7 @@ class MultiKeyManager:
         
         return Result(status=Status.SUCCESS, data=is_encrypted, msg=message)
 
-    def get_key_paths(self, key_id: str, key_size: int, is_encrypted: bool = False) -> tuple[str, str]:
+    def get_key_paths(self, key_id: str, key_size: int, is_encrypted: bool = False) -> tuple[Path, Path]:
         """
         获取指定密钥ID的文件路径
         
@@ -330,7 +332,7 @@ class MultiKeyManager:
             is_encrypted (bool): 私钥是否加密
 
         Returns:
-            (private_key_path, public_key_path) (tuple[str, str]): 私钥和公钥的文件路径
+            (private_key_path, public_key_path) (tuple[Path, Path]): 私钥和公钥的文件路径
         """
         
         PRIVATE_, PUBLIC_, _ENCRYPTED, _PEM = _get_consts(is_encrypted)
@@ -338,10 +340,7 @@ class MultiKeyManager:
         public_key_file = f"{PUBLIC_}{key_id}_{key_size}{_PEM}"
 
         keys_dir = get_path(DirType.KEYS)
-        return (
-            str(Path(keys_dir, private_key_file).as_posix()),
-            str(Path(keys_dir, public_key_file).as_posix())
-        )
+        return Path(keys_dir, private_key_file).resolve(), Path(keys_dir, public_key_file).resolve()
 
 
     """private methods"""
