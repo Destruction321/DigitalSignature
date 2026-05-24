@@ -55,7 +55,7 @@ class BackUps:
         """恢复备份对话框"""
         backups = list_backups()
         if not backups.is_success:
-            messagebox.showinfo("恢复备份", "没有找到可用的备份文件")
+            messagebox.showwarning("恢复备份", "没有找到可用的备份文件")
             return
 
         dialog = Restore(

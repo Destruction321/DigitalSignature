@@ -22,7 +22,7 @@ BASE_DIR: Final[str] = _BASE_DIR.as_posix()
 LOG_DIR: Final[str] = (_BASE_DIR / "logs").as_posix()
 
 # 备份文件夹
-BACKUP_DIR: Final[Path] = _BASE_DIR / "backups"
+BACKUP_DIR: Final[Path] = ROOT_DIR / "backups"
 
 # 目录类型
 DIRS: Final[dict[DirType, Path]] = {

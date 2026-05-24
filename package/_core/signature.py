@@ -47,10 +47,10 @@ def sign_file(key_manager: SingleKeyManager,
             signature_path = get_path(DirType.SIGNATURES, f"{file_path.name}.sig")
 
     try:
-        s_data = _read_with_progress(file_path, progress_callback, start=0.0, end=0.8)
+        s_data = _read_with_progress(file_path, progress_callback, start=0.0, end=0.6)
 
         if progress_callback:
-            progress_callback(0.85, "正在签名...")
+            progress_callback(0.7, "正在签名...")
 
         signature = key_manager.private_key.sign(
             s_data,
@@ -59,13 +59,13 @@ def sign_file(key_manager: SingleKeyManager,
         )
 
         if progress_callback:
-            progress_callback(0.95, "正在保存签名...")
+            progress_callback(0.75, "正在保存签名...")
 
         with open(signature_path, "wb") as f:
             f.write(signature)
 
         if progress_callback:
-            progress_callback(1.0, "签名完成")
+            progress_callback(0.8, "签名完成")
 
         message = f"文件签名成功：{signature_path}"
         return Result(status=Status.SIGN_SUCCESS, data=signature_path, msg=message)
@@ -107,16 +107,16 @@ def verify_signature(key_manager: SingleKeyManager,
         return Result(status=Status.KEY_FILE_CORRUPT, msg="缺少公钥")
 
     try:
-        v_data = _read_with_progress(file_path, progress_callback, start=0.0, end=0.8)
+        v_data = _read_with_progress(file_path, progress_callback, start=0.0, end=0.6)
 
         if progress_callback:
-            progress_callback(0.85, "正在读取签名...")
+            progress_callback(0.7, "正在读取签名...")
 
         with open(signature_path, "rb") as f:
             signature = f.read()
 
         if progress_callback:
-            progress_callback(0.9, "正在验证...")
+            progress_callback(0.75, "正在验证...")
 
         key_manager.public_key.verify(
             signature,
@@ -126,7 +126,7 @@ def verify_signature(key_manager: SingleKeyManager,
         )
 
         if progress_callback:
-            progress_callback(1.0, "验证完成")
+            progress_callback(0.8, "验证完成")
 
         return Result(status=Status.VERIFY_SUCCESS, msg="签名验证成功：文件完整未被篡改")
 

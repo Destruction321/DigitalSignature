@@ -148,16 +148,15 @@ def get_backups() -> Result:
     """
     try:
         backups = _internal.scan_backups(BACKUP_DIR)
+        if backups is None:
+            return Result(status=Status.NO_BACKUP_FILE, msg="没有找到备份目录")
         return Result(status=Status.SUCCESS, data=backups)
-
-    except FileNotFoundError:
-        return Result(status=Status.NO_BACKUP_FILE, data=[], msg="没有找到备份目录")
     
     except PermissionError:
-        return Result(status=Status.PERMISSION_DENIED, data=[], msg="权限不足，无法访问备份目录")
+        return Result(status=Status.PERMISSION_DENIED, msg="权限不足，无法访问备份目录")
     
     except Exception as e:
-        return Result(status=Status.FAILED, data=[], msg=f"列出备份时发生错误: {e}")
+        return Result(status=Status.FAILED, msg=f"列出备份时发生错误: {e}")
 
 def restore_backup(backup_dir: Path, overwrite: bool = False) -> Result:
     """

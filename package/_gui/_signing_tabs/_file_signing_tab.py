@@ -4,27 +4,36 @@ import tkinter as tk
 from hashlib import sha256
 from pathlib import Path
 from tkinter import ttk
-from typing import TYPE_CHECKING
+from typing import Callable, TYPE_CHECKING
 
 from ._base_signing_tab import BaseSigningTab, ButtonConfig
 from ..._core import signature
 from ..._gui.progress_dialog import ProgressDialog
 from ..._utils.enums import DirType, FileType
 from ..._utils.result import Status, Result
-from ..._utils.tools import get_path
+from ..._utils.tools import format_size, get_path
 from ..._utils.worker import Worker
 
 if TYPE_CHECKING:
     from ..._core.keys.managers import SingleKeyManager
 
 
-def _compute_file_hash(file_path: Path) -> str:
+def _compute_file_hash(file_path: Path,
+                       progress_callback: Callable[[float, str], None] | None = None) -> str:
     """分块计算文件 SHA-256，避免一次性读入大文件"""
     h = sha256()
-    ONE_MB = 1024 * 1024  # 1 MB
+    file_size = file_path.stat().st_size
+    ONE_MB = 1024 * 1024
+    processed = 0
     with open(file_path, "rb") as f:
         while chunk := f.read(ONE_MB):
             h.update(chunk)
+            processed += len(chunk)
+            if progress_callback and file_size > 0:
+                progress_callback(
+                    processed / file_size,
+                    f"计算哈希... {format_size(processed)}/{format_size(file_size)}"
+                )
     return h.hexdigest()
 
 
@@ -42,21 +51,24 @@ class _FileSignWorker(Worker):
             progress_callback=self._report_progress
         )
         if result.is_success and not self.is_cancelled:
-            self._report_progress(0.95, "正在计算文件哈希...")
-            file_hash = _compute_file_hash(self.__file_path)
+            self._report_progress(0.8, "正在计算文件哈希...")
+            file_hash = _compute_file_hash(
+                self.__file_path,
+                progress_callback=lambda f, m: self._report_progress(0.8 + f * 0.2, m)
+            )
             self._report_progress(1.0, "签名完成")
             return Result(
                 status=result.status,
                 data={"path": result.data, "hash": file_hash},
                 msg=result.msg
             )
-        
         return result
 
 
 class _FileVerifyWorker(Worker):
     """在后台线程验证文件签名，分块读取时报告进度"""
-    def __init__(self, km: SingleKeyManager, file_path: Path, signature_path: Path) -> None:
+    def __init__(self, km: SingleKeyManager, file_path: Path,
+                 signature_path: Path) -> None:
         super().__init__()
         self.__km = km
         self.__file_path = file_path
@@ -69,16 +81,18 @@ class _FileVerifyWorker(Worker):
             signature_path=self.__signature_path,
             progress_callback=self._report_progress
         )
-        if result.is_success or result.status == Status.VERIFY_FAILED and not self.is_cancelled:
-            self._report_progress(0.95, "正在计算文件哈希...")
-            file_hash = _compute_file_hash(self.__file_path)
+        if (result.is_success or result.status == Status.VERIFY_FAILED) and not self.is_cancelled:
+            self._report_progress(0.8, "正在计算文件哈希...")
+            file_hash = _compute_file_hash(
+                self.__file_path,
+                progress_callback=lambda f, m: self._report_progress(0.8 + f * 0.2, m)
+            )
             self._report_progress(1.0, "验证完成")
             return Result(
                 status=result.status,
                 data={"hash": file_hash},
                 msg=result.msg
             )
-            
         return result
 
 

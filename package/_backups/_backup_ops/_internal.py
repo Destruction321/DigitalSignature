@@ -210,15 +210,18 @@ def calculate_checksum(backup_dir: Path, progress_callback: ProgressCallback | N
 
     return hash_sha256.hexdigest(), file_count, total_size
 
-def scan_backups(backups_dir: Path) -> BackupList:
+def scan_backups(backups_dir: Path) -> BackupList | None:
     """
     获取备份列表，扫描 backups/ 下各类型子目录中的备份
 
     Args:
         backups_dir: 备份根目录路径
+        
+    Returns:
+        backups (BackupList | None): 备份列表，包含备份名称、路径、创建时间和大小等信息；如果目录不存在则返回 None
     """
     if not backups_dir.exists():
-        return []
+        return None
 
     backups: BackupList = []
     for type_dir in backups_dir.iterdir():

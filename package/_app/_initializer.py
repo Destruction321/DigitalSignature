@@ -36,7 +36,7 @@ class Initializer:
         )
         
         self.__current_km: SingleKeyManager | None = None
-        self.__tabs: MainWindow = MainWindow(
+        self.__main_window: MainWindow = MainWindow(
             root=self.__root,
             multi_km=self.__multi_km,
             key_loader=self.__key_loader
@@ -50,13 +50,13 @@ class Initializer:
     
     @property
     def ui_setter(self) -> MainWindow:
-        return self.__tabs
+        return self.__main_window
     
     
     """public methods"""
     def auto_load_current_key(self) -> None:
         """程序启动时自动加载当前密钥"""
-        assert self.__tabs.key_tab is not None, "密钥管理标签页未初始化"
+        assert self.__main_window.key_tab is not None, "密钥管理标签页未初始化"
 
         if not self.__multi_km.config_secure:
             self.__ui_state_mgr.update_status("密钥配置完整性验证未通过，请手动恢复配置", Level.WARNING)
@@ -75,7 +75,7 @@ class Initializer:
             if success and isinstance(result, SingleKeyManager):
                 # 设置密钥管理器
                 self.__set_key_manager(result)
-                self.__tabs.key_tab.loaded_key_id = self.__multi_km.current_key_id
+                self.__main_window.key_tab.loaded_key_id = self.__multi_km.current_key_id
                 self.__ui_state_mgr.update_status(f"自动加载密钥成功: {self.__multi_km.current_key_id}")
             elif not success and loading_result.status == Status.NEED_PASSWORD:
                 self.__ui_state_mgr.update_status(f"密钥 '{self.__multi_km.current_key_id}' 已加密，请手动加载")
@@ -86,7 +86,7 @@ class Initializer:
             self.__ui_state_mgr.update_status(f"自动加载密钥出错: {e}", Level.ERROR, log=True)
 
         # 更新密钥标签页显示
-        self.__tabs.key_tab.update_key_status()
+        self.__main_window.key_tab.update_key_status()
         self.__ui_state_mgr.update_dir_labels()
     
     
@@ -96,7 +96,7 @@ class Initializer:
                      
     def __on_key_loaded(self, key_manager: SingleKeyManager | None) -> None:
         """密钥加载成功时的回调"""
-        if self.__tabs.key_tab is None:
+        if self.__main_window.key_tab is None:
             raise RuntimeError("密钥管理标签页未初始化")
         
         if key_manager is None or key_manager.private_key is None:
@@ -105,7 +105,7 @@ class Initializer:
             self.__multi_km.current_key_id = None
 
             # 通知KeyManagementTab加载失败
-            self.__tabs.key_tab.loaded_key_id = None
+            self.__main_window.key_tab.loaded_key_id = None
             return
 
         try:
@@ -120,7 +120,7 @@ class Initializer:
                     messagebox.showerror("密钥配置保存失败", f"密钥加载成功但配置保存失败：{save_result.msg}")
                     
                 # 通知KeyManagementTab密钥已真正加载
-                self.__tabs.key_tab.loaded_key_id = key_id
+                self.__main_window.key_tab.loaded_key_id = key_id
 
             self.__current_km = key_manager
             self.__update_key_managers()
@@ -133,7 +133,7 @@ class Initializer:
             self.__multi_km.current_key_id = None
 
             # 通知KeyManagementTab加载失败
-            self.__tabs.key_tab.loaded_key_id = None
+            self.__main_window.key_tab.loaded_key_id = None
 
     def __set_key_manager(self, key_manager: SingleKeyManager) -> None:
         """设置当前密钥管理器"""
@@ -160,13 +160,13 @@ class Initializer:
         """更新所有标签页的密钥管理器"""
         if self.__current_km is None:
             raise RuntimeError("当前密钥管理器为空，无法更新标签页")
-        if self.__tabs.text_tab is None:
+        if self.__main_window.text_tab is None:
             raise RuntimeError("文本签名标签页未初始化")
-        if self.__tabs.file_tab is None:
+        if self.__main_window.file_tab is None:
             raise RuntimeError("文件签名标签页未初始化")
 
-        self.__tabs.text_tab.km = self.__current_km
-        self.__tabs.file_tab.km = self.__current_km
+        self.__main_window.text_tab.km = self.__current_km
+        self.__main_window.file_tab.km = self.__current_km
            
 
 def migrate_existing_files() -> None:
