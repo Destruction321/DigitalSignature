@@ -154,10 +154,7 @@ class MultiKeyManager:
         except _encryption.PasswordError:
             return Result(status=Status.PASSWORD_ERROR)
 
-        except _encryption.InvalidKeyError as e:
-            return Result(status=Status.KEY_FILE_CORRUPT, msg=str(e))
-
-        except _encryption.DecryptError as e:
+        except _encryption.unexpected_decrypt_errors as e:
             return Result(status=Status.KEY_FILE_CORRUPT, msg=str(e))
 
         except Exception as e:

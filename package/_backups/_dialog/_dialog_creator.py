@@ -197,7 +197,11 @@ class Initializer:
 
     
     """private methods"""
-    def __create_integrity_label(self, parent: ttk.Frame, ratio: float, valid_count: int, total_count: int) -> None:
+    def __create_integrity_label(self,
+                                 parent: ttk.Frame,
+                                 ratio: float,
+                                 valid_count: int,
+                                 total_count: int) -> None:
         """创建完整性状态标签"""
         if ratio == 100:
             color = "green"
@@ -231,7 +235,9 @@ class Initializer:
         list_container.pack(fill=tk.BOTH, expand=True)
 
         self.__listbox = tk.Listbox(list_container, height=15, font=("Consolas", 9), selectmode=tk.SINGLE)
-        scrollbar: ttk.Scrollbar = ttk.Scrollbar(list_container, orient=tk.VERTICAL, command=self.__listbox.yview)
+        scrollbar: ttk.Scrollbar = ttk.Scrollbar(
+            list_container, orient=tk.VERTICAL, command=self.__listbox.yview
+        )
         self.__listbox.configure(yscrollcommand=scrollbar.set)
 
         self.__listbox.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)

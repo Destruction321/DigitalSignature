@@ -122,7 +122,8 @@ class PasswordResetter:
                 
             # 询问是否重试
             retry = messagebox.askretrycancel(
-                "密码错误", f"密码错误！剩余尝试次数: {attempts_left}\n是否重试？",
+                "密码错误",
+                f"密码错误！剩余尝试次数: {attempts_left}\n是否重试？",
                 parent=self.__parent_window
             )
             
@@ -177,6 +178,5 @@ class PasswordResetter:
         get_ui_state_manager().update_status(f"{context_text}密钥密码: {key_id}")
         
         # 成功结果
-        status_desc = "设置加密" if new_password else "移除加密"
-        message = f"{context_text}成功（{status_desc}）"
+        message = f"{context_text}成功：已{"设置加密" if new_password else "移除加密"}"
         return Result(status=Status.SUCCESS, msg=message)

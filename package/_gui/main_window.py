@@ -100,7 +100,10 @@ class MainWindow:
         labels: list[str] = ["密钥:", "文本:", "签名:", "临时:"]
 
         for i, (category, label) in enumerate(zip(categories, labels)):
-            ttk.Label(dir_grid, text=label, font=("微软雅黑", 9)).grid(row=1, column=i * 2, sticky=tk.W, padx=(10, 2))
+            ttk.Label(
+                dir_grid, text=label, font=("微软雅黑", 9)
+            ).grid(row=1, column=i * 2, sticky=tk.W, padx=(10, 2))
+            
             self.__dir_labels[category] = ttk.Label(dir_grid, text="加载中...", font=("微软雅黑", 9))
             self.__dir_labels[category].grid(row=1, column=i * 2 + 1, sticky=tk.W, padx=(0, 15))
 
@@ -152,7 +155,9 @@ class MainWindow:
         ]
 
         for text, command in buttons_row1:
-            ttk.Button(button_row1, text=text, command=command).pack(side=tk.LEFT, expand=True, fill=tk.X, padx=2)
+            ttk.Button(
+                button_row1, text=text, command=command
+            ).pack(side=tk.LEFT, expand=True, fill=tk.X, padx=2)
 
         button_row2: ttk.Frame = ttk.Frame(tools_container)
         button_row2.pack(fill=tk.X, expand=True, pady=2)
@@ -165,7 +170,9 @@ class MainWindow:
         ]
 
         for text, command in buttons_row2:
-            ttk.Button(button_row2, text=text, command=command).pack(side=tk.LEFT, expand=True, fill=tk.X, padx=2)
+            ttk.Button(
+                button_row2, text=text, command=command
+            ).pack(side=tk.LEFT, expand=True, fill=tk.X, padx=2)
 
     def __create_backup_area(self, parent: tk.Widget) -> None:
         """创建备份工具区域"""

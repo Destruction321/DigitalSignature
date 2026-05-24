@@ -130,7 +130,9 @@ class CleanUps:
         return result.get("days") if result.get("confirmed") else None
 
     @staticmethod
-    def __on_dialog_confirm(dialog: tk.Toplevel, selected_days: tk.IntVar, result: dict[str, bool | int]) -> None:
+    def __on_dialog_confirm(dialog: tk.Toplevel,
+                            selected_days: tk.IntVar,
+                            result: dict[str, bool | int]) -> None:
         """处理对话框确认"""
         result["confirmed"] = True
         result["days"] = selected_days.get()

@@ -56,6 +56,8 @@ class Worker(ABC):
     def __run(self) -> None:
         try:
             result = self.do_work()
+            
         except Exception as e:
             result = Result(status=Status.SYSTEM_ERROR, msg=str(e))
+            
         self.__on_finished(result)

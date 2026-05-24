@@ -22,6 +22,8 @@ if TYPE_CHECKING:
     from ...._core.keys.managers import MultiKeyManager
 
 
+ui_state_mgr = get_ui_state_manager()
+
 @dataclass
 class KeySetter:
     """
@@ -79,7 +81,10 @@ class _KeyCreationWorker(Worker):
 
 
 """public methods"""
-def create_key_pair(key_setter: KeySetter, multi_km: MultiKeyManager, callbacks: CallBacks, parent: Widget) -> None:
+def create_key_pair(key_setter: KeySetter,
+                    multi_km: MultiKeyManager,
+                    callbacks: CallBacks,
+                    parent: Widget) -> None:
     """
     创建新的密钥对
 
@@ -95,7 +100,6 @@ def create_key_pair(key_setter: KeySetter, multi_km: MultiKeyManager, callbacks:
         return
 
     key_id, key_size, password = validate_result
-    ui_state_mgr = get_ui_state_manager()
 
     # 检查密钥ID是否重复
     if key_id in multi_km.key_pairs:
@@ -223,7 +227,7 @@ def _handle_creation_success(key_id: str,
     callbacks.toggle_password_callback()
     
     # 回调更新状态
-    get_ui_state_manager().update_status(f"密钥 '{key_id}' 创建成功")
+    ui_state_mgr.update_status(f"密钥 '{key_id}' 创建成功")
     callbacks.refresh_callback()
     callbacks.update_key_status_callback()
         

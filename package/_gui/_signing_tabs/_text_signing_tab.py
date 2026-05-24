@@ -124,11 +124,9 @@ class TextSigningTab(BaseSigningTab):
             self._show_warning(message)
             return
 
-        file_name = f"document_{datetime.now().strftime("%Y%m%d_%H%M%S")}.txt"
-
         self.__save_text_file(
             content=content,
-            file_name=file_name,
+            file_name=f"document_{datetime.now().strftime("%Y%m%d_%H%M%S")}.txt",
             callback=self.__on_save_success
         )
 

@@ -252,7 +252,9 @@ def _del_orphaned_keys(key_files: dict, valid_key_ids: list[str]) -> tuple[Resul
                 
     return orphaned_key_ids, deleted_count
 
-def _update_config(orphaned_key_ids: set[str], config_path: Path, config_data: config.ConfigData) -> Result | None:
+def _update_config(orphaned_key_ids: set[str],
+                   config_path: Path,
+                   config_data: config.ConfigData) -> Result | None:
     """更新配置"""
     if not orphaned_key_ids or "key_pairs" not in config_data:
         return

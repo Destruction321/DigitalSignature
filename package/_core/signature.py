@@ -15,7 +15,6 @@ if TYPE_CHECKING:
     from .keys.managers import SingleKeyManager
     from .._utils.worker import ProgressCallback
 
-_CHUNK_SIZE = 1024 * 1024  # 1 MB
 
 """public methods"""
 def sign_file(key_manager: SingleKeyManager,
@@ -54,7 +53,10 @@ def sign_file(key_manager: SingleKeyManager,
 
         signature = key_manager.private_key.sign(
             s_data,
-            padding.PSS(mgf=padding.MGF1(SHA256()), salt_length=padding.PSS.MAX_LENGTH),
+            padding.PSS(
+                mgf=padding.MGF1(SHA256()),
+                salt_length=padding.PSS.MAX_LENGTH
+            ),
             SHA256()
         )
 
@@ -121,7 +123,10 @@ def verify_signature(key_manager: SingleKeyManager,
         key_manager.public_key.verify(
             signature,
             v_data,
-            padding.PSS(mgf=padding.MGF1(SHA256()), salt_length=padding.PSS.MAX_LENGTH),
+            padding.PSS(
+                mgf=padding.MGF1(SHA256()),
+                salt_length=padding.PSS.MAX_LENGTH
+            ),
             SHA256()
         )
 
@@ -151,7 +156,7 @@ def _read_with_progress(file_path: Path,
     
     with open(file_path, "rb") as f:
         while True:
-            chunk = f.read(_CHUNK_SIZE)
+            chunk = f.read(1024 * 1024)  # 1 MB
             if not chunk:
                 break
            

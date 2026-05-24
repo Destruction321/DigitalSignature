@@ -160,7 +160,8 @@ def create_checksum(backup_dir: Path, backup_type: str) -> None:
     with open(checksum_file, "w", encoding="utf-8") as f:
         dump(checksum_data, f, ensure_ascii=False, indent=2)
 
-def calculate_checksum(backup_dir: Path, progress_callback: ProgressCallback | None = None) -> tuple[str, int, int]:
+def calculate_checksum(backup_dir: Path,
+                       progress_callback: ProgressCallback | None = None) -> tuple[str, int, int]:
     """
     计算备份目录的校验和、文件数量和总大小
 
