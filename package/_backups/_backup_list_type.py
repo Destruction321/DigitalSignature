@@ -14,7 +14,6 @@ class _ChecksumData(TypedDict):
     file_count: int
     total_size: int
     created_time: str
-    backup_version: str
 
 class BackupItem(TypedDict):
     """

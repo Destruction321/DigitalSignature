@@ -39,12 +39,10 @@ class ConfigData(TypedDict):
         key_pairs (dict[str, KeyPairInfo]): 密钥对信息字典，键为密钥ID
         current_key_id (str | None): 当前使用的密钥ID，若无则为None
         signature (str, optional): 配置文件的数字签名
-        version (str, optional): 配置文件版本号
     """
     key_pairs: dict[str, KeyPairInfo]
     current_key_id: str | None
     signature: NotRequired[str]
-    version: NotRequired[str]
 
 
 """public methods"""
@@ -265,7 +263,6 @@ def _sign_config(secret_key: bytes, config_data: ConfigData) -> None:
     """为配置数据添加数字签名"""
     config_hash = _calculate_config_hash(secret_key, config_data)
     config_data["signature"] = config_hash
-    config_data["version"] = "1.0"
 
 def _verify_config(config_data: ConfigData, secret_key: bytes) -> bool:
     """验证配置数据的完整性（不修改原始 dict）"""
@@ -275,7 +272,6 @@ def _verify_config(config_data: ConfigData, secret_key: bytes) -> bool:
     stored_signature = config_data["signature"]
     config_to_verify = config_data
     config_to_verify.pop("signature", None)
-    config_to_verify.pop("version", None)
 
     calculated_hash = _calculate_config_hash(secret_key, config_to_verify)
     return compare_digest(stored_signature, calculated_hash)

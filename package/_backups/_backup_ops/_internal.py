@@ -153,7 +153,6 @@ def create_checksum(backup_dir: Path, backup_type: str) -> None:
         "file_count": file_count,
         "total_size": total_size,
         "created_time": datetime.now().isoformat(),
-        "backup_version": "1.0"
     }
 
     checksum_file = backup_dir / CHECKSUM_FILE
