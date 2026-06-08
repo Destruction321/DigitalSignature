@@ -4,7 +4,7 @@ import tkinter as tk
 from hashlib import sha256
 from pathlib import Path
 from tkinter import ttk
-from typing import Callable, TYPE_CHECKING
+from typing import TYPE_CHECKING
 
 from ._base_signing_tab import BaseSigningTab, ButtonConfig
 from ..._core import signature
@@ -16,10 +16,11 @@ from ..._utils.worker import Worker
 
 if TYPE_CHECKING:
     from ..._core.keys.managers import SingleKeyManager
+    from ..._utils.worker import ProgressCallback
 
 
 def _compute_file_hash(file_path: Path,
-                       progress_callback: Callable[[float, str], None] | None = None) -> str:
+                       progress_callback: ProgressCallback | None = None) -> str:
     """分块计算文件 SHA-256，避免一次性读入大文件"""
     h = sha256()
     file_size = file_path.stat().st_size
@@ -300,14 +301,12 @@ class FileSigningTab(BaseSigningTab):
         if not file_path.exists():
             return Result(status=Status.FILE_NOT_FOUND)
 
-        file_size = file_path.stat().st_size
         try:
-            sha256_hash = sha256(file_path.read_bytes()).hexdigest()
+            sha256_hash = _compute_file_hash(file_path)
             result = {
                 "path": file_path.as_posix(),
-                "size": file_size,
                 "sha256": sha256_hash,
-                "size_formatted": f"{file_size} 字节"
+                "size_formatted": format_size(file_path.stat().st_size)
             }
             return Result(status=Status.SUCCESS, data=result)
         

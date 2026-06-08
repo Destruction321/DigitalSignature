@@ -104,13 +104,6 @@ class UICreator:
             font=("微软雅黑", 9),
             foreground="blue",
         ).grid(row=0, column=0, sticky=tk.W)
-        
-        ttk.Label(
-            dir_frame,
-            text=f"日志存储目录: {LOG_DIR}",
-            font=("微软雅黑", 9),
-            foreground="red",
-        ).grid(row=1, column=0, sticky=tk.W)
 
     def __create_key_creation_area(self) -> None:
         """创建密钥创建区域"""

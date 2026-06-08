@@ -166,7 +166,7 @@ class MultiKeyManager:
         
         Args:
             key_id (str): 密钥ID
-            parent (Tk): 父级窗口对象
+            password (str | None): 用于验证私钥的密码（如果密钥已加密）
             
         Returns:
             delete_result (Result): 删除结果
@@ -258,9 +258,9 @@ class MultiKeyManager:
                 return save_result
 
             # 删除旧文件
-            if new_private_path != new_private_path and private_path.exists():
+            if private_path.resolve() != new_private_path and private_path.exists():
                 private_path.unlink()
-            if public_path != new_public_path and public_path.exists():
+            if public_path.resolve() != new_public_path and public_path.exists():
                 public_path.unlink()
                 
             # 更新配置

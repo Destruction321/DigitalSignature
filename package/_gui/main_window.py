@@ -9,7 +9,7 @@ from ._key_management_tab import KeyManagementTab
 from ._signing_tabs import FileSigningTab, TextSigningTab
 from .._backups import BackUps
 from .._cleanups import CleanUps
-from .._utils.constants import BASE_DIR, DIRS
+from .._utils.constants import BASE_DIR, DIRS, LOG_DIR
 from .._utils.enums import DirType
 from .._utils.tools import format_size
 from .._utils.ui_state_manager import get_ui_state_manager
@@ -59,7 +59,7 @@ class MainWindow:
         """设置主窗口"""
         self.__root.title("数字签名系统 - 哈尔滨工程大学")
         self.__root.geometry("1000x850")
-        self.__root.minsize(900, 775)
+        self.__root.minsize(900, 770)
         self.__root.columnconfigure(0, weight=1)
         self.__root.rowconfigure(0, weight=1)
         
@@ -92,7 +92,7 @@ class MainWindow:
         dir_grid: ttk.Frame = ttk.Frame(dir_info_frame)
         dir_grid.pack(fill=tk.X)
 
-        base_info: str = f"数据目录: {BASE_DIR}"
+        base_info: str = f"数据目录: {BASE_DIR}\n日志存储目录: {LOG_DIR}"
         base_label: ttk.Label = ttk.Label(dir_grid, text=base_info, font=("微软雅黑", 9, "bold"))
         base_label.grid(row=0, column=0, columnspan=6, sticky=tk.W, pady=(0, 5))
 

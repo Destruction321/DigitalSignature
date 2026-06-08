@@ -108,11 +108,11 @@ def restore_partial_backup(backup_dir: Path, data_type: DirType, overwrite: bool
     Returns:
         result (Result): 恢复结果，包含状态和消息
     """
-    dir = Path(get_path(data_type))
-    dir.mkdir(parents=True, exist_ok=True)
+    data_dir = Path(get_path(data_type)).resolve()
+    data_dir.mkdir(parents=True, exist_ok=True)
 
     if overwrite:
-        result = _rm_dir(dir, data_type)
+        result = _rm_dir(data_dir, data_type)
         if result is not None and not result.is_success:
             return result
 
@@ -123,7 +123,7 @@ def restore_partial_backup(backup_dir: Path, data_type: DirType, overwrite: bool
             continue
 
         src_path = backup_dir / file_name
-        dst_path = dir / file_name
+        dst_path = data_dir / file_name
 
         if not src_path.is_file():
             continue
@@ -135,7 +135,9 @@ def restore_partial_backup(backup_dir: Path, data_type: DirType, overwrite: bool
             message = f"复制文件 {file_name} 失败: {e}"
             return Result(status=Status.RESTORE_FAILED, msg=message)
 
-    message = f"{DATA_TYPE[data_type]}恢复完成: 复制了 {len(copied_files)} 个文件到 {dir.resolve().as_posix()}"
+    message = (
+        f"{DATA_TYPE[data_type]}恢复完成: 复制了 {len(copied_files)} 个文件到 {data_dir.as_posix()}"
+    )
     return Result(status=Status.RESTORE_SUCCESS, data=len(copied_files), msg=message)
 
 def create_checksum(backup_dir: Path, backup_type: str) -> None:
@@ -255,9 +257,9 @@ def detect_backup_type(backup_dir: Path) -> DirType:
 
 
 """private methods"""
-def _rm_dir(dir: Path, data_type: DirType) -> Result | None:
+def _rm_dir(data_dir: Path, data_type: DirType) -> Result | None:
     """删除目录下的所有内容"""
-    for file_name in dir.iterdir():
+    for file_name in data_dir.iterdir():
         try:
             if file_name.is_file():
                 file_name.unlink()

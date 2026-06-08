@@ -35,7 +35,6 @@ def create_backup(backup_type: DirType = DirType.DATA) -> Result:
     
     Args:
         backup_type (DirType): 备份类型（full=完整备份，keys=密钥备份，texts=文本备份，signatures=签名备份）
-        backup_dir (str | None): 备份目录路径（None=自动生成目录）
         
     Returns:
         result (Result): 备份结果，成功时包含备份路径和结果消息
@@ -111,8 +110,8 @@ def verify_backup_integrity(backup_dir: Path) -> Result:
         # 验证备份类型
         backup_type = checksum_data.get("backup_type", "unknown")
         stored_checksum = checksum_data.get("checksum", "")
-        file_count = checksum_data.get("file_count", 0)
-        total_size = checksum_data.get("total_size", 0)
+        stored_file_count = checksum_data.get("file_count", 0)
+        stored_total_size = checksum_data.get("total_size", 0)
 
         # 计算当前备份的校验和
         checksum, file_count, total_size = _internal.calculate_checksum(backup_dir)
@@ -123,12 +122,12 @@ def verify_backup_integrity(backup_dir: Path) -> Result:
             message += "备份完整性验证失败：\n校验和不匹配"
 
         # 验证文件数量
-        if file_count != file_count:
-            message += f"\n文件数量不匹配（应有{file_count}个，实有{file_count}个）"
+        if stored_file_count != file_count:
+            message += f"\n文件数量不匹配（应有{stored_file_count}个，实有{file_count}个）"
 
         # 验证文件大小
-        if total_size != total_size:
-            message += f"\n文件大小不匹配（应有{total_size}字节，实有{total_size}字节）"
+        if stored_total_size != total_size:
+            message += f"\n文件大小不匹配（应有{stored_total_size}字节，实有{total_size}字节）"
 
         if message:
             return Result(status=Status.BACKUP_VERIFY_FAILED, data=checksum_data, msg=message)

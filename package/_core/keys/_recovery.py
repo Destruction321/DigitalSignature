@@ -221,5 +221,5 @@ class KeyRecoveryManager:
             return key_id, key_info
 
         except Exception as e:
-            error("密钥解析失败", f"{file_name}: {e}")
+            error(f"密钥解析失败, {file_name}: {e}")
             return None

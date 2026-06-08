@@ -11,7 +11,6 @@ from .._utils.constants import KEYS_CONFIG_FILE
 from .._utils.enums import DirType, FileType, KeyType
 from .._utils.result import Status, Result
 from .._utils.tools import get_path
-from .._utils.ui_state_manager import get_ui_state_manager
 
 
 """文件类型导出"""
@@ -53,8 +52,6 @@ def cleanup_all_files(days_old: int = 30) -> Result:
         else:
             message = f"完整清理失败: \n{temp_result.msg}\n{old_result.msg}\n{orphaned_result.msg}"
             return Result(status=Status.CLEANUP_FAILED, msg=message)
-        
-        get_ui_state_manager().update_status(f"完整清理完成，共清理 {total_deleted} 个文件")
         
         if total_deleted == 0:
             message = "无文件需要清理"

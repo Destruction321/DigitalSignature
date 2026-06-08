@@ -13,6 +13,7 @@ class Worker(ABC):
     def __init__(self) -> None:
         self.__cancel_event = Event()
         self.__on_progress: ProgressCallback | None = None
+        self.__on_finished: Callable[[Result], None] | None = None
 
     
     """Interfaces for subclasses to implement"""
@@ -60,4 +61,7 @@ class Worker(ABC):
         except Exception as e:
             result = Result(status=Status.SYSTEM_ERROR, msg=str(e))
             
+        if self.__on_finished is None:
+            raise RuntimeError("on_finished callback is not set")
+        
         self.__on_finished(result)

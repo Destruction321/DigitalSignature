@@ -29,6 +29,9 @@ class CleanUps:
         if selected_days is not None:
             self.__cleanup_days_threshold = selected_days
             cleanup_result = _cleanup_ops.cleanup_all_files(selected_days)
+            if cleanup_result.is_success:
+                self.__ui_state_mgr.update_status(f"完整清理完成，共清理 {cleanup_result.data} 个文件")
+            
             self.__refresh_key_list()
             self.__handle_cleanup_result(cleanup_result)
 

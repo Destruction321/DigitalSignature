@@ -270,8 +270,7 @@ def _verify_config(config_data: ConfigData, secret_key: bytes) -> bool:
         return False
 
     stored_signature = config_data["signature"]
-    config_to_verify = config_data
-    config_to_verify.pop("signature", None)
+    config_to_verify = cast(ConfigData, {k: v for k, v in config_data.items() if k != "signature"})
 
     calculated_hash = _calculate_config_hash(secret_key, config_to_verify)
     return compare_digest(stored_signature, calculated_hash)
